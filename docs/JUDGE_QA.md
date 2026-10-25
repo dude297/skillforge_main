@@ -3,16 +3,16 @@
 Short answers first, then the evidence. Cite file paths when pushed. Never give a GB10 number that isn't in `results/`.
 
 ## How is this different from an ordinary agent, or a Hermes-style agent?
-Most tool-calling agents, and the frameworks they're built on, send every new request through the model. Some keep memory or saved prompts, but each recurrence still costs another round of inference, and whatever code comes out is used without anyone having checked it. SkillForge calls the model **once** per incident class. It turns the result into an immutable program and checks it with tests the model never saw. A person approves it, and after that it runs without the model. Recurrences are handled deterministically, and a lookalike incident is refused. (If "Hermes" means a specific product, we haven't benchmarked against it. The comparison above is with the pattern of re-running the model on every request.)
+A simple tool-calling agent loop (a pattern we compare against, not a survey of products) sends every new request through the model, so each recurrence costs another round of inference, and whatever code comes out is used without an independent check. SkillForge calls the model **once** per incident class. It turns the result into an immutable program and checks it with tests the model never saw. A person approves it, and after that it runs without the model. Recurrences are handled deterministically, and a lookalike incident is refused. (If "Hermes" means a specific product, we haven't benchmarked against it. The comparison above is with the pattern of re-running the model on every request.)
 
-## What's novel?
-Three things, tied together:
+## What is different?
+Three design choices, tied together (we have not benchmarked them against other systems):
 1. **Verified, approved, immutable executable skills.** The model writes the code. The host verifies it: static lint, the skill's own tests, a replay of INC-1, a capacity check, and a hidden suite. A person approves it on the host CLI. The approved files are pinned by sha256 (`app/skillforge.py` `approve_skill`).
 2. **Deterministic reuse.** A compatible incident runs the pinned code. A `NoModel` guard counts any model call and fails the run if there is one (`experiments/oncall_infer/oncall.py`).
 3. **Fail-closed refusal of lookalikes.** An incident fingerprint (exception type, component, failure category, top frames) must match the one stored when the skill was approved. If it differs or is missing, the incident is refused.
 
 ## Why the GB10?
-- The logs, configs and code of an inference fleet are sensitive. With a local model, synthesis happens on the box and nothing goes to a cloud API.
+- The logs, configs and code of an inference fleet are sensitive. With a local model, synthesis is designed to happen on the box with no cloud API (egress policy not yet verified on the GB10).
 - 128 GB of unified memory (`docs/GB10_FRONTIER.md`) holds a 35B mixture-of-experts model (Qwen3.6-35B-A3B NVFP4, ~3B active parameters per token) together with the sandbox, verifier and console on one machine.
 - Measured GB10 throughput, latency and memory headroom: **pending GB10** (`docs/GB10_EVIDENCE_CHECKLIST.md`).
 
