@@ -233,7 +233,10 @@ def run(live=False, base_url=None, model=None, state=DEFAULT_STATE, out=DEFAULT_
     if live and not allow_fallback:
         llm_mod.OpenAICompatLLM(base_url, model, os.environ.get("LLM_API_KEY") or None, 30).health()  # GET /models only
     ctx = Ctx(state)
-    shutil.rmtree(ctx.state, ignore_errors=True)  # throwaway registry per run: predictable demo state
+    prev = ctx.state.with_name(ctx.state.name + ".prev")  # throwaway registry per run, but kept until the run succeeds
+    shutil.rmtree(prev, ignore_errors=True)
+    if ctx.state.exists():
+        ctx.state.rename(prev)
     log = []
     audit = lambda ev, d: log.append({"t": now(), "event": ev, "detail": d})
     conn = ctx.connect()
@@ -254,6 +257,9 @@ def run(live=False, base_url=None, model=None, state=DEFAULT_STATE, out=DEFAULT_
         except llm_mod.LLMUnavailable as e:
             if not allow_fallback:
                 conn.close()
+                shutil.rmtree(ctx.state, ignore_errors=True)
+                if prev.exists():
+                    prev.rename(ctx.state)  # failed strict --live run: the previous registry survives
                 raise
             model_block["note"] = f"endpoint unavailable ({str(e)[:200]}); fell back to the RECORDED reference skill"
             audit("model_unavailable", str(e)[:300])
@@ -295,6 +301,7 @@ def run(live=False, base_url=None, model=None, state=DEFAULT_STATE, out=DEFAULT_
         audit("pending_approval", "stopped: a person must run the approve command on the host")
     sf.task_end(conn, model_calls=syn["model_calls"])
     conn.close()
+    shutil.rmtree(prev, ignore_errors=True)
     doc = {"schema": "skillforge.oncall_run/1", "mode": mode, "generated_at": now(), "host": socket.gethostname(),
            "model": model_block, "incident": incident_block("INC-1"), "synthesis": synthesis, "verification": ver,
            "approval": approval,
@@ -381,7 +388,10 @@ def reuse(state=DEFAULT_STATE, out=DEFAULT_OUT):
     with NoModel() as guard:
         t0 = time.perf_counter()
         ok, why, _ = _decide(conn, "INC-2", learned_fp)
-        res = sf.run_skill(conn, NAME) if ok else None
+        try:
+            res = sf.run_skill(conn, NAME) if ok else None
+        except tools.ToolError as e:  # e.g. integrity_error: approved files changed since approval -> recorded refusal
+            ok, why, res = False, f"core refused to run the skill: {e}", None
         ms = round((time.perf_counter() - t0) * 1000, 1)
     if ok:
         p = (res["proposals"] or [None])[0]
@@ -395,7 +405,10 @@ def reuse(state=DEFAULT_STATE, out=DEFAULT_OUT):
     with NoModel():
         ok3, why3, _ = _decide(conn, "INC-3", learned_fp)
         if ok3:
-            sf.run_skill(conn, NAME)
+            try:
+                sf.run_skill(conn, NAME)
+            except tools.ToolError as e:
+                ok3, why3 = False, f"core refused to run the skill: {e}"
     doc["refusal"].update(state="UNEXPECTED_ACCEPT" if ok3 else "refused", reason=why3)
     audit("reuse_inc3", f"{doc['refusal']['state']}: {why3}")
     conn.close()
