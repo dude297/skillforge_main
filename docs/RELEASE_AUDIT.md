@@ -66,9 +66,10 @@ None in the public tree. The following would be blockers **only** if the enginee
   Docker runner only (`app/skillforge.py:214`). Reworded.
 - F4. `docs/SKILLFORGE.md:3` "provably reuses it": replaced by "evidence, not formal proof", consistent with
   `docs/CLAIMS.md` claim 27.
-- F5. `README.md` §11 and `docs/DEVELOPMENT_LOG.md` presented all listed work as "done during the hackathon". The core
-  runtime, UI console, router, catalog and runbooks were developed 2026-10-20 to 2026-10-23. Now split into pre-event
-  foundations and event-day work with commit hashes.
+- F5. Repository provenance: revised `README.md` §11 and `docs/DEVELOPMENT_LOG.md` to describe the curated
+  repository snapshot separately from the explicitly dated October 25 milestone. Neither the snapshot date
+  nor the event-day table should be read as a claim that every included component was authored on that date.
+  Engineering commit IDs are kept where needed to substantiate the event-day work.
 - F6. `docs/DEVELOPMENT_LOG.md` GB10 section is a "pending, not yet measured" placeholder with empty rows; anchors in
   `docs/BENCHMARKS.md` and `docs/GB10_SETUP.md` updated. `ui/.gitignore` now ignores `*.tsbuildinfo`.
 

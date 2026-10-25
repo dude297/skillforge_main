@@ -1,48 +1,25 @@
-# Development log
+# Development and validation record
 
-This log separates what existed **before** the hackathon (2026-10-25) from what was done **on the event day**, links
-each item to commit hashes, and records the tests actually run. Every commit carries an AI co-author trailer (Claude
-Code). Per-person authorship is not recorded in git.
+This record documents the SkillForge repository snapshot, the October 25, 2026 demonstration milestone, and
+the verification evidence for the published code. **It does not claim that every component in the repository
+was authored on October 25.** Dates in the event-day table apply to the work described in those rows, not to
+all components included in the final snapshot. Every tracked engineering commit has an AI co-author trailer
+(Claude Code); individual human authorship is not established by those trailers.
 
-**About the hashes.** They refer to the team's private engineering repository, whose history is not published
-(its commits carry personal author metadata). This public repository is a single curated snapshot commit. The hashes
-are provenance you can ask the team to show, not links you can follow here. The recorded commit dates are the
-committer's local clock (UTC-4). The event start time is **not recorded in git**, so a few commits dated 2026-10-25
-that were prepared earlier are listed as pre-event and marked.
+**About the hashes.** The engineering commit IDs refer to a separate repository whose history is not published
+here (it includes personal author metadata). This public repository is a curated snapshot, not a replay of
+the engineering commit history. The hashes are identifiers that the team can substantiate independently.
 
-Environment for every test below: **Windows 11 x86_64 dev box, no GPU, no real model**, Python 3.14.3, synthetic data.
-"Reported" = reported by the person who ran it, not re-run on this tree. "Re-run" = re-run on this public tree.
+Dev-box test environment: **Windows 11 x86_64, no GPU, no real model**, Python 3.14.3, synthetic data.
+"Reported" means reported by its operator, not re-run against this public tree; "Re-run" means re-run against
+this public tree. GB10 model runs are reported separately below.
 
-## Part 1. Pre-event foundations (before 2026-10-25)
+## Part 1. Repository scope at the demonstration milestone
 
-Developed 2026-10-20 to 2026-10-23, none of it written on the event day. The core runtime (`app/`, `adapters/`) was
-declared frozen in the team's rules (blocker, security and compatibility fixes only; some proposed core changes were
-made on 2026-10-22).
-
-| date | work | branch / key commits |
-|---|---|---|
-| 2026-10-20 | Local agent foundation: SQLite tools, approval gate, verifier, mock demo, OpenClaw skill, GB10 docs; LF line endings; model bake-off procedure | `0a6a17a`, `6cf82cd`, `75ec968` |
-| 2026-10-20 | SkillForge core: learn, replay-validate, human-promote, reuse deterministic skills; sanitization, hidden validation, profiling; three-mode benchmark, deterministic matcher, trusted service boundary | `4315c68`, `e47796a`, `2182c02` |
-| 2026-10-20 | GB10 readiness: runbook, gated preflight, least-privilege service, runner fix | `59f90ce` (`master`) |
-| 2026-10-21 | Contract rehearsal, research-driven fixes, runbook gates 0-5, deploy manifest, demo plan; resilience (capability gate, failover, crash recovery, fault injection, soak) | `98872c9`, `4ca18c8`, `90e3445`, `e5a2a15`, `7e93be6`, `582ff71` (`prep/readiness`) |
-| 2026-10-21 | OnCall and ops-discrepancy evaluation fixtures (experiments, not core) | `2ca1d1a` (`exp/scenarios`) |
-| 2026-10-21 | UI: design system, story, operator console; four independent reviews integrated | `080b468`, `e321c70`, `7f6b95b`, `d81bc39` (`ui/console`) |
-| 2026-10-21 | Read-only operator API, live console over real backend state; integration review fixes; release-candidate notes | `43c6122`, `25cf96c`, `a6fd80a` (`integ/live`, tag `rc1-2026-10-21`) |
-| 2026-10-21 | Daylight World, Ember companion, perf/a11y pass, usability kit (not run) | `320feb6`, `d60bc2f`, `82ae167`, `2fb8cc1`, `94c147d`, `a881acb` (`exp/world`) |
-| 2026-10-21 | Event kit (no product change) | `0b1672a`, `a98e2e2` (`prep/event-kit`) |
-| 2026-10-22 | Exception workflow on the real backend (freight) | `954f682` (`exp/workflow`) |
-| 2026-10-22 | Event router spike, A/B/C harness, organisational skill catalog | `abe7126`, `a131597`, `7e137cf`, `9e3c000` (`exp/router`) |
-| 2026-10-22 | Enterprise slice: namespace isolation, typed skill refusals, verifier attestation (proposed core changes), Bootstrap Lite manifest | `80a1f2d`, `c0d1956`, `b266684`, `9bb106b`, `91e8f0d`, `6151037`, `2d440ba`, `3c510bd` (`exp/enterprise`) |
-| 2026-10-22 | Bootstrap cinematic and honesty patch; restore-guard fixes | `c343ff6`, `b543cfa`, `42d11bf`, `a864178` |
-| 2026-10-22 | Research only: execution-cost audit and CPU benchmark; GB10 measurement runbook and TTFT probe | `c405feb`, `6de3cf1` (`research/exec-perf`), `d03dd1e` (`research/gb10-bench`) |
-| 2026-10-22 | Review packet, channel contract (synthetic), event-readiness handoff (doc only) | `15661b1`, `740c5de`, `bc5db46`, `cbf1ba5`, `ffbdbec` |
-| 2026-10-22 | Functional read-only onboarding (Bootstrap Lite) | `e8fb788` (`exp/bootstrap-lite`) |
-| 2026-10-23 | unified-alpha: merged the experiments above into one console, stabilization, browser acceptance | `5a7cd29`, `ae63d41`, `0ff2ecd`, `b132e9e`, `427bded`, `0f56032`, `e2864b4`, `2719faf`, `9faeb26`, `7d77af1`, `136ad0e` (`integration/unified-alpha`) |
-| 2026-10-23 | One connected product path (homepage to Bootstrap to Lite to office to console); truthful provenance | `aef91a2`, `552613e`, `e364083` (`ui/product-experience`) |
-| 2026-10-25, early | Dated on the event date but outside the event-day product work (a judgement call; the event start time is not recorded): Telegram bridge experiment (not merged, **not in this tree**) and the event-kit screenshots | `4440911` (`exp/telegram`, 04:07), `fce80be` (`prep/event-kit`, 12:30) |
-
-Public snapshot of this foundation: `5b6489a` ("Pre-event foundation: snapshot of private commit e364083", 13:01 on
-2026-10-25, a tree snapshot, not a replay of history).
+The snapshot contains the trusted SQLite-backed tool service, approval and verification gates, versioned and
+hash-pinned skill registry, deterministic matcher, independent verifiers, workflow and catalog experiments,
+operator console, Daylight World and Bootstrap Lite, plus GB10 setup and deployment tooling.
+This section describes what is present, not when each subsystem was first implemented.
 
 ## Part 2. Event-day work (2026-10-25)
 
@@ -85,8 +62,8 @@ re-run; `tests/test_faults.py::test_restore_checkpoint_and_resume_interrupted_wo
 
 ## Real-model integration
 
-Parts 1 to 3 above predate the GB10 session. The test results in Part 3 are dev-box results and were not re-run for
-the GB10 patches. The live GB10 model results are in the next section.
+The test results in Part 3 are dev-box results and were not re-run for the GB10 patches. The live GB10 model
+results are in the next section.
 
 ## GB10 results (event day, 2026-10-25)
 

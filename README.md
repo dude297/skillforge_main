@@ -189,26 +189,22 @@ Results on the dev box (Windows 11 x86_64, Python 3.14.3, no GPU) are in
 GB10 measurements (section 8) are separate: [docs/BENCHMARKS.md](docs/BENCHMARKS.md) keeps the three kinds of numbers
 apart. GB10 reuse latency: 6 trials, p50 28.2 ms (subprocess runner; match plus deterministic skill run; 0 model calls).
 
-## 11. What was built when
+## 11. Repository snapshot and October 25 milestone
 
-**Pre-event foundation (before 2026-10-25, developed 2026-10-20 to 2026-10-23):** the core runtime (`app/`,
-`adapters/`: SQLite store, tool service, approval and verification gates, skill registry), the pinned verifiers, the
-three-mode benchmark, the freight workflow, the router and catalog experiments, the console, Daylight World and
-Bootstrap Lite UI, and the GB10 runbooks. This is **not** hackathon-day work.
+This repository is a curated snapshot of SkillForge's runtime, verification gates, skill registry, benchmarks,
+domain demonstrations, console, Daylight World, Bootstrap Lite UI and GB10 operational tooling. The snapshot's
+contents do **not** establish when every component was originally authored; do not interpret the release date
+as an assertion that the whole system was built during the event.
 
-**Event-day work (2026-10-25):**
+**October 25, 2026 milestone:** Demo launchers, the OnCall incident run/reuse walkthrough, guided six-scene demo,
+incident console view, fingerprint and approval-kind hardening, the GB10 compute-frontier harness, deployment
+handoff improvements, and the live GB10 measurements described in sections 7–8 were brought together and
+validated or demonstrated with the limitations stated above. The committed guided demo remains a labelled
+recorded simulation, while the separate live GB10 run includes a human-approved skill and measured deterministic
+reuse.
 
-- demo launchers
-- OnCall loop and recorded artifact
-- guided six-scene demo, console incident view
-- fingerprint and approval-kind fixes after a bypass audit
-- GB10 compute-frontier harness (later run on the GB10)
-- real-backend browser rehearsal fixes
-- GB10 handoff: strict `--live`, served-id discovery, portable bundle, preflight
-- GB10 live runs: frontier throughput, five live OnCall synthesis attempts, a lint-bypass fix
-- release preparation (this tree)
-
-Commit hashes, dates, status and the tests actually run: [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md).
+For test provenance, recorded commands and the GB10 results, see [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md)
+and [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
 ## 12. Security and approvals
 
