@@ -93,3 +93,34 @@ def test_reuse_with_model_call_is_counted_as_failure_not_latency(tmp_path):
     p.write_text(json.dumps(j))
     t = er.build([d])
     assert "trials failing the contract (refused, or model_calls != 0) | 1 |" in t
+
+
+def test_sf_gb10_dir_without_identity_is_accepted_with_derived_label(tmp_path):
+    d = _unmarked("synthetic_sfgb10_oncall", tmp_path)
+    assert not (d / "identity.json").exists()
+    t = er.build([d])
+    assert "MOCK" not in t and er.DERIVED in t
+    assert "| GPU | not measured |" in t and "synthetic-model-35b" in t and "`console.txt`" in t
+    assert "| gpu.csv peak utilization.gpu / temperature.gpu C / power.draw W | 90.0 / 60.0 / 40.0 |" in t
+
+
+def test_sf_gb10_x86_is_rejected(tmp_path):
+    d = _unmarked("synthetic_sfgb10_oncall", tmp_path)
+    c = d / "console.txt"
+    c.write_text(c.read_text().replace("arch=aarch64", "arch=x86_64"), encoding="utf-8")
+    with pytest.raises(er.Rejected, match="aarch64"):
+        er.build([d])
+
+
+def test_sf_gb10_mock_mode_is_rejected(tmp_path):
+    d = _unmarked("synthetic_sfgb10_oncall", tmp_path)
+    o = json.loads((d / "oncall-run.json").read_text())
+    o["mode"] = "RECORDED_SIMULATION"
+    (d / "oncall-run.json").write_text(json.dumps(o))
+    with pytest.raises(er.Rejected, match="RECORDED_SIMULATION"):
+        er.build([d])
+
+
+def test_sf_gb10_fixture_as_shipped_is_rejected():
+    with pytest.raises(er.Rejected):
+        er.build([FIX / "synthetic_sfgb10_oncall"])
