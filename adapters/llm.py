@@ -39,6 +39,9 @@ class OpenAICompatLLM:
         self.base_url, self.model, self.api_key, self.timeout = base_url.rstrip("/"), model, api_key, timeout
 
     def _req(self, path, body=None):
+        # opt-in: e.g. LLM_CHAT_TEMPLATE_KWARGS='{"enable_thinking": false}' for Qwen3.x served with thinking on by default
+        if body and path == "/chat/completions" and os.environ.get("LLM_CHAT_TEMPLATE_KWARGS"):
+            body = {**body, "chat_template_kwargs": json.loads(os.environ["LLM_CHAT_TEMPLATE_KWARGS"])}
         req = urllib.request.Request(self.base_url + path, data=json.dumps(body).encode() if body else None,
                                      headers={"Content-Type": "application/json",
                                               **({"Authorization": f"Bearer {self.api_key}"} if self.api_key else {})})
