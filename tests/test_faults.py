@@ -346,7 +346,8 @@ def test_skill_learned_under_one_model_runs_unchanged_under_another(learned, tmp
 
 # data integrity: checkpoint/restore, migrations ---------------------------------------------------------
 
-def test_restore_checkpoint_and_resume_interrupted_workflow(conn, tmp_path):
+def test_restore_checkpoint_and_resume_interrupted_workflow(conn, tmp_path, monkeypatch):
+    monkeypatch.setattr(ops, "_running_services", lambda: ([], False))  # a live console on this host must not decide the test
     aid = approved(conn)
     b = ops.db_backup(conn, tmp_path / "ck.db")
     assert b["integrity"] == "ok"
@@ -359,7 +360,8 @@ def test_restore_checkpoint_and_resume_interrupted_workflow(conn, tmp_path):
     assert ops.recover(c)["verified_after_restart"] == [{"action_id": aid, "passed": True}]
 
 
-def test_corrupt_backup_is_not_restored(conn, tmp_path):
+def test_corrupt_backup_is_not_restored(conn, tmp_path, monkeypatch):
+    monkeypatch.setattr(ops, "_running_services", lambda: ([], False))  # a live console on this host must not decide the test
     bad = tmp_path / "bad.db"
     bad.write_bytes(b"not a database" * 100)
     with pytest.raises(sqlite3.DatabaseError):
