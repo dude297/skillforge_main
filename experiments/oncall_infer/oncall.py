@@ -49,6 +49,13 @@ Contract: scripts/helper.py defines run(dataset) -> {"proposals": [...], "refuse
   Only when the root cause is a serving config regression that a bounded revert of ONE key fixes. Never apply changes.
 - refused: {"record_id", "code": "not_applicable"|"insufficient_evidence"|"requires_review", "reason"} for every
   record you do not propose for (a different root cause is not_applicable; ambiguous cases are requires_review).
+Operational rule (a wrong revert is worse than a refusal; refusals state that human review is required):
+- Propose only if ALL hold: trusted log evidence shows the diagnosed failure signature (GPU/CUDA out-of-memory), AND
+  trusted config_before/config_after show exactly ONE memory-relevant serving key changed, AND that change moves in the
+  direction that raises memory demand (so the revert lowers it). Symptoms alone (latency, 429s, errors) are never enough.
+- Otherwise refuse: evidence missing, untrusted or incomplete -> insufficient_evidence; zero or several candidate keys, or
+  conflicting signals -> requires_review; evidence of a different failure class -> not_applicable. Never pick a key by order.
+- tests/test_helper.py must cover one positive case and at least two refusal cases, on small made-up datasets you build.
 Allowed imports: json, math, re, collections, itertools, functools, statistics, datetime, typing. No files, network,
 open/eval/exec/getattr. tests/test_helper.py: at least 3 plain `def test_*` functions using `from helper import run`.
 Incident INC-1 (current data):
