@@ -102,7 +102,7 @@ written by a coding agent and the approval was typed by an agent (`approval.kind
 
 | ![Guided demo scene 5](ui/screenshots/demo/scene-5-1440.png) | ![Guided demo scene 4](ui/screenshots/demo/scene-4-1440.png) |
 |---|---|
-| Scene 5: INC-2 reuse with 0 model requests (from an earlier recorded run, 145.4 ms) and INC-3 refused | Scene 4: the banner and the panel say the skill code was hand-written |
+| Scene 5: INC-2 reuse with 0 model requests (from the committed recorded run, 256.0 ms on the dev box) and INC-3 refused | Scene 4: the banner and the panel say the skill code was hand-written |
 
 ## 7. Implemented vs supported features
 
