@@ -174,7 +174,7 @@ def synthesize_live(base_url, model, data, dest, audit, attempts=2, timeout=int(
     audit("model_health", f"{base_url} serves {info['model']}")
     calls, usage, t0, feedback = 0, {"prompt_tokens": 0, "completion_tokens": 0, "seen": False}, time.monotonic(), ""
     for i in range(attempts):
-        body = {"model": client.model, "temperature": 0, "max_tokens": int(os.environ.get("ONCALL_MAX_TOKENS", 8192)),
+        body = {"model": client.model, "temperature": 0, "max_tokens": int(os.environ.get("ONCALL_MAX_TOKENS", 24000)),
                 "messages": [{"role": "user", "content": PROMPT % json.dumps(data) + feedback}]}
         calls += 1
         out = client._req("/chat/completions", body)  # adapter transport; keeps `usage` that chat() drops
