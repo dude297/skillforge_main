@@ -1,0 +1,176 @@
+{
+ "schema": "skillforge.oncall_run/1",
+ "mode": "LIVE_REAL_MODEL",
+ "generated_at": "2026-10-25T20:11:52+00:00",
+ "host": "<gb10-host>",
+ "model": {
+  "id": "skillforge-qwen",
+  "endpoint": "http://127.0.0.1:8000/v1",
+  "available": true,
+  "note": "LIVE: the served model wrote the skill on this run; hidden suite never shown to it"
+ },
+ "incident": {
+  "id": "INC-1",
+  "title": "chat-qwen-prod: 429 storm and p99 latency spike after deploy",
+  "service": "chat-qwen-prod",
+  "summary": "p99 latency 0.9s -> 21s and 31% HTTP 429 within 6 minutes of deploy d-4117. Engine restarts with CUDA OOM.",
+  "evidence": [
+   {
+    "kind": "log",
+    "name": "logs/chat-qwen-prod/vllm-server.log",
+    "excerpt": "2026-10-24T14:04:30Z ERROR engine: torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 2.25 GiB (GPU 0; 119.6 GiB total capacity; 117.9 GiB already allocated)\n2026-10-24T14:04:30Z ERROR engine:   at vllm/worker/model_runner.py:execute_model\n2026-10-24T14:04:31Z ERROR api_server: engine dead, restarting (attempt 1/5)",
+    "source_path": "experiments/oncall_infer/fixtures/inc1_primary.json#evidence[0]"
+   },
+   {
+    "kind": "metric",
+    "name": "metrics/chat-qwen-prod.json",
+    "excerpt": "2026-10-24T13:58:00Z p99=910ms 429=0.0% gpu_mem=71.2% disk_free=412GB\n2026-10-24T14:05:00Z p99=21300ms 429=31.0% gpu_mem=99.1% disk_free=411GB",
+    "source_path": "experiments/oncall_infer/fixtures/inc1_primary.json#evidence[1]"
+   },
+   {
+    "kind": "config",
+    "name": "deploy/chat-qwen-prod/serving.yaml@d-4116",
+    "excerpt": "{\"image_tag\": \"vllm-0.11.2\", \"max_num_seqs\": 128, \"max_model_len\": 32768, \"gpu_memory_utilization\": 0.85}",
+    "source_path": "experiments/oncall_infer/fixtures/inc1_primary.json#evidence[2]"
+   },
+   {
+    "kind": "config",
+    "name": "deploy/chat-qwen-prod/serving.yaml@d-4117",
+    "excerpt": "{\"image_tag\": \"vllm-0.11.2\", \"max_num_seqs\": 1024, \"max_model_len\": 32768, \"gpu_memory_utilization\": 0.85}",
+    "source_path": "experiments/oncall_infer/fixtures/inc1_primary.json#evidence[3]"
+   },
+   {
+    "kind": "deploy",
+    "name": "deploys/d-4117.json",
+    "excerpt": "d-4117 at 2026-10-24T14:00:30Z by ci-bot (PR #882 'raise concurrency for launch'): serving.yaml: max_num_seqs 128 -> 1024",
+    "source_path": "experiments/oncall_infer/fixtures/inc1_primary.json#evidence[4]"
+   }
+  ]
+ },
+ "synthesis": {
+  "provenance": "model",
+  "model_calls": 1,
+  "latency_ms": 233829.6,
+  "prompt_tokens": 1998,
+  "completion_tokens": 17067,
+  "code": "import json\nimport re\nfrom typing import Any, Dict, List, Optional, Tuple\n\nMEMORY_RELEVANT_KEYS = {\n    \"gpu_memory_utilization\", \"max_num_seqs\", \"max_model_len\", \n    \"num_gpu_blocks\", \"swap_space\", \"max_tokens_per_prompt\", \n    \"max_num_batched_tokens\", \"tensor_parallel_size\", \"pipeline_parallel_size\"\n}\n\ndef is_memory_relevant(key: str) -> bool:\n    return key in MEMORY_RELEVANT_KEYS\n\ndef raises_memory(key: str, before: Any, after: Any) -> bool:\n    try:\n        b = float(before)\n        a = float(after)\n    except (ValueError, TypeError):\n        return False\n    if key in (\"tensor_parallel_size\", \"pipeline_parallel_size\"):\n        return a < b\n    return a > b\n\ndef run(dataset: Dict[str, Any]) -> Dict[str, List[Dict[str, Any]]]:\n    proposals = []\n    refused = []\n    \n    records = dataset.get(\"records\", [])\n    evidence_list = dataset.get(\"evidence\", [])\n    \n    for rec in records:\n        rid = rec.get(\"id\")\n        if rid is None:\n            continue\n            \n        trusted_log_lines = []\n        config_before = None\n        config_after = None\n        deploy_id = None\n        \n        for ev in evidence_list:\n            if ev.get(\"record_id\") != rid:\n                continue\n            if not ev.get(\"trusted\"):\n                continue\n                \n            src = ev.get(\"source\")\n            data = ev.get(\"data\", {})\n            \n            if src == \"log\":\n                lines = data.get(\"lines\", [])\n                if isinstance(lines, list):\n                    trusted_log_lines.extend(lines)\n            elif src == \"config_before\":\n                config_before = data.get(\"config\", {})\n            elif src == \"config_after\":\n                config_after = data.get(\"config\", {})\n            elif src == \"deploy\":\n                deploy_id = data.get(\"id\")\n                \n        oom_pattern = re.compile(r\"(CUDA out of memory|OutOfMemoryError)\", re.IGNORECASE)\n        has_oom = any(oom_pattern.search(line) for line in trusted_log_lines)\n        \n        if not has_oom:\n            has_trusted_log = len(trusted_log_lines) > 0\n            if not has_trusted_log:\n                refused.append({\"record_id\": rid, \"code\": \"insufficient_evidence\", \"reason\": \"No trusted log evidence found.\"})\n            else:\n                refused.append({\"record_id\": rid, \"code\": \"not_applicable\", \"reason\": \"No GPU/CUDA OOM signature in trusted logs.\"})\n            continue\n            \n        if config_before is None or config_after is None:\n            refused.append({\"record_id\": rid, \"code\": \"insufficient_evidence\", \"reason\": \"Missing trusted config_before or config_after evidence.\"})\n            continue\n            \n        if deploy_id is None:\n            refused.append({\"record_id\": rid, \"code\": \"insufficient_evidence\", \"reason\": \"Missing trusted deploy evidence.\"})\n            continue\n            \n        before_keys = set(config_before.keys())\n        after_keys = set(config_after.keys())\n        changed_keys = before_keys.symmetric_difference(after_keys)\n        changed_keys.update(k for k in before_keys if k in after_keys and config_before[k] != config_after[k])\n        \n        mem_relevant_changed = [k for k in changed_keys if is_memory_relevant(k)]\n        \n        if len(mem_relevant_changed) == 0:\n            refused.append({\"record_id\": rid, \"code\": \"not_applicable\", \"reason\": \"No memory-relevant config keys changed.\"})\n            continue\n            \n        if len(mem_relevant_changed) > 1:\n            refused.append({\"record_id\": rid, \"code\": \"requires_review\", \"reason\": \"Multiple memory-relevant config keys changed.\"})\n            continue\n            \n        key = mem_relevant_changed[0]\n        before_val = config_before.get(key)\n        after_val = config_after.get(key)\n        \n        if before_val is None or after_val is None:\n            refused.append({\"record_id\": rid, \"code\": \"insufficient_evidence\", \"reason\": f\"Missing value for key {key} in config.\"})\n            continue\n            \n        if not raises_memory(key, before_val, after_val):\n            refused.append({\"record_id\": rid, \"code\": \"not_applicable\", \"reason\": f\"Change in {key} does not raise memory demand.\"})\n            continue\n            \n        proposals.append({\n            \"record_id\": rid,\n            \"field\": key,\n            \"value\": before_val,\n            \"action_type\": \"revert_config\",\n            \"reason\": f\"class=serving_config_regression;key={key};from={after_val};to={before_val};deploy={deploy_id}\"\n        })\n        \n    return {\"proposals\": proposals, \"refused\": refused}",
+  "skill_name": "oncall-serving-config-revert",
+  "skill_version": 1,
+  "skill_hash": "dea20e217c0c988dd3a3116c664b2f331718678cde676ffc03d0985c46ffc773"
+ },
+ "verification": {
+  "hidden": [
+   {
+    "name": "num_seqs_raised_oom",
+    "pass": true
+   },
+   {
+    "name": "gpu_util_raised_oom",
+    "pass": true
+   },
+   {
+    "name": "context_raised_oom",
+    "pass": true
+   },
+   {
+    "name": "oom_without_memory_key_change_escalates",
+    "pass": false
+   },
+   {
+    "name": "two_memory_keys_changed_escalates",
+    "pass": true
+   },
+   {
+    "name": "disk_full_lookalike_not_applicable",
+    "pass": true
+   },
+   {
+    "name": "key_changed_but_no_oom_not_applicable",
+    "pass": true
+   },
+   {
+    "name": "mixed_batch_one_fix",
+    "pass": true
+   },
+   {
+    "name": "missing_config_after_never_proposes",
+    "pass": true
+   }
+  ],
+  "regression": [
+   {
+    "name": "lint (core static screen)",
+    "pass": true
+   },
+   {
+    "name": "skill's own tests (4 run)",
+    "pass": true
+   },
+   {
+    "name": "INC-1 capacity check fails on the deployed config (reproduces the incident)",
+    "pass": true
+   },
+   {
+    "name": "INC-1 replay: revert max_num_seqs 1024 -> 128",
+    "pass": true
+   },
+   {
+    "name": "INC-1 capacity check passes with the proposed revert (simulated, not applied)",
+    "pass": true
+   }
+  ],
+  "passed": false,
+  "note": "tests, not a formal proof"
+ },
+ "approval": {
+  "state": "rejected",
+  "by": null,
+  "at": null,
+  "command": "none: the candidate failed verification and was not staged for approval"
+ },
+ "reuse": {
+  "incident_id": "INC-2",
+  "path": "deterministic_fastpath",
+  "model_calls": null,
+  "latency_ms": null,
+  "diagnosis": null,
+  "state": "not_run",
+  "reason": "awaiting approval"
+ },
+ "refusal": {
+  "incident_id": "INC-3",
+  "state": "not_run",
+  "reason": "awaiting approval"
+ },
+ "telemetry": {
+  "gpu": null,
+  "note": "no GPU telemetry on this host"
+ },
+ "audit": [
+  {
+   "t": "2026-10-25T20:07:58+00:00",
+   "event": "incident_loaded",
+   "detail": "INC-1 from experiments/oncall_infer/fixtures/inc1_primary.json (SYNTHETIC)"
+  },
+  {
+   "t": "2026-10-25T20:07:58+00:00",
+   "event": "model_health",
+   "detail": "http://127.0.0.1:8000/v1 serves skillforge-qwen"
+  },
+  {
+   "t": "2026-10-25T20:11:52+00:00",
+   "event": "synthesis_attempt",
+   "detail": "attempt 1: lint_errors=0 own_tests_ok=True"
+  },
+  {
+   "t": "2026-10-25T20:11:52+00:00",
+   "event": "synthesized",
+   "detail": "model wrote the skill in 1 call(s), 233829.6 ms"
+  },
+  {
+   "t": "2026-10-25T20:11:52+00:00",
+   "event": "verified",
+   "detail": "hidden 8/9, regression 5/5"
+  }
+ ]
+}
