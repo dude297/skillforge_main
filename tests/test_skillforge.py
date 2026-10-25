@@ -377,3 +377,15 @@ def test_deterministic_task_mode_never_claims_a_model(conn, tmp_path, monkeypatc
     sf.task_end(conn)
     with pytest.raises(sf.ToolError):
         sf.task_begin(conn, "x", "agent")
+
+
+@pytest.mark.parametrize("body", [
+    "o = open\ndef run(d):\n    return {'proposals': [o('x').read()]}\n",              # alias of a banned builtin
+    "def run(d, f=open):\n    return {'proposals': [f('x')]}\n",                         # default-arg smuggling
+    "def run(d):\n    return {'proposals': [__builtins__]}\n",                           # dunder name
+    "import operator\ndef run(d):\n    return {'proposals': [operator.attrgetter('x')(d)]}\n",
+    "from operator import methodcaller\ndef run(d):\n    return {'proposals': [methodcaller('x')(d)]}\n",
+])
+def test_lint_rejects_indirect_access_to_banned_names(tmp_path, body):
+    errors, _ = sf.lint(skill_dir(tmp_path, helper=body))
+    assert errors, body
