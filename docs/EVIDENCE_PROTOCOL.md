@@ -83,7 +83,7 @@ Warm vs cold, stated plainly:
 - `SKILL_RUNNER` value, and whether `docker` containers were available.
 - Which model profile was served and that you did not change it (`nemoclaw inference get --json` before and after).
 - Anything you did that the scripts did not, as a manual hint (CLAUDE.md: record every manual hint).
-- Screenshots only as supplementary (`docs/GB10_EVIDENCE_CHECKLIST.md` item 18).
+- Screenshots only as supplementary (item 18 of the evidence map below).
 
 ## 5. Acceptance checks before any number is quoted
 
@@ -95,3 +95,27 @@ Warm vs cold, stated plainly:
 6. Anything shown as "not measured" stays "not measured" in the slides.
 
 Until these files exist, every GB10 figure in the pitch stays **pending GB10 evidence**.
+
+## 6. Evidence map: item, source file, claim it supports
+
+Paths: `EV/<cmd>` = `results/gb10-evidence/<UTC>-<cmd>/`, written by `deploy/gb10/sf-gb10.sh`; `FR` = `results/frontier/<label>/`, written by `sf-gb10.sh bench <label>` (which runs `experiments/gb10_bench/frontier.sh`). Merged report: `python -m experiments.gb10_bench.frontier_report report` writes `results/frontier/frontier.md` and `frontier.json`. Null or `[N/A]` stays null; never write 0.
+
+| # | Item | Where it comes from | Supports the claim | Recorded (2026-10-25) |
+|---|---|---|---|---|
+| 1 | Hardware identity (host, arch, GPU name, driver) | `EV/preflight/console.txt`; `FR/identity.json` `host`, `gpu` | "Ran on a Dell GB10" | yes, [BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25) |
+| 2 | vLLM image and version | `FR/identity.json` `container.image`, `server.vllm_version` | "served by vLLM <version>" | yes (0.21.0+2325b6f0.dev) |
+| 3 | Served model id + revision | `EV/preflight/models.json`; `FR/identity.json` `model.revision` (may be null) | the model name in the pitch | id yes; revision not reported |
+| 4-6 | `/health`, `/v1/models`, one chat completion | `EV/preflight/console.txt`, `models.json`, `check-llm.json` (`"mock": false`) | "local inference verified" | yes |
+| 7-8 | TTFT p50/p95, decode tok/s | `FR/ttft-c<C>-<i>.json` `trials[]`; `frontier.md` | the TTFT and decode numbers | yes, per request |
+| 9-10 | Unified memory, temperature | `FR/samples.csv`; preflight `MemAvailable` | headroom, "stayed under N C" | yes |
+| 11 | OnCall model calls, synthesis wall ms (model requests + in-loop lint + the skill's own tests; not pure inference latency), tokens | `EV/oncall/oncall-run.json` `synthesis.*` | "the local model wrote the skill in N calls, T s" | yes (attempts 4 and 5 committed under `docs/evidence/gb10/`) |
+| 12-13 | Generated code saved; hidden-test results | `synthesis.code`, `synthesis.provenance == "model"`, `mode == "LIVE_REAL_MODEL"`, `verification.hidden[]` | "model-written skill passed k/9 hidden cases" | yes |
+| 14-15 | Approval by a person; skill version + sha256 | `EV/reuse/oncall-run.json` `approval.*`, `synthesis.skill_hash`; registry audit `skill_approved` | "a person approved it on the host", "hash-pinned skill" | yes (`host_cli`; name not identity-verified) |
+| 16-17 | INC-2 reuse; INC-3 refusal | `reuse.state == "done"`, `model_calls == 0`, `latency_ms`; `refusal.state == "refused"` | "0 model calls on reuse", "lookalike refused" | yes, `docs/evidence/gb10/reuse-oncall-run.json` |
+| 18 | Screenshots of `#/demo` scenes 4-6 (banners LIVE REAL MODEL, DETERMINISTIC SKILL; approval "Approved by <name>") | next to `EV/reuse/` | visual proof | not in this repository |
+| 19 | Sandbox runner used | whether `SKILL_RUNNER=docker` was exported | "container-isolated verification" | subprocess runner for the timed runs; Docker re-verification of the approved skill is recorded in [LIMITATIONS.md](LIMITATIONS.md#evidence) |
+
+Consistency checks before quoting anything: `generated_at` in `oncall-run.json` is later than the preflight time and
+`host` is the GB10 hostname, not `<dev-box>`; `model.id` equals an id in `models.json`; the `skill_hash` in `EV/oncall`
+equals the one in `EV/reuse`; the bench's OnCall run (`FR/oncall-run.json`) is a separate registry, so quote it as the
+bench run, not as the demo run.

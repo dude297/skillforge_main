@@ -106,8 +106,8 @@ fingerprint. The committed run (`ui/public/demo/oncall-run.recorded.json`) is a 
 written by a coding agent and the approval was typed by an agent (`approval.kind: simulated`). The guided demo at
 `#/demo` shows six scenes with a mode banner that names the source of every screen. Walkthrough:
 [docs/DEMO_GUIDE.md](docs/DEMO_GUIDE.md). For presenters: [pitch](docs/JUDGE_PITCH.md),
-[live demo runbook](docs/LIVE_DEMO_RUNBOOK.md), [judge Q&A](docs/JUDGE_QA.md),
-[GB10 evidence checklist](docs/GB10_EVIDENCE_CHECKLIST.md).
+[judge Q&A](docs/JUDGE_QA.md),
+[evidence map](docs/EVIDENCE_PROTOCOL.md#6-evidence-map-item-source-file-claim-it-supports).
 
 | ![Guided demo scene 5](ui/screenshots/demo/scene-5-1440.png) | ![Guided demo scene 4](ui/screenshots/demo/scene-4-1440.png) |
 |---|---|

@@ -1,7 +1,7 @@
 # SkillForge — Moonshot UI: Ember's Living System
 **UI/UX implementation handoff for Claude**  
 **Date:** 2026-10-25  
-**Repo:** `dude297/skillforge`  
+**Repo:** `<REPO_URL>`  
 **Target file:** `moonshot_ui.md` (repo root)  
 **Intent:** cinematic, interactive, evidence-grounded prototype; build incrementally on the existing UI.  
 **Priority:** a genuinely useful operator interface, not a pre-rendered marketing animation.
