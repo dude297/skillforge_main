@@ -7,7 +7,7 @@ in [GB10_FRONTIER.md](GB10_FRONTIER.md) and [BENCHMARKS.md](BENCHMARKS.md).
 **Status.** Reported by the operator so far: an aarch64 GB10 host with the GPU detected, about 121 GiB
 memory, Docker 29.6.2. **Live inference with Qwen is not confirmed**: `sf-gb10.sh preflight` has not passed on the
 GB10. Results go to `results/gb10-evidence/` and are summarised in
-[DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md#gb10-results-pending--not-yet-measured).
+[DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md#gb10-results-event-day-2026-10-25).
 
 ## Portable bundle path
 

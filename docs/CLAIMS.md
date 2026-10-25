@@ -9,7 +9,9 @@ dedicated evidence beyond review), **recorded simulation** (shown with a hand-wr
 Environment "dev box" = Windows 11 x86_64, no GPU, Python 3.14.3, synthetic data, no real model.
 
 Each claim rests on one of three kinds of evidence: tests and measurements on the dev box, recorded simulation,
-and real hardware verification. **No claim has real hardware verification.**
+and real hardware verification. GB10 rows (15a, 21b, 21c, 22, 24) rest on the GB10 operator's report and on sha256-named
+evidence files that live on the GB10/SSD, not in this repository. **Sandbox isolation (claims 18, 23) has no GB10
+verification.**
 
 | # | claim | status | evidence | environment |
 |---|---|---|---|---|
@@ -31,7 +33,8 @@ and real hardware verification. **No claim has real hardware verification.**
 | 13c | The recorded OnCall diagnostic code | **hand-written** reference (by a coding agent), not model output | `experiments/oncall_infer/reference_skill/`; `synthesis.provenance: recorded_reference` | — |
 | 13d | The recorded OnCall approval | by a **synthetic agent identity** (`approval.kind: simulated`), not a person; only `host_cli` counts as a person, and names are not identity-verified | `approval` in the recorded JSON | — |
 | 14 | OnCall: the reference skill passes the 9-case hidden suite; a wrong skill fails it | verified | `test_reference_skill_passes_hidden_and_stops_pending`, `test_wrong_skill_fails_hidden` | dev box |
-| 15 | A local model writes the OnCall skill | **not done** | the `--live` path is tested only against a stub server (`test_live_path_counts_calls_and_tokens_against_a_stub_server`); it fails loudly with no silent fallback (`test_live_strict_fails_loudly_writes_nothing_and_keeps_previous_state`) | — |
+| 15 | A local model writes the OnCall skill | **GB10, 1 of 2 with a disclosed prompt revision; 0 of 3 with the original prompt.** Qwen3.6-35B-A3B-NVFP4 wrote a skill that passed the hidden suite 9/9 and regression 5/5 (attempt 4, staged as `tested`); the identical re-run scored 8/9 and was rejected. Every failing candidate was rejected by the verifier, none staged. The prompt was revised after the 7/9 result (evidence-sufficiency rule); the authoring agent did not read the hidden suite | `docs/evidence/gb10/attempt4-oncall-run.json` (sanitized; sha256 `712dbf7827e0f7c1bf16890d8efcb2758398bcfcd888eeb3766e12369f634b58`, original `6683d26b...`) and `attempt5-oncall-run.json` (sha256 `f95121b01f36373f43d06ccc377bc739987841b17576883db04879ee6a2ee01d`); attempt 5 failed because the model answered `not_applicable` where the prompt says `requires_review`; skill tree sha256 `7fe0c025039b11b93617ba63955f3fe9da0ec55c7e7a0ed11bbae3982fa3aa0e`; details [BENCHMARKS.md §3](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25) | GB10, subprocess runner |
+| 15a | A person approved the live-written skill; it was reused on INC-2 and INC-3 was refused, on the GB10 | **pending** (needs `skill approve` on the GB10) | — | — |
 | 16 | Pinned freight verifier refuses a newer contract revision | verified | `tests/test_freight.py::test_newer_contract_revision_invalidates_the_verifier` | dev box |
 | 17 | Stale catalog skills are refused until revalidated | verified (experiment) | `experiments/catalog/test_catalog.py` | dev box |
 | 18 | Generated code runs in Docker with no network, read-only, uid 65534 | verified locally | [SKILLFORGE.md §11](SKILLFORGE.md#11-trust-boundary-v2-trusted-service-outside-the-sandbox) | dev box, Docker Desktop |
@@ -39,11 +42,12 @@ and real hardware verification. **No claim has real hardware verification.**
 | 20 | Browser UI passes its e2e suites (mock 68/68; local backend 15/15) | verified on the dev box (reported; not re-run on this tree) | `ui/e2e/`, `ui/e2e-live/` | dev box |
 | 21 | One-command launcher; attaches instead of colliding; stops only its own process | implemented; verified on Windows only by the owner's session (Ctrl-Break tested, real Ctrl-C not); not re-run on this tree | `scripts/demo_launcher.py` | dev box |
 | 21a | Guided demo `#/demo`: six scenes, mode banner, autoplay stops at approval unless approved | verified on the dev box: mock e2e 78/78, lint/typecheck/build clean, one local-backend rehearsal (reported; not re-run here) | `ui/src/story/GuidedDemo.tsx`, `ui/e2e/demo.spec.ts` | dev box |
-| 21b | GB10 compute-frontier harness | stub-tested only; nothing measured on a GB10 | `experiments/gb10_bench/test_frontier.py`, [GB10_FRONTIER.md](GB10_FRONTIER.md) | dev box, stub server |
-| 21c | GB10 bundle and preflight (`deploy/gb10/`) | implemented; preflight dry-run on the dev box failed the inference checks, as expected; **not run on a GB10** | `deploy/gb10/sf-gb10.sh`, [GB10_SETUP.md](GB10_SETUP.md#portable-bundle-path) | dev box |
-| 22 | Runs on the Dell Pro Max GB10 with NemoClaw, OpenShell and vLLM | **not done** | [GB10_RUNBOOK.md](GB10_RUNBOOK.md) (procedure only) | — |
-| 23 | OpenShell egress policy confines the sandbox to the host service | **not verified** | `adapters/openclaw/presets/host-tools.yaml` | — |
-| 24 | GPU, power or token savings | **not measured** | — | — |
+| 21b | GB10 compute-frontier harness | **run on the GB10**: c=1/2/4, 70 streaming requests, 0 errors; TTFT p50 0.0623 / 0.1087 / 0.1026 s; decode p50 75.63 / 61.83 / 55.27 tok/s per request (not aggregate); min MemAvailable 62.78 GiB; peak 62 C, 42.07 W | sanitized frontier report sha256 `6890165aa86abbb7834ec2aa15784bbf6326104363466d786b0fd66d4e8d23e2` (file on the GB10); [BENCHMARKS.md §3](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25) | GB10 (aarch64, vLLM 0.21.0) |
+| 21c | GB10 bundle and preflight (`deploy/gb10/`) | the OnCall and frontier runs above were driven from this tooling on the GB10 (with five GB10-side patches, e.g. preflight accepts a git checkout without `SHA256SUMS`); the operator's full gate record is not reproduced here | `deploy/gb10/sf-gb10.sh`, [GB10_SETUP.md](GB10_SETUP.md#portable-bundle-path) | GB10 |
+| 22 | Runs on the Dell Pro Max GB10 with vLLM | **partly: vLLM serving and live OnCall synthesis plus verification ran on the GB10**; **NemoClaw and OpenShell are not installed on the GB10 and nothing ran under them** (claim 23) | [BENCHMARKS.md §3](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25) | GB10, subprocess runner |
+| 23 | OpenShell egress policy confines the sandbox to the host service | **not verified** (OpenShell not installed on the GB10) | `adapters/openclaw/presets/host-tools.yaml` | — |
+| 24 | GPU, power or token savings | **not measured.** Raw GPU/power readings exist (62 C and 42.07 W peak in the frontier run); no comparison against an alternative exists | — | — |
+| 24a | Skill lint is a security boundary | **no.** A GB10-side audit bypassed it by aliasing (`o = open`) and `operator.attrgetter`; fixed in `1094d95`. Hidden-suite secrecy against a hostile skill needs the Docker runner (not run on the GB10) | [SECURITY.md](SECURITY.md#runner-lint-and-hidden-suite-secrecy) | GB10-side audit |
 | 25 | GPU-aware scheduling, model sleep/wake | **proposed** | `experiments/router/power.py` (read-only detection) | — |
 | 26 | Messaging channel (Slack, Telegram) delivers tasks | **not done** in this tree; channel is simulated | `scripts/unified.py` (`SIM_META`) | — |
 | 27 | Tests prove skills correct | **no**: tests are evidence, not formal proof | [ARCHITECTURE.md §C](ARCHITECTURE.md#c-independent-verification) | — |
