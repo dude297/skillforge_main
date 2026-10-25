@@ -100,19 +100,19 @@ def from_env():
 
 
 def parse_json(text):
-    """Pull the first JSON object out of model text (handles ```json fences / chatter). None if absent."""
+    """Pull the first JSON object out of model text (handles ```json fences / chatter). None if absent.
+    String-aware: json.JSONDecoder.raw_decode skips braces inside JSON strings (e.g. Python code in a field)."""
     if "</think>" in text:  # inline reasoning (no server reasoning parser): only the answer after it counts
         text = text.rsplit("</think>", 1)[1]
+    dec = json.JSONDecoder()
     start = text.find("{")
     while start != -1:
-        depth = 0
-        for i in range(start, len(text)):
-            depth += {"{": 1, "}": -1}.get(text[i], 0)
-            if depth == 0:
-                try:
-                    return json.loads(text[start:i + 1])
-                except json.JSONDecodeError:
-                    break
+        try:
+            obj, _ = dec.raw_decode(text, start)
+            if isinstance(obj, dict):
+                return obj
+        except json.JSONDecodeError:
+            pass
         start = text.find("{", start + 1)
     return None
 

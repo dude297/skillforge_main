@@ -183,11 +183,28 @@ def synthesize_live(base_url, model, data, dest, audit, attempts=2, timeout=int(
             usage["seen"] = True
             usage["prompt_tokens"] += u.get("prompt_tokens") or 0
             usage["completion_tokens"] += u.get("completion_tokens") or 0
-        text = ((out.get("choices") or [{}])[0].get("message") or {}).get("content") or ""
+        choice = (out.get("choices") or [{}])[0]
+        msg = choice.get("message") or {}
+        text = msg.get("content") or ""  # the answer; a server reasoning parser keeps thinking in msg["reasoning"], never used here
+        finish = choice.get("finish_reason")
+        think = msg.get("reasoning") or msg.get("reasoning_content") or ""
+        audit("synthesis_response", f"attempt {i + 1}: finish_reason={finish} max_tokens={body['max_tokens']} "
+              f"completion_tokens={u.get('completion_tokens')} content_chars={len(text)} reasoning_chars={len(think)}")
         j = llm_mod.parse_json(text) or {}
+        problem = None
         if not all(isinstance(j.get(k), str) for k in ("skill_md", "helper", "tests")):
-            feedback = "\nYour previous reply was not the required JSON object. Reply with only the JSON object."
-            audit("synthesis_parse_failed", f"attempt {i + 1}: {text[:120]!r}")
+            problem = ("Your previous reply was cut off at the token limit (finish_reason=length) before the JSON object "
+                       "was complete. Think much less and reply with only the complete, shorter JSON object."
+                       if finish == "length" else
+                       "Your previous reply was not the required JSON object. Reply with only the JSON object.")
+        else:
+            flat = [k for k in ("helper", "tests") if "\n" not in j[k] and "\\n" in j[k]]
+            if flat:  # decoded code whose only newlines are the two characters backslash-n: JSON was escaped twice
+                problem = (f"Field(s) {', '.join(flat)} contain literal backslash-n sequences instead of line breaks (the JSON "
+                           "was escaped twice). Escape each newline once, as \\n inside the JSON string.")
+        if problem:
+            feedback = "\n" + problem
+            audit("synthesis_parse_failed", f"attempt {i + 1}: finish_reason={finish} {problem[:60]!r} {text[:120]!r}")
             continue
         _write_skill(dest, j["skill_md"], j["helper"], j["tests"])
         errors, _ = sf.lint(dest)
