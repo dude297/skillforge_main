@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# EXPERIMENT: GB10 compute-frontier measurement for the CURRENTLY SERVED model. Run ON the GB10, repo root.
+# EXPERIMENT: GB10 compute-frontier measurement for the SERVED model. Run ON the GB10, repo root.
 #   bash experiments/gb10_bench/frontier.sh <label> [--concurrency 1,2,4]     # identity, sampling, probe, ttft, oncall run
 #   bash experiments/gb10_bench/frontier.sh <label> --after-approval          # oncall reuse, after a PERSON approved
 #   python3 -m experiments.gb10_bench.frontier_report report                  # merge results/frontier/*/

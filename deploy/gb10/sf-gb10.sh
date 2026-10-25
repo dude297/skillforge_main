@@ -3,7 +3,7 @@
 #   bash deploy/gb10/sf-gb10.sh preflight      read-only: bundle integrity, host, endpoint /health, /v1/models, ONE chat
 #   bash deploy/gb10/sf-gb10.sh oncall         live OnCall synthesis (fails loudly, never falls back), stops for a person
 #   bash deploy/gb10/sf-gb10.sh reuse          after a PERSON typed the approve command: INC-2 reuse + INC-3 refusal
-#   bash deploy/gb10/sf-gb10.sh bench [label]  experiments/gb10_bench/frontier.sh on the currently served model
+#   bash deploy/gb10/sf-gb10.sh bench [label]  experiments/gb10_bench/frontier.sh on the served model
 #   bash deploy/gb10/sf-gb10.sh demo           console + guided demo on 127.0.0.1 (start-demo.sh --no-open)
 # Env (no secrets in this file): LLM_BASE_URL (default http://127.0.0.1:8000/v1), MODEL (default auto = served id),
 # VLLM_KEY_FILE (default ~/.nemoclaw/dual-station-vllm-api-key; read into LLM_API_KEY, never printed).
