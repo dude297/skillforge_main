@@ -1,6 +1,6 @@
 # SkillForge: learn a deterministic skill from a verified solve, then reuse it
 
-**Goal.** The agent learns a new deterministic capability by solving a problem, and then provably reuses it. The proof is verified outcomes and measured calls, not the agent saying it learned.
+**Goal.** The agent learns a new deterministic capability by solving a problem, and then reuses it. The evidence is verified outcomes and measured calls, not the agent saying it learned (a test is evidence, not a formal proof).
 
 ## 1. Integration decision
 

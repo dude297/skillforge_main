@@ -18,7 +18,7 @@ Operations teams see the same incidents again and again. An LLM agent can invest
 GPU time, its answer can differ from last time, and it cannot be trusted to grade or approve its own fix. On a
 single local machine such as a GB10, inference capacity is also the scarcest resource.
 
-## 3. Solution and what is new
+## 3. Solution and what is different
 
 - **Learned fixes become executable skills.** After a solve is approved and verified, the model drafts a skill
   (`SKILL.md`, `scripts/helper.py`, tests). Trusted code lints it, runs its tests in an isolated runner, replays it
@@ -30,10 +30,10 @@ single local machine such as a GB10, inference capacity is also the scarcest res
 - **Refusal is a result.** Lookalike data, stale contracts and changed incident fingerprints are refused with a
   typed reason.
 
-The differentiator is the combination: independently verified, human-approved, immutable executable skills,
-reused deterministically instead of another LLM call. Agents that "remember" by re-prompting do not give that
-guarantee. There is **no** live autonomous skill-generation loop yet: the model step has run only as a recorded
-simulation.
+The design point is the combination: independently verified, human-approved, immutable executable skills,
+reused deterministically instead of another LLM call. This is a design claim; it has **not** been benchmarked against
+other agent-memory approaches. There is **no** live autonomous skill-generation loop yet: the model step has run only
+as a recorded simulation.
 
 ## 4. How it works
 
@@ -130,7 +130,8 @@ All claims with their tests: [docs/CLAIMS.md](docs/CLAIMS.md).
 
 Intended: SkillForge's host service and console run on a Dell Pro Max with NVIDIA GB10; OpenClaw runs in a
 NemoClaw/OpenShell sandbox; a local model (primary `Qwen3.6-35B-A3B` NVFP4, alternate NVIDIA Nemotron 3.5 Lightning,
-`data/models.json`) is served by vLLM on `127.0.0.1:8000`. Nothing leaves the box.
+`data/models.json`) is served by vLLM on `127.0.0.1:8000`. The intent is that nothing leaves the box; the sandbox egress policy has not been
+verified on a real runtime ([docs/SECURITY.md](docs/SECURITY.md#network-exposure)).
 
 Confirmed so far, as reported by the operator: an aarch64 GB10 host with the GPU detected, about 121 GiB memory,
 Docker 29.6.2. **Live Qwen inference is not confirmed**; `bash deploy/gb10/sf-gb10.sh preflight` has not passed on the
@@ -176,10 +177,14 @@ Results on the dev box (Windows 11 x86_64, Python 3.14.3, no GPU) are in
 **GB10 measurements: none yet.** Methodology and separation of the three kinds of numbers:
 [docs/BENCHMARKS.md](docs/BENCHMARKS.md).
 
-## 11. Hackathon work
+## 11. What was built when
 
-The workstreams done during the hackathon, with status and the tests actually run, are listed in
-[docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md):
+**Pre-event foundation (before 2026-10-25, developed 2026-10-20 to 2026-10-23):** the core runtime (`app/`,
+`adapters/`: SQLite store, tool service, approval and verification gates, skill registry), the pinned verifiers, the
+three-mode benchmark, the freight workflow, the router and catalog experiments, the console, Daylight World and
+Bootstrap Lite UI, and the GB10 runbooks. This is **not** hackathon-day work.
+
+**Event-day work (2026-10-25):**
 
 - demo launchers
 - OnCall loop and recorded artifact
@@ -190,11 +195,14 @@ The workstreams done during the hackathon, with status and the tests actually ru
 - GB10 handoff: strict `--live`, served-id discovery, portable bundle, preflight
 - release preparation (this tree)
 
+Commit hashes, dates, status and the tests actually run: [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md).
+
 ## 12. Security and approvals
 
 Approvals are host CLI commands only; the agent has no approve tool and the UI is read-only. `approval.kind` is
 `simulated` or `host_cli`, and the `--by` name is **not** identity-verified. Skills are sha256-pinned and versioned.
-Generated code runs in a subprocess or Docker runner (no network). Services refuse `0.0.0.0`. The OnCall fingerprint
+Generated code runs in a subprocess runner (a Python-level socket block, **not** an isolation boundary) or, with
+`SKILL_RUNNER=docker`, in a Docker runner with `--network none`; Docker isolation was checked on the dev box only. Services refuse `0.0.0.0`. The OnCall fingerprint
 fails closed; the core matcher's INC-3 false-exact gap is documented and contained. Details and vulnerability
 reporting: [docs/SECURITY.md](docs/SECURITY.md).
 

@@ -41,6 +41,9 @@ Each claim and its evidence: [CLAIMS.md](CLAIMS.md). Security gaps in detail:
   `experiments/oncall_infer/test_oncall_infer.py::test_after_approval_inc2_reused_with_zero_model_calls_and_inc3_refused`
   (`ToolError` at `app/skillforge.py:748`; passed on re-run). Causes not investigated.
 - Single workspace, single open task (`scripts/unified.py`).
+- **Screenshots under `ui/screenshots/` come from earlier builds** and are not evidence. Some show copy that was later
+  removed because it overstated what is verified (for example the status bar text "Live reads the GB10", which
+  the current UI replaces with "Live reads this machine"). Trust the current UI source and the recorded JSON, not the older images.
 
 ## Launchers and UI
 
