@@ -114,8 +114,16 @@ check and a hidden suite of 9 cases the model never sees.
 - **Lint-bypass finding.** The attempt-4 candidate imports only `json` and `typing`, uses no file, attribute or dunder
   access, passes the hardened lint, and its hash is unchanged, so its 9/9 is not contaminated by the finding in SECURITY.md.
 
-**Pending, do not claim:** a person's approval of attempt 4 (`skill approve` on the GB10); reuse on INC-2 and refusal of
-INC-3 on the GB10. No GB10 reuse latency exists. No first-time-vs-reuse comparison exists.
+**Approval and reuse on the GB10 (2026-10-25, GB10 commit `35d5820`; the GB10 operator's report).**
+
+- **Approval.** At 20:25:02Z a person (the operator) typed `python -m app skill approve oncall-serving-config-revert 1 --by "<operator>"` on the GB10 host CLI. Result: status approved, active, sha256 `7fe0c025039b11b93617ba63955f3fe9da0ec55c7e7a0ed11bbae3982fa3aa0e` (matches the attempt-4 tree hash). The command re-ran the hidden suite (`hidden_validation.ok` true). Audit actor `human:<operator>`, `approval.kind` `host_cli`. Caveat: the `--by` name is not identity-verified.
+- **INC-2 reuse** (`sf-gb10.sh reuse`, 20:25:08Z): state done, deterministic fast path, **0 model calls**, 27.0 ms. Matched by "core matcher exact + incident fingerprint equal". It generalized to a different key: diagnosis `serving_config_regression`, key `max_model_len`, deployed 131072 vs baseline 16384, deploy `d-5203`, proposal "revert max_model_len to 16384" (proposal only, never applied).
+- **INC-3 refused.** Reason: "structural signature matches (core matcher: exact) but the incident fingerprint differs: exception_type: 'torch.OutOfMemoryError' -> 'OSError'; failure_category: 'gpu_oom' -> 'disk_full'; top_frames: 'vllm/worker/model_runner.py:execute_model' -> 'vllm/compilation/backends.py:save_graph'".
+- **Repeatability.** 5 more reuse trials in fresh processes: 42.1 (first), 28.4, 27.9, 28.5, 27.7 ms, all 0 model calls, INC-3 refused every time. Over n=6: p50 28.2 ms, min 27.0, max 42.1.
+- **Server side.** vLLM Prometheus counters (`request_success_total`, `prompt_tokens_total`, `generation_tokens_total`) were unchanged before and after the reuse trials (Qwen 44713 -> 44713, Nemotron 78758 -> 78758): no request reached either model server. This backs up the in-process `NoModel` guard.
+- **Latency scope.** The reuse decision plus the sandboxed skill run in the SUBPROCESS runner (no Docker isolation), on GB10 aarch64. It is not a speed-up claim against synthesis; these are different scopes: synthesis attempt 4 took one model call of 173.0 s, reuse made 0 model calls in about 28 ms.
+- **Evidence.** Run record `docs/evidence/gb10/reuse-oncall-run.json` (sanitized copy; its sha256 is listed in `docs/evidence/gb10/README.md`); GB10 original `results/gb10-evidence/20261025T202508Z-reuse/oncall-run.json` sha256 `1e32985ef4bffa612f5c36879ec1dbdbe9415d1badee85059f5f29eef84086d2` (pre-sanitization). `console.txt` sha256 `c0f70c5f042379aa9269c3b83ca4b2124074069ed95e2d796fd4b45beb2abcfc`. SSD `SHA256SUMS` (57 lines, 0 failures) sha256 `e40e446bdffa6c1d6a515da803cafc9953f6295a9364c36362d0881a3906895e`.
+- **Caveats.** Subprocess runner (no Docker isolation); unauthenticated `--by` identity; small n (1 of 2 passes with the disclosed revision; 6 reuse trials); disclosed prompt revision after attempt 2. Overall live status: GO.
 
 **Not run under NemoClaw.** NemoClaw/OpenShell is not installed on the GB10; nothing on the OnCall path ran under it.
 

@@ -11,8 +11,7 @@ Each claim and its evidence: [CLAIMS.md](CLAIMS.md). Security gaps in detail:
   suite once (9/9) and failed the identical repeat (8/9); with the original prompt 0 of 3 attempts passed. The prompt
   was revised by the operator after seeing the 7/9 result (disclosed, evidence-sufficiency rule). Two samples are not a
   success rate; output is not deterministic at temperature 0 on this vLLM. See [BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25).
-- **Not done on the GB10:** a person's approval of the passing skill, reuse on INC-2 and refusal of INC-3 (all pending),
-  so there is no GB10 first-time-vs-reuse comparison and no GB10 reuse latency. GPU telemetry for the passing run was not captured.
+- **GB10 approval and reuse: done, with caveats.** A person (the operator) approved the passing skill on the GB10 host CLI; the `--by` name is not identity-verified. INC-2 reuse made 0 model calls (6 trials, p50 28.2 ms, min 27.0, max 42.1) and INC-3 was refused every time, all in the subprocess runner (no Docker isolation). n=6, one skill. There is no GB10 first-time-vs-reuse speed-up claim (different scopes: 173.0 s model call vs ~28 ms with 0 model calls). GPU telemetry for the passing run was not captured.
 - **GB10 evidence files are not in this repository.** Numbers are the GB10 operator's report plus the sha256 of the files
   on the GB10/SSD; they are not independently reproducible from this tree.
 - **Decode tok/s is per request only.** The frontier harness runs C parallel copies of a single-request probe; it
