@@ -103,8 +103,9 @@ check and a hidden suite of 9 cases the model never sees.
   `6683d26bbed1e0b8ce4d6f7508a309498da9c0b5aefbe8585e0b67769fec87a1`). Proposal: revert
   `max_num_seqs` 1024 to 128 on deploy `d-4117`. **Proposal only; nothing was applied.** GPU telemetry for attempt 4: not captured (null).
 - **Attempt 5 GPU telemetry.** 235 samples, utilization p50 96%, temperature max 67 C, power p50 42.9 W / max 44.0 W
-  (source: sanitized run record `docs/evidence/gb10/attempt5-oncall-run.json`, sha256
-  `f95121b01f36373f43d06ccc377bc739987841b17576883db04879ee6a2ee01d`; pre-sanitization original `0448b065...`).
+  (source: `nvidia-smi` 1 s samples in the run's `gpu.csv` on the GB10/SSD evidence store, sha256
+  `e3560c82a6822deeb5ba998596fe2a3908897a257bbbbba9b846edccec917b27`, summarised by the GB10 operator; not in the
+  committed run record, whose `telemetry` field is null).
 - **Why attempt 5 failed.** For the case "OOM present but no memory key changed" the model answered `not_applicable`,
   although the revised prompt says zero or several candidate keys mean `requires_review`: the model did not follow an
   explicit instruction. The verifier caught it.
