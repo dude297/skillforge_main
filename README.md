@@ -37,8 +37,8 @@ Verified, with evidence in [docs/CLAIMS.md](docs/CLAIMS.md) (claims table, then 
   round trip verified; Gate 2 GO (13/13), an OpenClaw agent called SkillForge records-ops host tools through the applied
   `host-tools` policy.
 
-Not verified: OpenClaw-driven OnCall synthesis (Gate 3: pipeline verified end to end, no candidate passed the independent
-verifier, 0 accepted), a single Telegram message driving SkillForge tools, a non-allowlisted-sender check, a full egress
+Gate 3 (OpenClaw in the OpenShell sandbox driving OnCall through host tools) is NOT PASSED: the agent's one candidate passed every
+visible check and the hidden suite refused it at human approval (8/9); no hidden information reached the agent. Not verified: a single Telegram message driving SkillForge tools, a non-allowlisted-sender check, a full egress
 review, GPU/power/token savings, any speed-up claim for reuse versus synthesis (different scopes). The timed GB10 runs used
 the subprocess runner (Docker re-verification of the approved skill ran on a copy); `--by` approver names are not
 identity-verified; NemoClaw's auth proxy listens on `0.0.0.0:11435` (token-protected, disclosed exception, mitigation
