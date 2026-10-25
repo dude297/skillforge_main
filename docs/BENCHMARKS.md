@@ -65,9 +65,9 @@ Source of these numbers: the GB10 operator's session. Raw evidence stays on the 
 Docker (see [SECURITY.md](SECURITY.md#runner-lint-and-hidden-suite-secrecy)).
 
 **Hardware and serving.** NVIDIA GB10, aarch64, driver 580.178.04, MemTotal 121.63 GiB, vLLM 0.21.0+2325b6f0.dev.
-Model Qwen3.6-35B-A3B-NVFP4 served locally as `skillforge-qwen`, `max_model_len` 32768, inline thinking (no reasoning parser).
+Model Qwen3.6-35B-A3B-NVFP4 served locally as `skillforge-qwen`, `max_model_len` 32768, inline thinking (no reasoning parser). This is the **earlier config** (gpu-memory-utilization 0.4, max-num-seqs 4); the serving was later changed, see "Serving change" below. All OnCall attempts, approval and reuse below were measured under this earlier config.
 
-**Throughput, per request** (frontier harness; decode tok/s is per request, not aggregate server throughput).
+**Throughput, per request, earlier config (0.4 / 32k / 4 seqs)** (frontier harness; decode tok/s is per request, not aggregate server throughput).
 Source: sanitized frontier report, sha256 `6890165aa86abbb7834ec2aa15784bbf6326104363466d786b0fd66d4e8d23e2`.
 
 | concurrency | requests | errors | TTFT p50 / p95 | decode tok/s p50 |
@@ -79,7 +79,22 @@ Source: sanitized frontier report, sha256 `6890165aa86abbb7834ec2aa15784bbf63261
 0 of 70 streaming requests failed. Memory over the run (same report): 78 samples, min MemAvailable 62.78 GiB, derived
 peak used 58.85 GiB (MemTotal minus min MemAvailable; CPU and GPU share one pool), peak temperature 62 C, peak power 42.07 W.
 
-**Live OnCall synthesis (Qwen writes the skill).** The verifier is lint, the skill's own tests, an INC-1 replay, a capacity
+**Serving change and Qwen-only bench (label: UNCONTENDED; GB10 operator report).** Nemotron was stopped on purpose after 0/2 on OnCall (container kept). Qwen3.6-35B-A3B-NVFP4, vLLM 0.21.0, gpu-memory-utilization 0.80, `max_model_len` 131072, max-num-seqs 16, fp8 KV. KV cache 6,669,475 tokens (was 183k); vLLM reports 50.88x concurrency at 128k. Memory about 88% used (106.8/121.6 GiB).
+
+| config | thinking | c=1 / 2 / 4 TTFT p50 (s) | decode tok/s per request | aggregate tok/s | errors | GPU max |
+|---|---|---|---|---|---|---|
+| earlier: 0.4 / 32k / 4 seqs | (frontier report above) | 0.062 / 0.109 / 0.105 | 75.6 / 61.9 / 55.2 | 75.6 / 123.8 / 220.8 | 0/70 | 62 C, 42.07 W |
+| current: 0.80 / 128k / 16 seqs, fp8 KV | off | 0.058 / 0.085 / 0.082 | 73.8 / 59.2 / 55.6 | 73.8 / 118.4 / 222.5 | 0/70 | 65 C, 41.8 W |
+| current: 0.80 / 128k / 16 seqs, fp8 KV | on | 0.053 / 0.086 / 0.115 | 72.7 / 57.0 / 34.0 | 72.7 / 114.1 / 136.2 | 0/70 | 75 C, 71.8 W |
+
+The thinking-on decode drop at c=4 (34.0 tok/s) is unexplained and was not re-run. Takeaway: single-stream decode is unchanged (memory-bandwidth bound); the change buys context (32k -> 128k), KV capacity and concurrency headroom, not speed.
+
+- `qwen_bench` (current config, 33 requests, c=1, thinking off): TTFT p50 0.069 s (p95 0.255), end-to-end p50 0.689 s, decode p50 73.2 tok/s, JSON 12/12, native tool calls 12/12, 0/33 errors.
+- 512-token non-streaming aggregate (current config): 177 / 240 / 355 tok/s at c=4 / 8 / 16.
+- Evidence (GB10): `artifacts/bench/qwen3.6-35b-a3b-nvfp4-solo128k-20261025T215550Z.json` sha256 `8b035111270928b25352682de5780dadad16a09538dc7daacb4cfc9b20f3c7c2`; SSD `SHA256SUMS` sha256 `d199b610022ca4a9f0685fa84cf8c1fb7deb4bccf2398104904f72e0388bb28a` (93 lines, 0 failures). Neither file is in this repo.
+- Default `ONCALL_MAX_TOKENS` is now 24000 (commit `d14701d`): live thinking runs used 12-17k tokens and 8192 truncated them.
+
+**Live OnCall synthesis (Qwen writes the skill), earlier config.** The verifier is lint, the skill's own tests, an INC-1 replay, a capacity
 check and a hidden suite of 9 cases the model never sees.
 
 | # | run (UTC, 25 Oct) | model / prompt | result |
@@ -130,7 +145,7 @@ check and a hidden suite of 9 cases the model never sees.
 - **Caveats.** Subprocess runner (no Docker isolation); unauthenticated `--by` identity; small n (1 of 2 passes with the disclosed revision; 6 reuse trials); disclosed prompt revision after attempt 2. Overall live status: GO.
 - **Docker follow-up (after the runs above).** The GB10 Docker path first failed closed on every run (the 0700 temp dir was unreadable by the container's uid 65534; fixed in this release, `tests/test_docker_runner.py`). With the fix, the approved attempt-4 skill was re-verified on a copy with `SKILL_RUNNER=docker` (`--network none`, read-only, 512 MB, 1 CPU, pids 64, no capabilities, uid 65534, only the skill copy mounted, so the hidden suite is unreachable): hidden 9/9, regression 5/5, same hash `7fe0c025...` (GB10 evidence `docker-reverify.json`, sha256 `4b7d54fd1cbd3462ce8a3b5d0127c9113152edfc51fbb58c2a8a790717148f02`, not committed). INC-2 reuse under Docker: 0 model calls, 275.5 ms (container start-up included), INC-3 refused. The original attempt-4 verification and the 6 timed reuse trials still ran in the subprocess runner.
 
-**Not run under NemoClaw.** NemoClaw v0.0.137, OpenShell 0.0.116 and OpenClaw v2026.9.2 were installed on the GB10 on 2026-10-25, during attempt 6 and after the OnCall runs above (operator-authorized, no sudo); nothing on the OnCall path ran under them. A Telegram <-> local model round trip was verified separately ([CLAIMS.md](CLAIMS.md) #26, [integrations/telegram/telegram_setup.md](../integrations/telegram/telegram_setup.md)).
+**OnCall not run under NemoClaw; Gate 2 was.** NemoClaw v0.0.137, OpenShell 0.0.116 and OpenClaw v2026.9.2 were installed on the GB10 on 2026-10-25, during attempt 6 and after the OnCall runs above (operator-authorized, no sudo); nothing on the OnCall path ran under them. Afterwards Gate 2 passed 13/13 (GB10 report sha256 `25a552fe863dcbcce74fb4c5b66c0d4243ec66e95a959d750af6c7f046b99885`): an OpenClaw agent in the sandbox called `search_skills`, `read_records` (records A-101..A-105; 4 tool calls, 0 failures) and `get_audit` on the host tool service through the `host-tools` policy. That is a records-ops round trip, not a benchmark and not the OnCall flow (Gates 3/4 in progress) ([CLAIMS.md](CLAIMS.md) #23c). A Telegram <-> local model round trip was verified separately ([CLAIMS.md](CLAIMS.md) #26, [integrations/telegram/telegram_setup.md](../integrations/telegram/telegram_setup.md)).
 
 ### Methodology
 
