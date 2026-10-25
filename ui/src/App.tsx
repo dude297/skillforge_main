@@ -25,7 +25,7 @@ const NAV: { href: string; label: string; routes: Route[] }[] = [
   { href: "#/", label: "How it works", routes: ["story"] },
   { href: "#/world/onboard", label: "Set up", routes: ["onboard", "bootstrap"] },
   { href: "#/world", label: "Office", routes: ["world"] },
-  { href: "#/world/moonshot", label: "Living System", routes: ["moonshot"] },
+  { href: "#/world/moonshot", label: "Living map", routes: ["moonshot"] },
   { href: "#/console", label: "Console", routes: ["console"] },
   { href: "#/demo", label: "Guided demo", routes: ["demo", "pitch"] },
 ];

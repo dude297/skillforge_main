@@ -6,6 +6,7 @@ export const ROUTES = [
   { name: "onboard", hash: "#/world/onboard" },
   { name: "bootstrap", hash: "#/world/bootstrap" },
   { name: "world", hash: "#/world" },
+  { name: "moonshot", hash: "#/world/moonshot" },
   { name: "world-lab", hash: "#/world/lab" },
   { name: "console-investigations", hash: "#/console/investigations" },
   { name: "console-incident", hash: "#/console/investigations/incident" },
