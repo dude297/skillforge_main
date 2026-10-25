@@ -540,6 +540,8 @@ def hidden_check(skill_dir, scenario, input_shape):
                      (got is not None and not {p["record_id"] for p in got} & set(exp["no_proposals_for"]))
             detail = "ok" if ok else why or (str(r.get("error"))[-200:] if not r.get("ok") else f"got {len(got or [])} proposals")
         results.append({"case": case["name"], "ok": ok, "detail": detail})
+    if not results:  # all([]) is True: a suite that yields no cases must never count as a pass
+        return {"ok": False, "suite": suite_name, "cases": [], "error": f"hidden suite '{suite_name}' produced no cases"}
     return {"ok": all(c["ok"] for c in results), "suite": suite_name, "cases": results}
 
 

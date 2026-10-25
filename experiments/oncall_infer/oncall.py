@@ -35,6 +35,8 @@ HIDDEN_DIR = HERE / "hidden"
 REFERENCE = HERE / "reference_skill"
 SCENARIO = "oncall-infer-inc1"
 NAME = "oncall-serving-config-revert"
+MIN_HIDDEN_CASES = 9  # the independent suite must have run at least this many cases; fewer is a failure, never a pass
+STATE_ENTRIES = {"app.db", "app.db-wal", "app.db-shm", "app.db-journal", "skills", "draft"}  # all run() ever writes
 DEFAULT_STATE = ROOT / "data" / "unified" / "demo" / "oncall"
 DEFAULT_OUT = ROOT / "data" / "unified" / "demo" / "oncall-run.json"
 PROMPT = """You are on call for an LLM inference service (vLLM-style). Write a deterministic, reusable Python
@@ -229,17 +231,31 @@ def verify(skill_dir, inc1_data, input_shape):
     hidden = sf.hidden_check(skill_dir, SCENARIO, input_shape) if not errors else {"ok": False, "cases": []}
     hid = [{"name": c["case"], "pass": bool(c["ok"])} for c in hidden.get("cases", [])] or \
           [{"name": f"hidden suite: {hidden.get('error', 'not run (lint failed)')}", "pass": False}]
+    if hidden.get("cases") and len(hid) < MIN_HIDDEN_CASES:
+        hid.append({"name": f"hidden suite ran {len(hid)} cases; at least {MIN_HIDDEN_CASES} are required", "pass": False})
     passed = all(x["pass"] for x in reg + hid)
     return {"hidden": hid, "regression": reg, "passed": passed, "note": "tests, not a formal proof"}, p
 
 
 # ---- run -------------------------------------------------------------------------------------------------------
+def _check_state(state):
+    """Only a directory that looks like one of ours (DB + skills + draft) may be moved aside and later deleted.
+    `--state ~` or a live data dir holding anything else is refused."""
+    state = Path(state)
+    if state.is_symlink() or (state.exists() and not state.is_dir()):
+        raise ValueError(f"refusing to reuse {state} as state: not a plain directory")
+    foreign = sorted(p.name for p in state.iterdir() if p.name not in STATE_ENTRIES) if state.is_dir() else []
+    if foreign:
+        raise ValueError(f"refusing to reuse {state} as state: it holds files this experiment did not create: {foreign[:5]}")
+
+
 def run(live=False, base_url=None, model=None, state=DEFAULT_STATE, out=DEFAULT_OUT, allow_fallback=True):
     """allow_fallback=False (the CLI default for --live): any model failure raises LLMUnavailable instead of
     quietly producing a RECORDED_SIMULATION, and the endpoint is checked BEFORE the previous state is wiped."""
     if live and not allow_fallback:
         llm_mod.OpenAICompatLLM(base_url, model, os.environ.get("LLM_API_KEY") or None, 30).health()  # GET /models only
     ctx = Ctx(state)
+    _check_state(ctx.state)
     prev = ctx.state.with_name(ctx.state.name + ".prev")  # throwaway registry per run, but kept until the run succeeds
     shutil.rmtree(prev, ignore_errors=True)
     if ctx.state.exists():
@@ -286,11 +302,17 @@ def run(live=False, base_url=None, model=None, state=DEFAULT_STATE, out=DEFAULT_
     ver, proposal = verify(draft, data, sf._shape_key(data))
     audit("verified", f"hidden {sum(x['pass'] for x in ver['hidden'])}/{len(ver['hidden'])}, regression "
                       f"{sum(x['pass'] for x in ver['regression'])}/{len(ver['regression'])}")
+    if sf._tree_hash(draft) != sha:  # the files that were verified must be the files that get staged
+        ver["regression"].append({"name": "draft unchanged between hashing and verification", "pass": False})
+        ver["passed"] = False
     approval = {"state": "rejected", "by": None, "at": None,
                 "command": "none: the candidate failed verification and was not staged for approval"}
     if ver["passed"]:  # Stage C: stage in core's registry as 'tested' (what propose_skill would record), then STOP
         dest = sf.SKILLS_DIR / "candidates" / NAME / "v1"
         shutil.copytree(draft, dest)
+        if sf._tree_hash(dest) != sha:  # TOCTOU between verify and copy: never register files that were not verified
+            shutil.rmtree(dest, ignore_errors=True)
+            raise RuntimeError("staged copy differs from the verified draft; nothing registered")
         fp = incident_fingerprint(data, "INC-1")
         validation = {"lint": [], "verification": ver, "staged_by": "experiments.oncall_infer (not propose_skill: "
                       "OnCall has no executed+verified action to replay; the replay is the INC-1 regression test)",
@@ -299,7 +321,7 @@ def run(live=False, base_url=None, model=None, state=DEFAULT_STATE, out=DEFAULT_
                      "validation, signature, touches) VALUES (?, 1, ?, ?, 'tested', ?, ?, ?, ?, ?, ?)",
                      (NAME, "Revert a single memory-relevant serving key after a deploy-induced GPU OOM",
                       json.dumps(["oncall", "inference", "vllm"]), tools.current_task_id(conn), sf._shape_key(data),
-                      sf._tree_hash(dest), json.dumps(validation), json.dumps(sig), json.dumps([proposal["field"]])))
+                      sha, json.dumps(validation), json.dumps(sig), json.dumps([proposal["field"]])))
         (dest / "meta.json").write_text(json.dumps({"name": NAME, "version": 1, "scenario": SCENARIO, "status": "tested",
                                                     "created_by": synthesis["provenance"], "files_sha256": sha,
                                                     "incident_fingerprint": fp}, indent=2), encoding="utf-8")
@@ -315,7 +337,7 @@ def run(live=False, base_url=None, model=None, state=DEFAULT_STATE, out=DEFAULT_
            "reuse": {"incident_id": "INC-2", "path": "deterministic_fastpath", "model_calls": None, "latency_ms": None,
                      "diagnosis": None, "state": "not_run", "reason": "awaiting approval"},
            "refusal": {"incident_id": "INC-3", "state": "not_run", "reason": "awaiting approval"},
-           "telemetry": {"gpu": None, "note": "no GPU telemetry on this host"}, "audit": log}
+           "telemetry": {"gpu": None, "note": "not sampled by this harness (see the run's gpu.csv, if any)"}, "audit": log}
     write(out, doc)
     return doc
 
@@ -333,7 +355,7 @@ class NoModel:
 
     def __enter__(self):
         for cls in (llm_mod.OpenAICompatLLM, llm_mod.MockLLM):
-            for attr in ("__init__", "chat", "chat_message", "health"):
+            for attr in ("__init__", "chat", "chat_message", "health", "_req"):
                 self._saved[(cls, attr)] = cls.__dict__.get(attr)
                 setattr(cls, attr, self._trip)
         self._saved[(llm_mod, "from_env")] = llm_mod.from_env
@@ -380,6 +402,15 @@ def reuse(state=DEFAULT_STATE, out=DEFAULT_OUT):
         write(out, doc)
         conn.close()
         return doc
+    hv = json.loads(s["hidden_validation"] or "null")
+    if not (isinstance(hv, dict) and hv.get("ok") is True) or not s["active"]:
+        why = "approved status without a passing recorded hidden validation (or not active): refusing reuse"
+        doc["reuse"].update(state="refused", reason=why, model_calls=None, latency_ms=None, diagnosis=None)
+        doc["refusal"].update(state="refused", reason=why)
+        audit("reuse_refused", f"{NAME}@v1: {why}")
+        write(out, doc)
+        conn.close()
+        return doc
     ev = conn.execute("SELECT ts FROM audit WHERE event='skill_approved' ORDER BY id DESC").fetchone()
     doc["approval"].update(state="approved", by=s["decided_by"], at=ev["ts"].replace(" ", "T") + "Z" if ev else None)  # sqlite datetime('now') is UTC
     audit("approved", f"{NAME}@v1 approved by {s['decided_by']!r} via core `skill approve`")
@@ -398,7 +429,7 @@ def reuse(state=DEFAULT_STATE, out=DEFAULT_OUT):
         try:
             res = sf.run_skill(conn, NAME) if ok else None
         except tools.ToolError as e:  # e.g. integrity_error: approved files changed since approval -> recorded refusal
-            ok, why, res = False, f"core refused to run the skill: {e}", None
+            ok, why, res = False, f"core refused to run the skill ({e.code}): {e.message}", None
         ms = round((time.perf_counter() - t0) * 1000, 1)
     if ok:
         p = (res["proposals"] or [None])[0]
@@ -415,7 +446,7 @@ def reuse(state=DEFAULT_STATE, out=DEFAULT_OUT):
             try:
                 sf.run_skill(conn, NAME)
             except tools.ToolError as e:
-                ok3, why3 = False, f"core refused to run the skill: {e}"
+                ok3, why3 = False, f"core refused to run the skill ({e.code}): {e.message}"
     doc["refusal"].update(state="UNEXPECTED_ACCEPT" if ok3 else "refused", reason=why3)
     audit("reuse_inc3", f"{doc['refusal']['state']}: {why3}")
     conn.close()
