@@ -389,3 +389,9 @@ def test_deterministic_task_mode_never_claims_a_model(conn, tmp_path, monkeypatc
 def test_lint_rejects_indirect_access_to_banned_names(tmp_path, body):
     errors, _ = sf.lint(skill_dir(tmp_path, helper=body))
     assert errors, body
+
+
+def test_lint_allows_main_guard(tmp_path):
+    tests = "from helper import run\ndef test_a():\n    assert run([]) is not None\nif __name__ == '__main__':\n    test_a()\n"
+    errors, _ = sf.lint(skill_dir(tmp_path, tests=tests))
+    assert not any("dunder" in e for e in errors)

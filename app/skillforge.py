@@ -163,7 +163,7 @@ def lint(skill_dir):
                 imported.update({(a.asname or a.name).split(".")[0]: a.name for a in node.names})
             if isinstance(node, ast.Name) and node.id in BANNED_CALLS:  # any reference, not only a direct call (o = open)
                 errors.append(f"{rel}: use of '{node.id}' not allowed")
-            if isinstance(node, ast.Name) and node.id.startswith("__"):  # __builtins__ and friends
+            if isinstance(node, ast.Name) and node.id.startswith("__") and node.id != "__name__":  # __builtins__ etc.
                 errors.append(f"{rel}: dunder name '{node.id}' not allowed")
             if isinstance(node, ast.Attribute) and node.attr in BANNED_ATTRS or                     isinstance(node, ast.ImportFrom) and any(a.name in BANNED_ATTRS for a in node.names):
                 errors.append(f"{rel}: dynamic attribute access not allowed (operator.attrgetter/methodcaller)")
