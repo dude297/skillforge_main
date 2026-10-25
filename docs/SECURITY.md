@@ -2,7 +2,9 @@
 
 Scope: what the code in this repository enforces, how it was checked, and where the known gaps are. Everything
 marked "tested" was tested on a Windows 11 x86_64 dev box without a GPU, with synthetic data and a MOCK agent.
-**Nothing here has been verified on a GB10 or against a real model.** Design detail: [ARCHITECTURE.md](ARCHITECTURE.md)
+**Isolation has not been verified on a GB10:** the GB10 live runs used the subprocess runner (Docker was
+permission-denied for the GB10 user and the docker path fails closed), and NemoClaw/OpenShell is not installed there, so
+the egress policy was never exercised. Live-model results: [BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25). Design detail: [ARCHITECTURE.md](ARCHITECTURE.md)
 sections C to E. Claims with their tests: [CLAIMS.md](CLAIMS.md).
 
 ## Trust model
@@ -56,10 +58,26 @@ implemented.
 | runner | flags | checked |
 |---|---|---|
 | `SKILL_RUNNER=subprocess` (default) | `python -I -B`, scrubbed env, temp copy, timeout; POSIX rlimits | dev box. **rlimits are not applied on Windows** |
-| `SKILL_RUNNER=docker` | `--network none --read-only --cap-drop ALL --security-opt no-new-privileges`, user 65534, 512 MB memory and swap, 1 CPU, 64 pids, skill copy mounted read-only, killed on timeout | locally on the dev box with Docker Desktop only |
+| `SKILL_RUNNER=docker` | `--network none --read-only --cap-drop ALL --security-opt no-new-privileges`, user 65534, 512 MB memory and swap, 1 CPU, 64 pids, skill copy mounted read-only, killed on timeout | locally on the dev box with Docker Desktop only; **not run on the GB10** |
 
 The static lint (AST import and call allowlist) is an early filter, not a security boundary. The runner is the
-boundary. With the `--local` fallback package the DB and tools run inside the agent sandbox and the agent has `exec`,
+boundary.
+
+### Runner, lint and hidden-suite secrecy
+
+- **GB10 runs used the subprocess runner** (`python -I -B`, scrubbed env, rlimits CPU 10 s / AS 1 GiB / FSIZE 1 MiB /
+  NOFILE 64), as reported by the GB10 operator. Docker was permission-denied for the GB10 user; the docker path fails
+  closed and was not weakened.
+- **Finding (GB10-side audit, fixed in commit `1094d95`).** The lint could be bypassed by aliasing a banned builtin
+  (`o = open`) or by `operator.attrgetter`. Under the subprocess runner a hostile skill could then read the hidden
+  suite from disk. The lint now rejects aliased banned builtins, dunder names and `operator.attrgetter`/`methodcaller`.
+- **Attempt 4 is not affected.** The passing live candidate (skill tree sha256
+  `7fe0c025039b11b93617ba63955f3fe9da0ec55c7e7a0ed11bbae3982fa3aa0e`) imports only `json` and `typing`, uses no file,
+  attribute or dunder access, passes the hardened lint, and its hash is unchanged, so its 9/9 hidden result is not
+  contaminated.
+- **Residual.** The lint is not a security boundary. Under the subprocess runner the hidden suite is readable by
+  skill code that evades the lint; keeping it secret from a hostile skill needs the Docker runner.
+  The approver identity (`--by`) is not authenticated. With the `--local` fallback package the DB and tools run inside the agent sandbox and the agent has `exec`,
 so the guarantees above hold only for paths through the tool interface
 ([SKILLFORGE.md §11](SKILLFORGE.md#11-trust-boundary-v2-trusted-service-outside-the-sandbox)).
 

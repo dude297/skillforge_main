@@ -1,0 +1,3 @@
+timestamp, utilization.gpu [%], temperature.gpu, power.draw [W]
+t1, 10 %, 50, 20.5 W
+t2, 90 %, 60, 40.0 W

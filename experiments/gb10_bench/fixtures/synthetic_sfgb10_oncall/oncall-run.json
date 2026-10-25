@@ -1,0 +1,1 @@
+{"_synthetic": true, "_note": "SYNTHETIC FIXTURE: invented, not a measurement", "host": "synthetic-host", "mode": "LIVE_REAL_MODEL", "model": {"id": "synthetic-model-35b", "available": true}, "synthesis": {"model_calls": 1, "latency_ms": 5000.0, "prompt_tokens": 100, "completion_tokens": 200}}

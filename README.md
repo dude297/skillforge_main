@@ -3,9 +3,13 @@
 **A local AI runtime that turns an independently verified, human-approved fix into an immutable skill, then reuses
 that skill deterministically instead of making another model call.**
 
-> **Status, read first.** Everything here has run only on a Windows 11 x86_64 dev box with no GPU,
-> synthetic data, a scripted MOCK agent and recorded simulations. **No real model has produced any result in this
-> repository, and nothing has been measured on the Dell Pro Max GB10 yet.**
+> **Status, read first.** Most of this repository was built and tested on a Windows 11 x86_64 dev box with no GPU,
+> synthetic data, a scripted MOCK agent and recorded simulations; the committed demo recording is a
+> `RECORDED_SIMULATION`. On 2026-10-25 the GB10 operator ran a live Qwen3.6-35B-A3B on the Dell Pro Max GB10: one
+> live-written skill passed the hidden suite 9/9 (an identical repeat scored 8/9 and was rejected; the original prompt
+> passed 0 of 3). **Still pending on the GB10: a person's approval of that skill, INC-2 reuse and INC-3 refusal.**
+> The GB10 runs used the subprocess runner, not Docker, and NemoClaw/OpenShell is not installed there. Numbers and
+> sha256: [docs/BENCHMARKS.md](docs/BENCHMARKS.md#3-gb10-live-measurements-2026-10-25).
 
 ## 1. What it is
 
@@ -32,15 +36,16 @@ single local machine such as a GB10, inference capacity is also the scarcest res
 
 The design point is the combination: independently verified, human-approved, immutable executable skills,
 reused deterministically instead of another LLM call. This is a design claim; it has **not** been benchmarked against
-other agent-memory approaches. There is **no** live autonomous skill-generation loop yet: the model step has run only
-as a recorded simulation.
+other agent-memory approaches. The model step has run live on the GB10 (1 of 2 attempts with a disclosed prompt
+revision passed the verifier; 0 of 3 with the original prompt), but promotion and reuse of that skill on the GB10 are
+still pending a person's approval.
 
 ## 4. How it works
 
 | stage | what happens | who |
 |---|---|---|
 | solve | agent investigates, proposes a bounded fix; a person approves on the host; trusted code executes once and re-reads state to verify | model + person + code |
-| synthesize | the model writes the skill | model (recorded simulation so far) |
+| synthesize | the model writes the skill | model (live on the GB10, see section 8; the committed demo is a recorded simulation) |
 | validate | AST allowlist lint, own tests in the sandbox, replay must reproduce the approved fix, hidden suite | code |
 | approve | `python -m app skill approve <name> <version> --by <person>`; hashes must match what was tested | person |
 | reuse | exact-match routing, skill proposes, policy + approval + verification again | code + person |
@@ -52,11 +57,11 @@ Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/SKILLFORGE.md](docs
 
 ```mermaid
 flowchart LR
-  subgraph SB["OpenShell sandbox (intended, not verified on GB10)"]
+  subgraph SB["OpenShell sandbox (intended; not installed on the GB10)"]
     Agent["OpenClaw agent"]
     Client["client.py: agent tools only"]
   end
-  Model["Local model via vLLM (intended on GB10)"]
+  Model["Local model via vLLM (served on the GB10)"]
   subgraph HOST["Host (trusted)"]
     Service["app/server.py tool service"]
     Tools["app/tools.py: policy, approval gate, execute once, verify"]
@@ -115,13 +120,14 @@ hardware**.
 | Skill lint, sandboxed tests, replay, hidden suite, sha256 pinning, versions, rollback | implemented + tested on dev box |
 | Deterministic exact-match reuse with zero model calls | implemented + tested on dev box (MOCK); recorded simulation (OnCall) |
 | OnCall incident fingerprint, fail-closed, bound to the registry row | implemented + tested on dev box |
-| Model writes the OnCall skill (`--live`) | stub-tested; not verified on hardware |
-| Docker runner (`--network none --read-only --cap-drop ALL`) | implemented + tested on dev box (Docker Desktop) |
+| Model writes the OnCall skill (`--live`) | run on the GB10: 1 of 2 passed with a disclosed prompt revision, 0 of 3 with the original ([BENCHMARKS.md](docs/BENCHMARKS.md#3-gb10-live-measurements-2026-10-25)) |
+| Person approves the live skill; INC-2 reuse and INC-3 refusal on the GB10 | **pending** |
+| Docker runner (`--network none --read-only --cap-drop ALL`) | implemented + tested on dev box (Docker Desktop); not run on the GB10 |
 | Guided demo, console, Daylight World, Bootstrap Lite | implemented + tested on dev box (mock e2e 78/78, reported) |
 | Demo launchers | implemented; verified on Windows only |
-| GB10 bundle, preflight, compute-frontier harness | stub-tested; not verified on hardware |
-| NemoClaw / OpenShell sandbox and egress policy | not verified on hardware |
-| GPU, power and token measurements | not verified on hardware (none taken) |
+| GB10 bundle, preflight, compute-frontier harness | run on the GB10 (frontier: 70 requests, 0 errors) |
+| NemoClaw / OpenShell sandbox and egress policy | not installed on the GB10; not verified |
+| GPU, power and token measurements | measured for the frontier run and OnCall attempt 5 only; none for the passing attempt 4 (not captured) |
 | Freight-accruals workflow (second domain, simulated channel) | implemented + tested on dev box |
 
 All claims with their tests: [docs/CLAIMS.md](docs/CLAIMS.md).
@@ -133,10 +139,16 @@ NemoClaw/OpenShell sandbox; a local model (primary `Qwen3.6-35B-A3B` NVFP4, alte
 `data/models.json`) is served by vLLM on `127.0.0.1:8000`. The intent is that nothing leaves the box; the sandbox egress policy has not been
 verified on a real runtime ([docs/SECURITY.md](docs/SECURITY.md#network-exposure)).
 
-Confirmed so far, as reported by the operator: an aarch64 GB10 host with the GPU detected, about 121 GiB memory,
-Docker 29.6.2. **Live Qwen inference is not confirmed**; `bash deploy/gb10/sf-gb10.sh preflight` has not passed on the
-GB10. Procedure: [docs/GB10_SETUP.md](docs/GB10_SETUP.md) (bundle, transfer, preflight, live OnCall, rollback) and
-[docs/GB10_RUNBOOK.md](docs/GB10_RUNBOOK.md) (gates 0–5).
+**Measured on the GB10 (2026-10-25, GB10 operator's report; evidence files on the GB10/SSD, sha256 in
+[docs/BENCHMARKS.md](docs/BENCHMARKS.md#3-gb10-live-measurements-2026-10-25)):** NVIDIA GB10, aarch64, driver
+580.178.04, 121.63 GiB, vLLM 0.21.0+2325b6f0.dev serving Qwen3.6-35B-A3B-NVFP4 as `skillforge-qwen`
+(`max_model_len` 32768). Per-request streaming, 0 of 70 requests failed: TTFT p50 0.0623 s at c=1, 0.1087 s at c=2,
+0.1026 s at c=4; decode p50 75.63 / 61.83 / 55.27 tok/s per request (not aggregate throughput). Live OnCall
+synthesis: attempt 4 (revised prompt) one model call, 173.0 s, 12,763 completion tokens, hidden 9/9, regression 5/5,
+staged as `tested`, proposal only; attempt 5 (same config) hidden 8/9, rejected. **Not true on the GB10:** NemoClaw/OpenShell
+is not installed and nothing ran under it; Docker was permission-denied, so every run used the subprocess runner.
+**Pending:** a person's approval, INC-2 reuse, INC-3 refusal. Procedure: [docs/GB10_SETUP.md](docs/GB10_SETUP.md)
+and [docs/GB10_RUNBOOK.md](docs/GB10_RUNBOOK.md) (gates 0–5).
 
 ## 9. Reproduce the demo
 
@@ -167,15 +179,15 @@ python -m pytest -q -p no:cacheprovider        # full suite, about 3 min
 ```
 
 Results on the dev box (Windows 11 x86_64, Python 3.14.3, no GPU) are in
-[docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md#part-3-tests-on-this-tree). Measurements, all from the dev box:
+[docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md#part-3-tests-on-this-tree). Dev-box measurements:
 
 - OnCall INC-2 reuse: `model_calls: 0`; about 117–256 ms across recorded runs. This is match plus deterministic
   execution, **not** an inference saving.
 - MOCK benchmark: tool calls 20 → 7–8 with reuse; latency 0.06 s → 0.17 s (worse in mock).
 - Indexed freight variant: 31× faster skill compute at 4,400 records; human-authored research, not promoted.
 
-**GB10 measurements: none yet.** Methodology and separation of the three kinds of numbers:
-[docs/BENCHMARKS.md](docs/BENCHMARKS.md).
+GB10 measurements (section 8) are separate: [docs/BENCHMARKS.md](docs/BENCHMARKS.md) keeps the three kinds of numbers
+apart. No GB10 reuse latency exists yet (reuse is pending approval).
 
 ## 11. What was built when
 
@@ -190,9 +202,10 @@ Bootstrap Lite UI, and the GB10 runbooks. This is **not** hackathon-day work.
 - OnCall loop and recorded artifact
 - guided six-scene demo, console incident view
 - fingerprint and approval-kind fixes after a bypass audit
-- GB10 compute-frontier harness (stub-tested)
+- GB10 compute-frontier harness (later run on the GB10)
 - real-backend browser rehearsal fixes
 - GB10 handoff: strict `--live`, served-id discovery, portable bundle, preflight
+- GB10 live runs: frontier throughput, five live OnCall synthesis attempts, a lint-bypass fix
 - release preparation (this tree)
 
 Commit hashes, dates, status and the tests actually run: [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md).
@@ -202,13 +215,16 @@ Commit hashes, dates, status and the tests actually run: [docs/DEVELOPMENT_LOG.m
 Approvals are host CLI commands only; the agent has no approve tool and the UI is read-only. `approval.kind` is
 `simulated` or `host_cli`, and the `--by` name is **not** identity-verified. Skills are sha256-pinned and versioned.
 Generated code runs in a subprocess runner (a Python-level socket block, **not** an isolation boundary) or, with
-`SKILL_RUNNER=docker`, in a Docker runner with `--network none`; Docker isolation was checked on the dev box only. Services refuse `0.0.0.0`. The OnCall fingerprint
+`SKILL_RUNNER=docker`, in a Docker runner with `--network none`; Docker isolation was checked on the dev box only
+(GB10 runs used the subprocess runner, so hidden-suite secrecy against a hostile skill is not guaranteed there; the lint
+is not a boundary, and a bypass found by a GB10-side audit was fixed). Services refuse `0.0.0.0`. The OnCall fingerprint
 fails closed; the core matcher's INC-3 false-exact gap is documented and contained. Details and vulnerability
 reporting: [docs/SECURITY.md](docs/SECURITY.md).
 
 ## 13. Limitations
 
-No real-model run yet; nothing measured on a GB10; core matcher gap; 15 s sandbox timeout risk under load; flaky
+Live synthesis is 1 pass in 2 revised-prompt attempts (0 of 3 before); approval and reuse on the GB10 pending; GB10
+runs used the subprocess runner and no NemoClaw; core matcher gap; 15 s sandbox timeout risk under load; flaky
 tests seen under load; approver identity not verified; launchers verified on Windows only. Full list:
 [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
 

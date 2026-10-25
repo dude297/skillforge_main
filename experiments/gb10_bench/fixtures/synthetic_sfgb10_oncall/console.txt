@@ -1,0 +1,2 @@
+== oncall  2026-01-01T00:00:00Z  host=synthetic-host  arch=aarch64  bundle=0000000
+SYNTHETIC FIXTURE console

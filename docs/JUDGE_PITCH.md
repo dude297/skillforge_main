@@ -1,6 +1,6 @@
 # SkillForge: 3-minute judge pitch
 
-Rules for the speaker: say only what the table at the end supports. Anything marked **pending GB10** is read from the evidence folder on the day, or left out. Never read a recorded number as a GB10 number.
+Rules for the speaker: say only what the table at the end supports. Anything marked **pending** (approval, reuse and refusal on the GB10) is left out unless done on the day and read from its evidence folder. Never read a recorded number as a GB10 number. GB10 figures and their sha256: `docs/BENCHMARKS.md` section 3.
 
 ## Full version (~420 words, 3:00)
 
@@ -14,19 +14,21 @@ SkillForge turns one good diagnosis into a reusable program. On the first incide
 After approval the skill is immutable, pinned by its sha256. The next compatible incident is handled by that fixed code, with **zero model calls**. A guard counts any model call, and the run fails if there is one. A lookalike incident is refused rather than guessed: a disk-full error that superficially matches the same structure. The incident fingerprint (exception type, component, failure category, top frames) differs, so reuse fails closed. So the model's output becomes an approved, versioned artifact. Recurring incidents are not answered by another round of model inference.
 
 ### 1:50-2:20 Why the GB10
-Synthesis runs on a local model, Qwen3.6-35B-A3B in NVFP4, served by vLLM on the GB10. The design keeps the logs, configs and code on the box; the sandbox egress policy is not yet verified on the GB10, so do not say "never leaves". The GB10's 128 GB unified memory holds a 35B mixture-of-experts model next to the sandbox, the verifier and the console on one desk-side machine.
+Synthesis runs on a local model, Qwen3.6-35B-A3B in NVFP4, served by vLLM on the GB10. The design keeps the logs, configs and code on the box; NemoClaw/OpenShell is not installed on the GB10 and the egress policy was never exercised, so do not say "never leaves" and do not say it ran in NemoClaw. The GB10's 128 GB unified memory holds a 35B mixture-of-experts model next to the sandbox, the verifier and the console on one desk-side machine.
 
 ### 2:20-3:00 Results (only what we measured)
 - Hidden suite: 9/9 cases pass, but for the **hand-written reference skill**, not model output (recorded run).
 - Reuse of INC-2: 0 model calls, enforced by the guard; 256 ms for match plus deterministic execution, on a Windows dev box. That is not a saving in inference time: the recorded first run made no model call to compare against.
 - INC-3 lookalike: refused by the fingerprint check.
-- Live synthesis on the GB10 (model calls, latency, tokens, hidden-suite result for model-written code, a person's approval): **pending GB10**.
-- TTFT, decode tok/s and memory headroom: **pending GB10**.
+- Live synthesis on the GB10 (Qwen3.6-35B-A3B, subprocess runner): with the original prompt 0 of 3 attempts passed. After a **disclosed** prompt revision made once the operator saw a 7/9 result, one attempt passed the hidden suite 9/9 (1 model call, 173.0 s, 12,763 completion tokens) and an identical repeat scored 8/9 and was rejected. Say "1 of 2", never "it works". Every failing candidate was rejected by the verifier; none staged. The passing skill is staged as `tested`, proposal only.
+- A person's approval of that skill, INC-2 reuse and INC-3 refusal on the GB10: **pending**. Do not claim them.
+- Per-request streaming (not aggregate throughput), 0 of 70 requests failed: TTFT p50 0.0623 s (c=1), 0.1087 s (c=2), 0.1026 s (c=4); decode p50 75.63 / 61.83 / 55.27 tok/s; min free memory 62.78 GiB; peak 62 C and 42.07 W.
+- Security caveat if asked: the GB10 runs used the subprocess runner, the lint is not a boundary (a bypass was found and fixed), and hidden-suite secrecy needs the Docker runner.
 
 Close: "Fix it once with the model, verify it independently, let a person approve it, then reuse it without the model, and refuse what only looks similar."
 
 ## 60-second emergency version
-"Inference on-call teams keep seeing the same incidents, and agents call the LLM again every time with unverified code. SkillForge has a local model on the GB10 write a small diagnostic skill once. The host verifies it with lint, the skill's own tests, a replay and a hidden suite the model never sees. A person approves it on the host. After that, the next matching incident runs the pinned skill with zero model calls, and a lookalike incident is refused, not guessed. Today, on the dev box: 0 model calls on reuse, enforced by a guard, and the lookalike refused. The GB10 numbers for live synthesis are [read from the evidence folder / pending]. Data never leaves the box."
+"Inference on-call teams keep seeing the same incidents, and agents call the LLM again every time with unverified code. SkillForge has a local model on the GB10 write a small diagnostic skill once. The host verifies it with lint, the skill's own tests, a replay and a hidden suite the model never sees. A person approves it on the host. After that, the next matching incident runs the pinned skill with zero model calls, and a lookalike incident is refused, not guessed. On the dev box: 0 model calls on reuse, enforced by a guard, and the lookalike refused. On the GB10, Qwen wrote a skill that passed the hidden suite 9/9 on its first try with our revised prompt; an identical repeat scored 8/9 and was rejected, and approval and reuse on the GB10 are still pending."
 
 ## Where every number comes from
 | Claim | Source | Status |
@@ -37,5 +39,7 @@ Close: "Fix it once with the model, verify it independently, let a person approv
 | INC-3 refused | same file `refusal.reason` | real, dev box |
 | Recorded approval | same file `approval.kind = "simulated"`, `by = "recorded-sim (agent, not a human)"` | simulated, **not a person** |
 | 128 GB unified memory | `docs/GB10_FRONTIER.md` §memory | spec, not measured |
-| Model id | `docs/SKILLFORGE.md` §16 (vendor docs) | assumed until `models.json` shows it |
-| Live synthesis, TTFT, decode, memory | `results/gb10-evidence/*`, `results/frontier/*` | **pending GB10** |
+| Model id | served as `skillforge-qwen` (Qwen3.6-35B-A3B-NVFP4), per the GB10 operator's report | reported, GB10 |
+| Live synthesis attempt 4: hidden 9/9, 1 call, 173.0 s, 12,763 completion tokens; attempt 5: 8/9 rejected; original prompt 0/3 | `docs/evidence/gb10/attempt4-oncall-run.json` sha256 `712dbf78...4b58` and `attempt5-oncall-run.json` sha256 `f95121b0...e01d` (sanitized records, see `docs/evidence/gb10/README.md`); attempts 1-3: operator report only. Attempt 5 failed because the model ignored an explicit prompt instruction (`not_applicable` instead of `requires_review`) | real, GB10, disclosed prompt revision |
+| TTFT, decode, memory, temperature, power | frontier report sha256 `6890165aa86abbb7834ec2aa15784bbf6326104363466d786b0fd66d4e8d23e2` (file on the GB10/SSD) | real, GB10, per request |
+| Person's approval; GB10 reuse and refusal | none | **pending** |

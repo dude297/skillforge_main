@@ -85,23 +85,27 @@ re-run; `tests/test_faults.py::test_restore_checkpoint_and_resume_interrupted_wo
 
 ## Real-model integration
 
-**Pending: GB10 preflight not yet run; live Qwen inference unconfirmed.** Reported by the operator so far: an
-aarch64 GB10 host with the GPU detected, about 121 GiB memory, Docker 29.6.2. No skill has been written by a served
-model, and no inference number exists.
+Parts 1 to 3 above predate the GB10 session. The test results in Part 3 are dev-box results and were not re-run for
+the GB10 patches. The live GB10 model results are in the next section.
 
-## GB10 results: pending — not yet measured
+## GB10 results (event day, 2026-10-25)
 
-> **Not measured yet. Nothing in this section has been pre-filled and nothing may be estimated.** Each
-> `bash deploy/gb10/sf-gb10.sh <command>` run writes `results/gb10-evidence/<UTC time>-<command>/`. Copy facts from
-> those folders only; leave a row empty rather than guess.
+Source: the GB10 operator's session, reported to this tree. Evidence files live on the GB10/SSD; the sha256 below
+identify them. Code: public `633b030` plus GB10 patches (final runs at `35d5820`). Full figures:
+[BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25).
 
-| step | evidence folder | result | notes |
+| step | evidence | result | notes |
 |---|---|---|---|
-| preflight (bundle, host, `/health`, `/v1/models`, one chat completion) | | | |
-| oncall `--live` (model, model_calls, tokens, verification, hidden) | | | |
-| person's approval (`approval.kind`) | | | |
-| reuse (INC-2 model_calls, latency; INC-3 refused) | | | |
-| bench (TTFT, decode tok/s per request, memory, temperature) | | | |
+| hardware and serving | frontier report sha256 `6890165aa86abbb7834ec2aa15784bbf6326104363466d786b0fd66d4e8d23e2` | NVIDIA GB10, aarch64, driver 580.178.04, 121.63 GiB; vLLM 0.21.0+2325b6f0.dev; Qwen3.6-35B-A3B-NVFP4 as `skillforge-qwen`, `max_model_len` 32768 | NemoClaw/OpenShell not installed |
+| bench (frontier) | same report | c=1/2/4: 10/20/40 requests, 0 errors; TTFT p50 0.0623 / 0.1087 / 0.1026 s; decode p50 75.63 / 61.83 / 55.27 tok/s per request; min MemAvailable 62.78 GiB; peak 62 C, 42.07 W | per request, not aggregate |
+| oncall `--live` #1 to #3 (original prompt) | operator report; no sha256 supplied | #1 Qwen non-thinking 5/9; #2 Qwen thinking 7/9; #3 Nemotron 2 calls, 660 s, 51,972 tokens, failed lint; all rejected | 0 of 3 passed |
+| operator prompt revision | commit `f1457b0` on the GB10 branch | evidence-sufficiency rule added after the 7/9 result; authoring agent did not read the hidden suite | disclosed manual hint |
+| oncall `--live` #4 (revised prompt) | `docs/evidence/gb10/attempt4-oncall-run.json` sha256 `712dbf7827e0f7c1bf16890d8efcb2758398bcfcd888eeb3766e12369f634b58` (sanitized; original `6683d26b...`) | 1 call, 173.0 s, 1,998 / 12,763 tokens; hidden 9/9, regression 5/5, PASSED, staged `tested`; skill tree sha256 `7fe0c025039b11b93617ba63955f3fe9da0ec55c7e7a0ed11bbae3982fa3aa0e`; proposal only | GPU telemetry not captured |
+| oncall `--live` #5 (repeat) | `docs/evidence/gb10/attempt5-oncall-run.json` sha256 `f95121b01f36373f43d06ccc377bc739987841b17576883db04879ee6a2ee01d` (sanitized; original `0448b065...`) | 1 call, 233.8 s, 1,998 / 17,067 tokens; hidden 8/9, REJECTED, not staged; 235 GPU samples, util p50 96%, max 67 C, max 44.0 W | model answered `not_applicable` where the prompt says `requires_review`; output not deterministic at temperature 0 |
+| runner | operator report | subprocess runner for every run (Docker permission-denied; docker path fails closed) | hidden-suite secrecy needs Docker |
+| security finding | commit `1094d95` | lint bypass via aliasing / `operator.attrgetter` fixed; attempt 4 unaffected (hash unchanged, imports `json`, `typing` only) | [SECURITY.md](SECURITY.md#runner-lint-and-hidden-suite-secrecy) |
+| person's approval of #4 (`approval.kind`) | none | **PENDING** (`skill approve` on the GB10) | |
+| reuse (INC-2 model_calls, latency; INC-3 refused) on the GB10 | none | **PENDING** | |
 
 A failure on Windows localhost (for example the intermittent tests in [LIMITATIONS.md](LIMITATIONS.md#reliability))
 is not evidence about the GB10 in either direction.

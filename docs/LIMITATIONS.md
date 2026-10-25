@@ -5,12 +5,16 @@ Each claim and its evidence: [CLAIMS.md](CLAIMS.md). Security gaps in detail:
 
 ## Evidence
 
-- **No real-model run yet.** No served model has written a skill, investigated a problem or produced a measurement
-  in this repository. The OnCall recording is a `RECORDED_SIMULATION`: the skill was hand-written by a coding agent,
-  and the approval was typed by an agent (`approval.kind: simulated`). The `--live` path is tested against a stub
-  server only.
-- **Nothing measured on a GB10.** The operator has reported an aarch64 GB10 host with the GPU detected, about
-  121 GiB memory and Docker 29.6.2. Live Qwen inference is not confirmed. See [BENCHMARKS.md](BENCHMARKS.md).
+- **The committed OnCall recording is still a `RECORDED_SIMULATION`**: its skill was hand-written by a coding agent,
+  and its approval was typed by an agent (`approval.kind: simulated`). Do not read it as the GB10 result.
+- **GB10 live synthesis is a small sample with a prompt revision.** Qwen wrote a skill that passed the 9-case hidden
+  suite once (9/9) and failed the identical repeat (8/9); with the original prompt 0 of 3 attempts passed. The prompt
+  was revised by the operator after seeing the 7/9 result (disclosed, evidence-sufficiency rule). Two samples are not a
+  success rate; output is not deterministic at temperature 0 on this vLLM. See [BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25).
+- **Not done on the GB10:** a person's approval of the passing skill, reuse on INC-2 and refusal of INC-3 (all pending),
+  so there is no GB10 first-time-vs-reuse comparison and no GB10 reuse latency. GPU telemetry for the passing run was not captured.
+- **GB10 evidence files are not in this repository.** Numbers are the GB10 operator's report plus the sha256 of the files
+  on the GB10/SSD; they are not independently reproducible from this tree.
 - **Decode tok/s is per request only.** The frontier harness runs C parallel copies of a single-request probe; it
   does not measure aggregate server throughput.
 - All data (OnCall incidents, freight records) is synthetic, and the message channel is simulated (no Slack or
@@ -27,7 +31,12 @@ Each claim and its evidence: [CLAIMS.md](CLAIMS.md). Security gaps in detail:
 - **Approver identity is not verified.** `--by` is free text; `approval.kind: host_cli` means a command was typed on
   the host, not that the named person approved.
 - The subprocess runner's rlimits are not applied on Windows. Docker isolation was checked only on the dev box.
-- The OpenShell egress policy and the host-service binding are unverified on a real NemoClaw/OpenShell runtime.
+- **GB10 runs used the subprocess runner**, not Docker (Docker was permission-denied for the GB10 user; the docker path
+  fails closed). **The skill lint is not a security boundary** (a bypass by aliasing and `operator.attrgetter` was found
+  and fixed in `1094d95`); under the subprocess runner a hostile skill could read the hidden suite from disk, so hidden-suite
+  secrecy needs the Docker runner ([SECURITY.md](SECURITY.md#runner-lint-and-hidden-suite-secrecy)).
+- **NemoClaw/OpenShell is not installed on the GB10.** Nothing on the OnCall path ran under it; the egress policy and
+  host-service binding are unverified on a real NemoClaw/OpenShell runtime.
 - With the `--local` fallback package, the agent has `exec` inside the sandbox, so guarantees hold only through the
   tool interface.
 
@@ -48,7 +57,7 @@ Each claim and its evidence: [CLAIMS.md](CLAIMS.md). Security gaps in detail:
 ## Launchers and UI
 
 - `start-demo.ps1` / `start-demo.sh` were verified on Windows only. `start-demo.sh` has not been run on Linux or
-  macOS (on the GB10 it is reached via `sf-gb10.sh demo`, not yet run).
+  macOS (on the GB10 it is reached via `sf-gb10.sh demo`; this tree has no record of that being run).
 - Stopping with **Ctrl-Break** was tested; a real **Ctrl-C** was not.
 - Without `ui/node_modules`, the launcher runs `npm ci`, which needs network access.
 - The UI suites (mock e2e 78/78, lint, typecheck, build) were reported by the owner's session and not re-run on the
