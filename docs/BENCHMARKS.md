@@ -60,7 +60,7 @@ Run: `python -m pytest -q -p no:cacheprovider experiments/gb10_bench experiments
 
 **None yet.** No TTFT, decode rate, memory, power, temperature or token number in this repository was measured on a
 GB10. Results will come from `results/gb10-evidence/` (`deploy/gb10/sf-gb10.sh`) and `results/frontier/`
-(`frontier.sh`), and will be added to [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md#gb10-results-to-be-filled-from-evidence-folders-resultsgb10-evidence).
+(`frontier.sh`), and will be added to [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md#gb10-results-pending--not-yet-measured).
 
 ### Methodology (prepared, not run)
 
