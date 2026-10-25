@@ -1,0 +1,92 @@
+{
+ "_synthetic": true,
+ "_note": "SYNTHETIC FIXTURE: invented numbers for unit tests, not a measurement",
+ "mode": "LIVE_REAL_MODEL",
+ "model": {
+  "id": "synthetic-model-35b",
+  "available": true
+ },
+ "synthesis": {
+  "model_calls": 2,
+  "latency_ms": 9000.0,
+  "prompt_tokens": null,
+  "completion_tokens": null
+ },
+ "verification": {
+  "hidden": [
+   {
+    "name": "h0",
+    "pass": true
+   },
+   {
+    "name": "h1",
+    "pass": true
+   },
+   {
+    "name": "h2",
+    "pass": true
+   },
+   {
+    "name": "h3",
+    "pass": true
+   },
+   {
+    "name": "h4",
+    "pass": true
+   },
+   {
+    "name": "h5",
+    "pass": true
+   },
+   {
+    "name": "h6",
+    "pass": true
+   },
+   {
+    "name": "h7",
+    "pass": true
+   },
+   {
+    "name": "h8",
+    "pass": false
+   }
+  ],
+  "regression": [
+   {
+    "name": "INC-1 replay",
+    "pass": true
+   }
+  ]
+ },
+ "approval": {
+  "state": "approved",
+  "by": "Synthetic Person",
+  "kind": "host_cli"
+ },
+ "reuse": {
+  "state": "not_run",
+  "model_calls": null,
+  "latency_ms": null
+ },
+ "refusal": {
+  "state": "refused"
+ },
+ "audit": [
+  {
+   "t": "2026-01-01T00:00:00+00:00",
+   "event": "incident_loaded"
+  },
+  {
+   "t": "2026-01-01T00:00:10+00:00",
+   "event": "synthesized"
+  },
+  {
+   "t": "2026-01-01T00:00:14+00:00",
+   "event": "verified"
+  },
+  {
+   "t": "2026-01-01T00:00:14+00:00",
+   "event": "pending_approval"
+  }
+ ]
+}

@@ -1,0 +1,10 @@
+{
+ "_synthetic": true,
+ "_note": "SYNTHETIC FIXTURE: invented numbers for unit tests, not a measurement",
+ "passed": true,
+ "checks": {
+  "endpoint": {
+   "ok": true
+  }
+ }
+}

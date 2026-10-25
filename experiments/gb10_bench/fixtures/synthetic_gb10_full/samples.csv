@@ -1,0 +1,4 @@
+ts,temp_c,power_w,util_pct,mem_used_mib,mem_available_kib
+1,50,,,,100663296
+2,60,,,,52428800
+3,55,,,,60000000

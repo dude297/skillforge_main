@@ -1,0 +1,10 @@
+{
+ "_synthetic": true,
+ "_note": "SYNTHETIC FIXTURE: invented numbers for unit tests, not a measurement",
+ "mode": "LIVE_REAL_MODEL",
+ "reuse": {
+  "state": "done",
+  "model_calls": 0,
+  "latency_ms": 110.0
+ }
+}

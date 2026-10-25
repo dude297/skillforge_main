@@ -1,0 +1,28 @@
+{
+ "_synthetic": true,
+ "_note": "SYNTHETIC FIXTURE: invented numbers for unit tests, not a measurement",
+ "label": "synthetic",
+ "model": "synthetic-model-35b",
+ "trials": [
+  {
+   "first_token_s": 0.2,
+   "decode_tok_s": 40.0,
+   "error": null
+  },
+  {
+   "first_token_s": 0.3,
+   "decode_tok_s": 42.0,
+   "error": null
+  },
+  {
+   "first_token_s": 0.4,
+   "decode_tok_s": 44.0,
+   "error": null
+  },
+  {
+   "first_token_s": null,
+   "decode_tok_s": null,
+   "error": "URLError: synthetic"
+  }
+ ]
+}

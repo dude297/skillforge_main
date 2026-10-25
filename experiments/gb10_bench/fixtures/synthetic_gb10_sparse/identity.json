@@ -1,0 +1,28 @@
+{
+ "_synthetic": true,
+ "_note": "SYNTHETIC FIXTURE: invented numbers for unit tests, not a measurement",
+ "at": "2026-01-01T00:00:00+00:00",
+ "host": {
+  "hostname": "synthetic-host",
+  "machine": "aarch64",
+  "mem_total_kib": 125829120
+ },
+ "gpu": {
+  "name": "NVIDIA GB10",
+  "driver": "0.0",
+  "compute_cap": "0.0"
+ },
+ "server": {
+  "model_id": "synthetic-model-35b",
+  "max_model_len": 4096,
+  "vllm_version": "0.0.0"
+ },
+ "model": {
+  "weights": "synthetic-model-35b",
+  "revision": null,
+  "quantization": null
+ },
+ "container": {
+  "image": "synthetic/vllm:0"
+ }
+}
