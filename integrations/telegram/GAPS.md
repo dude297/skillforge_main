@@ -14,7 +14,7 @@ below concern the **Telegram -> SkillForge tools** hop, which is not verified. O
    change). A launcher that discovers the bridge IP does not exist.
 4. Skill: only `records-ops` exists (`adapters/openclaw/skill/SKILL.md`, `scripts/package_skill.sh` is hard-wired to
    dist/records-ops). An OnCall/incident Telegram demo needs a new or extended skill and packaging.
-5. The sender's identity does not reach SkillForge on the OpenClaw path (ENTERPRISE_SLICE.md gap), so the audit cannot attribute a
+5. The sender's identity does not reach SkillForge on the OpenClaw path (ARCHITECTURE.md gap), so the audit cannot attribute a
    call to the Telegram user. Fix: pass the sender id from the bridge into `client.py` args and `app/server.py` (needs OpenClaw
    support, unverified), or accept allowlist-only attribution.
 6. `experiments/channel/contract.py`: no `telegram` entry in `CHANNELS` (a test asserts telegram is refused). Only needed for the
@@ -31,7 +31,7 @@ below concern the **Telegram -> SkillForge tools** hop, which is not verified. O
 ## Claims that must stay "simulated" until each is verified
 - CLAIMS.md #26 (messaging channel delivers tasks): "Telegram <-> local model round trip verified" only. It becomes "done" when a real
   Telegram message produces a reply AND a SkillForge tool call in the host audit.
-- WORKFLOW_FREIGHT.md / `scripts/unified.py` (`SIM_META` slack channel, scripted mock agent): remain SIMULATED.
-- ENTERPRISE_SLICE.md "trusted identity" row: stays "partly met" (allowlist only).
+- ARCHITECTURE.md / `scripts/unified.py` (`SIM_META` slack channel, scripted mock agent): remain SIMULATED.
+- ARCHITECTURE.md "trusted identity" row: stays "partly met" (allowlist only).
 - Egress policy: partly verified. OCSF shows only api.telegram.org, inference.local, and a DENIED telemetry.openclaw.ai.
 - Any statement that approvals work "via Telegram" must not be made; approvals are host-CLI only.

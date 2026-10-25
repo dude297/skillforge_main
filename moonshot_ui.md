@@ -27,17 +27,17 @@ The tree is **a visual metaphor, not the data model**. The underlying topology m
 ## 1. Repo-grounded starting state (checked 2026-10-25)
 
 Read these before coding, especially if commits have moved:
-- `README.md`, `docs/CLAIMS.md`, `docs/BENCHMARKS.md`, `docs/LIMITATIONS.md`, `docs/SECURITY.md` — current truth / limitations.
+- `README.md`, `docs/CLAIMS.md`, `docs/CLAIMS.md`, `docs/CLAIMS.md`, `docs/ARCHITECTURE.md` — current truth / limitations.
 - `ui/src/world/Mascot.tsx`, `ui/src/world/sprites.ts` — **reuse Ember**, the original animated 28×24 blue pixel sprite; available states: `idle`, `investigating`, `building`, `verifying`, `verified`, `waiting`, `error`. Preserve its recognizability, palette, crisp edges and state meanings. Add aura/particles around the sprite, not by repainting it.
 - `ui/src/world/Bootstrap.tsx`, `ui/src/world/bootstrap-data.ts` — existing SVG/Motion bootstrap cinematic. The latter explicitly contains **illustrative** data, not real connectors.
 - `ui/src/world/World.tsx`, `ui/src/world/Scene.tsx`, `ui/src/world/events.ts` — Daylight 2.5D world, state mapping, replay and source tags. Keep functional.
 - `ui/src/story/GuidedDemo.tsx`, `ui/src/data/oncall.ts` — six-scene OnCall flow, provenance logic.
 - `ui/src/data/live.ts`, `ui/src/data/useLive.ts` — read-only operator API, authenticated polling, event merging, stale/reconnect handling.
 - `experiments/router/bootstrap.py`, `experiments/bootstrap_lite/lite.py`, `ui/BOOTSTRAP_LITE.md` — real read-only Bootstrap Lite for an allowlisted **ops dataset**, not general filesystem/Git discovery.
-- `docs/PRODUCT_CONTRACTS.md` — proposed workflows, compatible skills, verifier coverage, dependencies, missing permissions; these are **contracts**, not an authorization to execute.
-- `experiments/oncall_infer/`, `ui/public/demo/oncall-run.recorded.json`, `docs/DEMO_GUIDE.md` — existing demo artifacts and recorded flow.
+- `docs/ARCHITECTURE.md` — proposed workflows, compatible skills, verifier coverage, dependencies, missing permissions; these are **contracts**, not an authorization to execute.
+- `experiments/oncall_infer/`, `ui/public/demo/oncall-run.recorded.json`, `docs/GB10_RUNBOOK.md` — existing demo artifacts and recorded flow.
 
-**Truth as of this handoff:** The 2026-10-25 GB10 operator reported a real local Qwen skill-generation attempt that passed 9/9 hidden cases, followed by a person approving the skill at the host CLI, INC-2 deterministic reuse with 0 model calls (six trials, p50 28.2 ms), and INC-3 fingerprint refusal. See `docs/BENCHMARKS.md` for provenance and caveats. **This does not turn the committed `oncall-run.recorded.json` into a live recording.** The committed recording uses hand-written reference code and a simulated approval. GB10 execution used the subprocess runner; NemoClaw/OpenShell was not installed/verified on the GB10 at the time documented. A separate identical model run scored 8/9 and was rejected. No validated cost/energy savings or general-purpose codebase exploration.
+**Truth as of this handoff:** The 2026-10-25 GB10 operator reported a real local Qwen skill-generation attempt that passed 9/9 hidden cases, followed by a person approving the skill at the host CLI, INC-2 deterministic reuse with 0 model calls (six trials, p50 28.2 ms), and INC-3 fingerprint refusal. See `docs/CLAIMS.md` for provenance and caveats. **This does not turn the committed `oncall-run.recorded.json` into a live recording.** The committed recording uses hand-written reference code and a simulated approval. GB10 execution used the subprocess runner; NemoClaw/OpenShell was not installed/verified on the GB10 at the time documented. A separate identical model run scored 8/9 and was rejected. No validated cost/energy savings or general-purpose codebase exploration.
 
 Do not regress or misstate this. Recheck the repo and actual run source before making any "LIVE", human-approved, hardware, speedup, security isolation, or connector claim.
 
