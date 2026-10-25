@@ -8,8 +8,12 @@ that skill deterministically instead of making another model call.**
 > `RECORDED_SIMULATION`. On 2026-10-25 the GB10 operator ran a live Qwen3.6-35B-A3B on the Dell Pro Max GB10: one
 > live-written skill passed the hidden suite 9/9 (an identical repeat scored 8/9 and was rejected; the original prompt
 > passed 0 of 3). **Then a person (the operator) approved that skill on the GB10 host CLI; INC-2 was reused with 0 model calls (6 trials, p50 28.2 ms) and INC-3 was refused.**
-> The GB10 runs used the subprocess runner, not Docker, and NemoClaw/OpenShell is not installed there. Numbers and
+> The GB10 OnCall runs used the subprocess runner, not Docker, and none of them ran under NemoClaw/OpenShell. Numbers and
 > sha256: [docs/BENCHMARKS.md](docs/BENCHMARKS.md#3-gb10-live-measurements-2026-10-25).
+>
+> **Stack status (GB10 operator report, 2026-10-25).** NemoClaw v0.0.137 (pinned), OpenShell 0.0.116 and OpenClaw v2026.9.2 are now installed on the GB10 (operator-authorized, no sudo), with sandbox `skillforge` pointing at the local Qwen. A **Telegram <-> local model round trip is verified** from OpenShell logs. **Not verified:** Telegram driving SkillForge tools (Gate 2 is in progress), a non-allowlisted-sender check, a full egress review. The OnCall loop itself has not run under NemoClaw/OpenShell/OpenClaw. Nemotron attempt 6 failed. See [integrations/telegram/telegram_setup.md](integrations/telegram/telegram_setup.md), [integrations/telegram/GAPS.md](integrations/telegram/GAPS.md) and [docs/CLAIMS.md](docs/CLAIMS.md).
+>
+> **Hosted preview:** https://skillforge-ui-lab.vercel.app (Vercel project `skillforge-ui-lab`, Root Directory `ui`): read-only, recorded data, no backend calls.
 
 ## 1. What it is
 
@@ -57,7 +61,7 @@ Details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/SKILLFORGE.md](docs
 
 ```mermaid
 flowchart LR
-  subgraph SB["OpenShell sandbox (intended; not installed on the GB10)"]
+  subgraph SB["OpenShell sandbox (installed on the GB10; OnCall tool path not yet run through it)"]
     Agent["OpenClaw agent"]
     Client["client.py: agent tools only"]
   end
@@ -126,7 +130,8 @@ hardware**.
 | Guided demo, console, Daylight World, Bootstrap Lite | implemented + tested on dev box (mock e2e 78/78, reported) |
 | Demo launchers | implemented; verified on Windows only |
 | GB10 bundle, preflight, compute-frontier harness | run on the GB10 (frontier: 70 requests, 0 errors) |
-| NemoClaw / OpenShell sandbox and egress policy | not installed on the GB10; not verified |
+| NemoClaw v0.0.137 / OpenShell 0.0.116 / OpenClaw v2026.9.2 install, sandbox `skillforge`, Telegram <-> local model round trip | run on the GB10, verified from OpenShell OCSF logs (claim 26) |
+| OnCall loop under NemoClaw/OpenShell; Telegram driving SkillForge tools; `host-tools.yaml` egress policy; non-allowlisted-sender check | not run / not verified (Gate 2 in progress) |
 | GPU, power and token measurements | measured for the frontier run and OnCall attempt 5 only; none for the passing attempt 4 (not captured) |
 | Freight-accruals workflow (second domain, simulated channel) | implemented + tested on dev box |
 
@@ -136,7 +141,7 @@ All claims with their tests: [docs/CLAIMS.md](docs/CLAIMS.md).
 
 Intended: SkillForge's host service and console run on a Dell Pro Max with NVIDIA GB10; OpenClaw runs in a
 NemoClaw/OpenShell sandbox; a local model (primary `Qwen3.6-35B-A3B` NVFP4, alternate NVIDIA Nemotron 3.5 Lightning,
-`data/models.json`) is served by vLLM on `127.0.0.1:8000`. The intent is that nothing leaves the box; the sandbox egress policy has not been
+`data/models.json`) is served by vLLM on `127.0.0.1:8000`. The intent is that nothing leaves the box; the SkillForge `host-tools.yaml` egress policy has not been
 verified on a real runtime ([docs/SECURITY.md](docs/SECURITY.md#network-exposure)).
 
 **Measured on the GB10 (2026-10-25, GB10 operator's report; evidence files on the GB10/SSD, sha256 in
@@ -145,10 +150,16 @@ verified on a real runtime ([docs/SECURITY.md](docs/SECURITY.md#network-exposure
 (`max_model_len` 32768). Per-request streaming, 0 of 70 requests failed: TTFT p50 0.0623 s at c=1, 0.1087 s at c=2,
 0.1026 s at c=4; decode p50 75.63 / 61.83 / 55.27 tok/s per request (not aggregate throughput). Live OnCall
 synthesis: attempt 4 (revised prompt) one model call, 173.0 s, 12,763 completion tokens, hidden 9/9, regression 5/5,
-staged as `tested`, proposal only; attempt 5 (same config) hidden 8/9, rejected. **Not true on the GB10:** NemoClaw/OpenShell
-is not installed and nothing ran under it; Docker was permission-denied, so every run used the subprocess runner.
+staged as `tested`, proposal only; attempt 5 (same config) hidden 8/9, rejected. **Not true on the GB10:** the OnCall runs did not
+run under NemoClaw/OpenShell; Docker was permission-denied, so every run used the subprocess runner.
 **Approval and reuse (GB10, 2026-10-25):** at 20:25:02Z a person (the operator) ran `skill approve` on the host CLI (status approved, tree sha256 matches, hidden suite re-run ok; the `--by` name is not identity-verified). INC-2 reuse: 0 model calls, 27.0 ms (6 fresh-process trials: p50 28.2, min 27.0, max 42.1 ms); vLLM request counters unchanged. INC-3 refused by the incident fingerprint every time. Latency is the reuse decision plus the sandboxed run in the subprocess runner, not a speed-up claim against synthesis. Procedure: [docs/GB10_SETUP.md](docs/GB10_SETUP.md)
 and [docs/GB10_RUNBOOK.md](docs/GB10_RUNBOOK.md) (gates 0–5).
+
+**Stack on the GB10 (2026-10-25, operator report):** NemoClaw v0.0.137 (pinned), OpenShell 0.0.116, OpenClaw v2026.9.2; sandbox `skillforge` (agent openclaw, restricted tier), inference provider compatible-endpoint to `skillforge-qwen` at `127.0.0.1:8000`, reached inside the sandbox as `https://inference.local`; sandbox GPU/CUDA verified; the only network policy is `telegram_bot` (`api.telegram.org:443`, rest, enforce). **Verified: Telegram <-> local model round trip** (OCSF: getUpdates -> inference.local -> sendChatAction -> sendMessage, all ALLOWED by `telegram_bot`; `skillforge-qwen` logged 5 chat completions in the window, Nemotron 0; OpenClaw's own telemetry to `telemetry.openclaw.ai:443` was DENIED). Evidence on the GB10: `openshell-ocsf.txt` sha256 `2237e29930c8846da986b97163df10662165ea4c1c812277b76c0c40bec290e7` (token-free; not in this repo). **Not verified:** Telegram driving SkillForge tools (the Gate 2 tool bridge is in progress), a non-allowlisted-sender check, and a full egress review. The OnCall loop has not run under this stack. Setup and gaps: [integrations/telegram/telegram_setup.md](integrations/telegram/telegram_setup.md), [integrations/telegram/GAPS.md](integrations/telegram/GAPS.md).
+
+**Nemotron attempt 6 failed** (adapter fix applied): both calls hit `max_tokens`=32000 while reasoning (finish_reason=length), so no candidate came back; Nemotron is 0 of 2, Qwen 1 pass in 4. See [BENCHMARKS.md](docs/BENCHMARKS.md#3-gb10-live-measurements-2026-10-25).
+
+**Known conflict:** NemoClaw's auth proxy listens on `0.0.0.0:11435` (token-protected, hard-coded upstream, not configurable). This project's no-0.0.0.0 rule covers SkillForge's own services, so this is a disclosed exception, not a pass. Proposed mitigation (UFW: allow loopback and 172.18.0.0/16 to 11435, deny the rest) is **not applied**; pending operator decision ([SECURITY.md](docs/SECURITY.md#network-exposure)).
 
 ## 9. Reproduce the demo
 

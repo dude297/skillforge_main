@@ -18,7 +18,7 @@ Each claim and its evidence: [CLAIMS.md](CLAIMS.md). Security gaps in detail:
 - **Decode tok/s is per request only.** The frontier harness runs C parallel copies of a single-request probe; it
   does not measure aggregate server throughput.
 - All data (OnCall incidents, freight records) is synthetic, and the message channel is simulated (no Slack or
-  Telegram in this tree).
+  Telegram in this tree's SkillForge code). A Telegram <-> local model round trip was verified on the GB10 through NemoClaw/OpenShell ([CLAIMS.md](CLAIMS.md) #26); Telegram driving SkillForge tools is not verified.
 - Tests, replay and hidden suites are evidence, not a formal proof that a skill is correct.
 - The reuse latency (about 117–256 ms) is a dev-box measurement of match plus deterministic execution, not an
   inference saving.
@@ -35,8 +35,11 @@ Each claim and its evidence: [CLAIMS.md](CLAIMS.md). Security gaps in detail:
   fails closed). **The skill lint is not a security boundary** (a bypass by aliasing and `operator.attrgetter` was found
   and fixed in `1094d95`); under the subprocess runner a hostile skill could read the hidden suite from disk, so hidden-suite
   secrecy needs the Docker runner ([SECURITY.md](SECURITY.md#runner-lint-and-hidden-suite-secrecy)).
-- **NemoClaw/OpenShell is not installed on the GB10.** Nothing on the OnCall path ran under it; the egress policy and
-  host-service binding are unverified on a real NemoClaw/OpenShell runtime.
+- **NemoClaw/OpenShell/OpenClaw are installed on the GB10 (2026-10-25) but the OnCall loop has not run under them.** The OnCall runs used the host harness. The `host-tools.yaml` egress policy and host-service binding are unverified; the sandbox `skillforge` has only the `telegram_bot` policy. Not verified: Telegram driving SkillForge tools (Gate 2 in progress), a non-allowlisted-sender check, a full egress review. See [integrations/telegram/telegram_setup.md](../integrations/telegram/telegram_setup.md) and [integrations/telegram/GAPS.md](../integrations/telegram/GAPS.md).
+- **NemoClaw's auth proxy listens on `0.0.0.0:11435`** (token-protected, 401 without the token; hard-coded in NemoClaw `scripts/ollama-auth-proxy.mts:478`, not configurable). Mitigation proposed (UFW allow lo and 172.18.0.0/16 to 11435, deny the rest), **not applied**, pending operator decision.
+- **Nemotron has not produced a passing skill.** Attempts 3 and 6 failed (0 of 2); attempt 6 hit `max_tokens` 32000 while reasoning with no answer (a thinking-budget problem).
+- **Incident, 2026-10-25.** The first `channels add telegram` rebuild deleted the original sandbox `my-assistant` (the non-interactive recreate lacked `NEMOCLAW_COMPATIBLE_AUTH_MODE=none`). Fixed in `integrations/telegram/telegram-setup.sh`; recreated as `skillforge`; vLLM untouched.
+- **Hosted preview is not the product.** https://skillforge-ui-lab.vercel.app is read-only with recorded data and no backend calls.
 - With the `--local` fallback package, the agent has `exec` inside the sandbox, so guarantees hold only through the
   tool interface.
 

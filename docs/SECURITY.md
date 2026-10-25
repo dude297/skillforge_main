@@ -3,8 +3,8 @@
 Scope: what the code in this repository enforces, how it was checked, and where the known gaps are. Everything
 marked "tested" was tested on a Windows 11 x86_64 dev box without a GPU, with synthetic data and a MOCK agent.
 **Isolation has not been verified on a GB10:** the GB10 live runs used the subprocess runner (Docker was
-permission-denied for the GB10 user and the docker path fails closed), and NemoClaw/OpenShell is not installed there, so
-the egress policy was never exercised. Live-model results: [BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25). Design detail: [ARCHITECTURE.md](ARCHITECTURE.md)
+permission-denied for the GB10 user and the docker path fails closed), and the OnCall runs did not run under NemoClaw/OpenShell (installed on the GB10 on 2026-10-25, see Network exposure), so
+the SkillForge egress policy was never exercised. Live-model results: [BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25). Design detail: [ARCHITECTURE.md](ARCHITECTURE.md)
 sections C to E. Claims with their tests: [CLAIMS.md](CLAIMS.md).
 
 ## Trust model
@@ -87,7 +87,9 @@ so the guarantees above hold only for paths through the tool interface
   reached from the sandbox at `host.openshell.internal` with a bearer token that authorizes only the agent tool set.
 - The operator console binds `127.0.0.1` (default port 8766).
 - The OpenShell egress preset (`adapters/openclaw/presets/host-tools.yaml`) allows only POST `/call` to the host
-  service. **Not verified on a real OpenShell runtime.**
+  service. **Not verified on a real OpenShell runtime** (OpenShell 0.0.116 is installed on the GB10; this preset has not been exercised).
+- GB10 sandbox `skillforge` (operator report): the only network policy is `telegram_bot` (`api.telegram.org:443`, rest, enforce); inference goes to the local model as `https://inference.local`. OpenClaw's own telemetry (`telemetry.openclaw.ai:443`) was DENIED by the restricted tier. Verified in OpenShell OCSF logs for one Telegram <-> local model round trip only; a non-allowlisted-sender check and a full egress review are **not done**. See [integrations/telegram/telegram_setup.md](../integrations/telegram/telegram_setup.md) and [integrations/telegram/GAPS.md](../integrations/telegram/GAPS.md).
+- **Exception to the no-0.0.0.0 rule.** NemoClaw's auth proxy listens on `0.0.0.0:11435` (token-protected, 401 without the token; hard-coded at `scripts/ollama-auth-proxy.mts:478`, not configurable). The rule binds SkillForge's own services (`app/server.py` still refuses `0.0.0.0`); this third-party listener conflicts with its intent. Proposed mitigation: UFW allow loopback and 172.18.0.0/16 to 11435, deny the rest. **Not applied; pending operator decision.** Other new listeners are loopback/bridge only (127.0.0.1:8080 gateway, 127.0.0.1:18789 dashboard, 172.18.0.1:8080).
 - The agent tool allowlist is fixed in code (`AGENT_TOOLS`). These isolation settings must not be weakened to make a
   check pass.
 

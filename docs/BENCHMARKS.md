@@ -90,11 +90,15 @@ check and a hidden suite of 9 cases the model never sees.
 | 4 | 200351Z | Qwen thinking, **revised prompt** | 1 model call, 173.0 s, 1,998 prompt / 12,763 completion tokens; hidden 9/9, regression 5/5, PASSED, staged as `tested` |
 | 5 | 200758Z | same config as 4 (repeatability) | 1 call, 233.8 s, 1,998 / 17,067 tokens; hidden 8/9 (failed "OOM present but no memory key changed"), regression 5/5, REJECTED, never staged |
 
+| 6 | 2026-10-25, GB10 | Nemotron, with the adapter fix (string-aware JSON extraction + truncation feedback) | 2 calls, both hit `max_tokens`=32000 while reasoning (finish_reason=length, from vLLM counters); no JSON answer, **no candidate**, FAILED |
+
 - **Prompt revision, disclosed.** Between attempts 3 and 4 the operator revised the prompt after seeing the 7/9 result. It
   adds an evidence-sufficiency rule: propose only with trusted OOM evidence and exactly one memory key raised; otherwise
   refuse with `requires_review` / `insufficient_evidence` / `not_applicable`. The authoring agent did not read the hidden suite.
 - **Pass rate.** Original prompt: 0 of 3 passed. Revised prompt: 1 of 2 passed (9/9, then 8/9). Two samples are not a
   success rate. Every failing candidate was rejected by the verifier and none was staged.
+- **Attempt 6 (Nemotron, failed).** A thinking-budget problem, not formatting: both calls exhausted 32000 tokens while reasoning. Nemotron total **0 of 2** (attempts 3 and 6). Wall time 13.7 min, contended by the NemoClaw install, so do not read it as clean latency. GPU 823 samples, utilization p50 96%, temperature max 74 C, power max 46.2 W. Evidence on the GB10: `console.txt` sha256 `c103565e937f9a1254d934d8982f4a0e2ef33dd1d4411518a30d09f1d2521cee` (not in this repo). **Overall tally: Qwen 1 pass in 4 (1 of 2 with the disclosed revision); Nemotron 0 of 2.**
+- **Extra bench numbers (GB10 operator report).** Qwen: TTFT p50 0.081 s, decode about 69-76 tok/s, structured JSON 12/12, tool calls 12/12, 0 of 33 errors. Nemotron: TTFT 0.244 s, first answer token 8.1 s. `check-llm` warm-after-idle 0.35-0.56 s (cold start not measured). No file hashes were supplied for these.
 - **Not deterministic.** Attempts 4 and 5 used the same configuration at temperature 0 and produced different code and
   different outcomes (vLLM is not deterministic here).
 - **Attempt 4 artifact.** Skill tree sha256 `7fe0c025039b11b93617ba63955f3fe9da0ec55c7e7a0ed11bbae3982fa3aa0e`;
@@ -126,7 +130,7 @@ check and a hidden suite of 9 cases the model never sees.
 - **Caveats.** Subprocess runner (no Docker isolation); unauthenticated `--by` identity; small n (1 of 2 passes with the disclosed revision; 6 reuse trials); disclosed prompt revision after attempt 2. Overall live status: GO.
 - **Docker follow-up (after the runs above).** The GB10 Docker path first failed closed on every run (the 0700 temp dir was unreadable by the container's uid 65534; fixed in this release, `tests/test_docker_runner.py`). With the fix, the approved attempt-4 skill was re-verified on a copy with `SKILL_RUNNER=docker` (`--network none`, read-only, 512 MB, 1 CPU, pids 64, no capabilities, uid 65534, only the skill copy mounted, so the hidden suite is unreachable): hidden 9/9, regression 5/5, same hash `7fe0c025...` (GB10 evidence `docker-reverify.json`, sha256 `4b7d54fd1cbd3462ce8a3b5d0127c9113152edfc51fbb58c2a8a790717148f02`, not committed). INC-2 reuse under Docker: 0 model calls, 275.5 ms (container start-up included), INC-3 refused. The original attempt-4 verification and the 6 timed reuse trials still ran in the subprocess runner.
 
-**Not run under NemoClaw.** NemoClaw/OpenShell is not installed on the GB10; nothing on the OnCall path ran under it.
+**Not run under NemoClaw.** NemoClaw v0.0.137, OpenShell 0.0.116 and OpenClaw v2026.9.2 were installed on the GB10 later on 2026-10-25 (operator-authorized, no sudo); nothing on the OnCall path ran under them. A Telegram <-> local model round trip was verified separately ([CLAIMS.md](CLAIMS.md) #26, [integrations/telegram/telegram_setup.md](../integrations/telegram/telegram_setup.md)).
 
 ### Methodology
 
