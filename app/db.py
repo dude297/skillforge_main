@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS skill_benchmarks (
 );
 """
 
-# Columns added after the first release. ALTER is idempotent here so existing DBs upgrade in place.
+# Additive columns: ALTER is idempotent here so existing DBs upgrade in place.
 MIGRATIONS = [
     ("tool_calls", "args_hash", "TEXT"), ("tool_calls", "queries", "INTEGER"), ("tool_calls", "resp_bytes", "INTEGER"),
     ("tasks", "duplicate_tool_calls", "INTEGER"), ("tasks", "db_queries", "INTEGER"), ("tasks", "data_bytes", "INTEGER"),

@@ -1,4 +1,4 @@
-"""Model bake-off: direct capability probes against whatever model the local endpoint serves right now.
+"""Model bake-off: direct capability probes against whatever model the local endpoint serves.
 Agent-level numbers (investigation, discovery, wrong-skill rejection, fallback, model calls) come from
 `python -m app bench --agent openclaw`; drop its result.json into the same results dir and `compare` merges both.
 

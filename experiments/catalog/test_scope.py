@@ -1,4 +1,4 @@
-"""P0-1: agent-facing namespace isolation. The scope comes from the host (APP_AGENT_NAMESPACE / APP_AGENT_ROLES on the
+"""Agent-facing namespace isolation. The scope comes from the host (APP_AGENT_NAMESPACE / APP_AGENT_ROLES on the
 `serve` process), never from tool arguments; out-of-scope skills do not exist for the agent.
   python -m pytest -q -p no:cacheprovider experiments/catalog/test_scope.py"""
 import json
