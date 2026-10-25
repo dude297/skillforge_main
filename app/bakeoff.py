@@ -70,8 +70,11 @@ def learn_a_dataset():
     return data
 
 
+MAX_TOKENS = int(os.environ.get("BAKEOFF_MAX_TOKENS", 24000))  # reasoning models spend most of a small cap thinking
+
+
 def probe_skill(llm, data):
-    reply = llm.chat([{"role": "user", "content": SKILL_PROMPT % json.dumps(data)[:3000]}], max_tokens=4096)
+    reply = llm.chat([{"role": "user", "content": SKILL_PROMPT % json.dumps(data)[:3000]}], max_tokens=MAX_TOKENS)
     j = llm_mod.parse_json(reply) or {}
     if not isinstance(j.get("helper"), str) or not isinstance(j.get("tests"), str):
         return {"ok": False, "stage": "parse", "detail": reply[:200]}
@@ -99,7 +102,7 @@ def probe_patch(llm, oncall):
     logs = "\n".join(p.read_text(encoding="utf-8")[-1500:] for p in sorted((oncall / "logs").glob("*.log")))
     reply = llm.chat([{"role": "user", "content": PATCH_PROMPT % (
         logs, (oncall / "service.py").read_text(encoding="utf-8"), (oncall / "test_regression.py").read_text(encoding="utf-8"))}],
-        max_tokens=2048)
+        max_tokens=MAX_TOKENS)
     m = re.search(r"```(?:diff)?\n(.*?)```", reply, re.S)
     diff = (m.group(1) if m else reply).lstrip("\n")  # keep trailing blank context lines: they belong to the hunk
     diff += "" if diff.endswith("\n") else "\n"
