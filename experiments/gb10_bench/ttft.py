@@ -6,6 +6,7 @@ Unknown values stay None, never 0. Fake-server results are plumbing checks, not 
 
   python -m experiments.gb10_bench.ttft --base-url http://127.0.0.1:8000/v1 [--model ID] [--n 10] [--warmup 2]
          [--max-tokens 128] [--out results/gb10_bench/ttft.json]      # LLM_API_KEY from env (bearer)
+         # optional env LLM_CHAT_TEMPLATE_KWARGS (JSON) is sent as chat_template_kwargs (e.g. disable thinking)
 """
 import argparse
 import json
@@ -22,6 +23,9 @@ def probe(base_url, model, prompt=PROMPT, max_tokens=128, api_key=None, timeout=
     """One streamed request. first_token_s = first chunk carrying content OR reasoning (reasoning models think first)."""
     body = {"model": model, "messages": [{"role": "user", "content": prompt}], "max_tokens": max_tokens,
             "temperature": 0, "stream": True, "stream_options": {"include_usage": True}}
+    # opt-in, same env as adapters/llm.py: e.g. LLM_CHAT_TEMPLATE_KWARGS='{"enable_thinking": false}' for Qwen3.x thinking-by-default
+    if os.environ.get("LLM_CHAT_TEMPLATE_KWARGS"):
+        body["chat_template_kwargs"] = json.loads(os.environ["LLM_CHAT_TEMPLATE_KWARGS"])
     req = urllib.request.Request(base_url.rstrip("/") + "/chat/completions", data=json.dumps(body).encode(),
                                  headers={"Content-Type": "application/json",
                                           **({"Authorization": f"Bearer {api_key}"} if api_key else {})})

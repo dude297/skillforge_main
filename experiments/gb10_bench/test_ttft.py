@@ -9,6 +9,7 @@ from experiments.gb10_bench import ttft
 
 class Fake(BaseHTTPRequestHandler):
     usage = True
+    bodies = []
 
     def log_message(self, *a):
         pass
@@ -22,6 +23,7 @@ class Fake(BaseHTTPRequestHandler):
 
     def do_POST(self):
         req = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        Fake.bodies.append(req)
         assert req["stream"] is True and req["model"] == "fake-model"
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream")
@@ -53,4 +55,20 @@ def test_probe_against_fake_stream():
         assert ttft.probe("http://127.0.0.1:9/v1", "x", timeout=2)["error"]  # unreachable -> error, no numbers
     finally:
         Fake.usage = True
+        srv.shutdown()
+
+
+def test_chat_template_kwargs_env(monkeypatch):
+    srv = HTTPServer(("127.0.0.1", 0), Fake)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    url = f"http://127.0.0.1:{srv.server_port}/v1"
+    try:
+        Fake.bodies.clear()
+        monkeypatch.delenv("LLM_CHAT_TEMPLATE_KWARGS", raising=False)
+        ttft.probe(url, "fake-model")
+        assert "chat_template_kwargs" not in Fake.bodies[-1]  # default unchanged
+        monkeypatch.setenv("LLM_CHAT_TEMPLATE_KWARGS", '{"enable_thinking": false}')
+        ttft.probe(url, "fake-model")
+        assert Fake.bodies[-1]["chat_template_kwargs"] == {"enable_thinking": False}
+    finally:
         srv.shutdown()

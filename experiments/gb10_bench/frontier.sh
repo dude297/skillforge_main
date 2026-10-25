@@ -6,6 +6,7 @@
 # GPU inference: AUTHORIZATION REQUIRED (docs/GB10_BENCH_RUNBOOK.md). Put the authorizer's name in your notes/label.
 # Never switches models, onboards, downloads, or changes serve flags. Reads docker/nvidia-smi/nemoclaw only.
 # Env: LLM_BASE_URL (http://127.0.0.1:8000/v1), LLM_API_KEY (else ~/.nemoclaw/dual-station-vllm-api-key),
+#      LLM_CHAT_TEMPLATE_KWARGS (JSON, optional; inherited by ttft.py/oncall_infer, e.g. '{"enable_thinking": false}'),
 #      FRONTIER_MIN_MEM_GIB (16), FRONTIER_MAX_TEMP_C (85), FRONTIER_STAGE_TIMEOUT_S (600), FRONTIER_ONCALL_TIMEOUT_S (1200),
 #      FRONTIER_ROOT (results/frontier), PYTHON (python3), FRONTIER_STAGES (probe,ttft,oncall),
 #      FRONTIER_ALLOW_UNKNOWN_SENSORS=1 runs without a readable temp/MemAvailable (recorded in stages.tsv; stub tests only).
