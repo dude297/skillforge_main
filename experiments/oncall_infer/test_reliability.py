@@ -234,7 +234,8 @@ def _stub(mode, reply=""):
                 time.sleep(3)
             if mode == "500":
                 return self._send({"error": "boom"}, 500)
-            self._send({"choices": [{"message": {"content": reply}}]})
+            self._send({"choices": [{"message": {"content": reply}, "finish_reason": "length" if mode == "length" else "stop"}],
+                        "usage": {"prompt_tokens": 5, "completion_tokens": 7}})
 
         def log_message(self, *a):
             pass
@@ -257,7 +258,7 @@ def test_live_strict_bad_model_reply_raises_and_writes_nothing(tmp_path, monkeyp
 
 
 def test_live_strict_synthesis_failure_keeps_previous_state(tmp_path, monkeypatch):
-    """CLI contract: 'nothing written' on a failed --live run. A previous run's registry must survive."""
+    """CLI contract: no run or registry written on a failed --live run. A previous run's registry must survive."""
     monkeypatch.setenv("LLM_RETRIES", "0")
     oncall.run(state=tmp_path / "s", out=tmp_path / "o.json")
     before = (tmp_path / "o.json").read_text(encoding="utf-8")
@@ -269,6 +270,25 @@ def test_live_strict_synthesis_failure_keeps_previous_state(tmp_path, monkeypatc
         srv.shutdown()
     assert (tmp_path / "o.json").read_text(encoding="utf-8") == before
     assert _conn(tmp_path / "s").execute("SELECT COUNT(*) FROM skills").fetchone()[0] == 1  # registry not wiped
+
+
+def test_live_length_twice_writes_failure_log_only(tmp_path, monkeypatch):
+    monkeypatch.setenv("LLM_RETRIES", "0")
+    oncall.run(state=tmp_path / "s", out=tmp_path / "prev.json")
+    srv, url = _stub("length", '{"skill_md": "cut')
+    try:
+        with pytest.raises(llm_mod.LLMUnavailable) as e:
+            oncall.run(True, url, None, tmp_path / "s", tmp_path / "o.json", allow_fallback=False)
+    finally:
+        srv.shutdown()
+    log = tmp_path / "o.failed.json"
+    d = json.loads(log.read_text(encoding="utf-8"))
+    resp = [x for x in d["audit"] if x["event"] == "synthesis_response"]
+    assert e.value.failure_log == str(log) and not (tmp_path / "o.json").exists()
+    assert d["schema"] == "skillforge.oncall_failed_run/1" and d["mode"] == "LIVE_FAILED" and d["model"]["endpoint"] == url
+    assert len(resp) == 2 and all("finish_reason=length" in x["detail"] for x in resp)
+    assert _conn(tmp_path / "s").execute("SELECT COUNT(*) FROM skills").fetchone()[0] == 1  # previous registry intact
+    print(json.dumps(d, indent=1))
 
 
 def test_live_timeout_is_a_meaningful_error(tmp_path, monkeypatch):
@@ -323,7 +343,8 @@ def test_cli_live_failure_exits_2_without_writing(tmp_path):
     r = subprocess.run([sys.executable, "-m", "experiments.oncall_infer", "run", "--live", "--base-url",
                         "http://127.0.0.1:9/v1", "--model", "m", "--state", str(tmp_path / "s"), "--out", str(out)],
                        capture_output=True, text=True, timeout=120, env={**os.environ, "LLM_RETRIES": "0"})
-    assert r.returncode == 2 and "LIVE RUN FAILED" in r.stderr and not out.exists()
+    assert r.returncode == 2 and "LIVE RUN FAILED (no run or registry written" in r.stderr and not out.exists()
+    assert "failure log: none" in r.stderr and not (tmp_path / "o.failed.json").exists()  # pre-flight failure: no run, no audit
 
 
 # ---- timeouts in the skill sandbox ---------------------------------------------------------------------------------

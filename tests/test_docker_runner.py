@@ -1,4 +1,4 @@
-"""SKILL_RUNNER=docker end to end: skipped unless docker and the runner image are usable (GB10/Linux)."""
+"""SKILL_RUNNER=docker end to end; run with pytest (python -m pytest tests/test_docker_runner.py). Skipped unless docker and the runner image are usable (GB10/Linux)."""
 import os
 import shutil
 import subprocess

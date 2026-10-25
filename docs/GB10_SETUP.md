@@ -43,7 +43,7 @@ bash deploy/gb10/sf-gb10.sh reuse      # INC-2 deterministic reuse (0 model call
 bash deploy/gb10/sf-gb10.sh bench      # TTFT / decode / memory / temperature on the served model (bounded)
 bash deploy/gb10/sf-gb10.sh demo       # console + guided demo at http://127.0.0.1:8766/#/demo (shows this run)
 ```
-- `--live` **fails loudly**: exit 2 and nothing written if the endpoint, the model id or the synthesis fails. It never falls back silently.
+- `--live` **fails loudly**: exit 2, no run or registry written (the audit goes to `<out stem>.failed.json`) if the endpoint, the model id or the synthesis fails. It never falls back silently.
 - The model id defaults to `auto`, which is what `/v1/models` serves; that can differ from the Hugging Face name. To pin it, set `MODEL=<served id>`.
 - Every command writes `results/gb10-evidence/<UTC time>-<command>/`, containing the console log, checks, `models.json`, `check-llm.json` and the run JSON. Keep these folders as the judges' evidence.
 
