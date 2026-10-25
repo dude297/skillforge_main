@@ -101,6 +101,8 @@ def from_env():
 
 def parse_json(text):
     """Pull the first JSON object out of model text (handles ```json fences / chatter). None if absent."""
+    if "</think>" in text:  # inline reasoning (no server reasoning parser): only the answer after it counts
+        text = text.rsplit("</think>", 1)[1]
     start = text.find("{")
     while start != -1:
         depth = 0

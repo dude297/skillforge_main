@@ -207,6 +207,7 @@ def test_openai_compatible_endpoint(fake_openai_server):
 def test_parse_json_handles_noise():
     assert llm.parse_json('Sure! {"a": {"b": 1}} done') == {"a": {"b": 1}}
     assert llm.parse_json("no json here") is None
+    assert llm.parse_json('<think>try {"a": 1}</think>\n\n{"a": 2}') == {"a": 2}
 
 
 # --- repeated demo ---

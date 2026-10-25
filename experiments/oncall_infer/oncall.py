@@ -157,7 +157,7 @@ def write(out, doc):
 
 
 # ---- Stage A ---------------------------------------------------------------------------------------------------
-def synthesize_live(base_url, model, data, dest, audit, attempts=2, timeout=300):
+def synthesize_live(base_url, model, data, dest, audit, attempts=2, timeout=int(os.environ.get("ONCALL_TIMEOUT", 300))):
     """Real model. model_calls = chat requests sent (LLM_RETRIES=0, so transport retries cannot hide calls)."""
     os.environ["LLM_RETRIES"] = "0"
     client = llm_mod.OpenAICompatLLM(base_url, model, os.environ.get("LLM_API_KEY") or None, timeout)
@@ -165,7 +165,7 @@ def synthesize_live(base_url, model, data, dest, audit, attempts=2, timeout=300)
     audit("model_health", f"{base_url} serves {info['model']}")
     calls, usage, t0, feedback = 0, {"prompt_tokens": 0, "completion_tokens": 0, "seen": False}, time.monotonic(), ""
     for i in range(attempts):
-        body = {"model": client.model, "temperature": 0, "max_tokens": 8192,
+        body = {"model": client.model, "temperature": 0, "max_tokens": int(os.environ.get("ONCALL_MAX_TOKENS", 8192)),
                 "messages": [{"role": "user", "content": PROMPT % json.dumps(data) + feedback}]}
         calls += 1
         out = client._req("/chat/completions", body)  # adapter transport; keeps `usage` that chat() drops
