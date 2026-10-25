@@ -14,7 +14,7 @@ INC-1/INC-2 fingerprints equal, INC-3 differs; untrusted or other-record evidenc
 approvers (agent/system/policy/blank/non-str) fail closed; agent tool dispatch has no approve path; tampered candidate,
 tampered/extra file in the approved dir are rejected; approved copy is independent of the candidate; double approval and
 double decision are invalid_state with provenance kept; repeated propose does not duplicate open actions; `--live`
-(bad reply, 500, wrong model id, timeout, unreachable) raises LLMUnavailable, exit 2, writes nothing; an overfit live
+(bad reply, 500, wrong model id, timeout, unreachable) raises LLMUnavailable, exit 2, no run or registry written (audit saved to `<out stem>.failed.json`); an overfit live
 skill fails the hidden suite and is not staged; a runaway skill gets "timeout after Ns".
 
 ## Remaining risks, ranked

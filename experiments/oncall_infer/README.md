@@ -20,7 +20,7 @@ All three incidents are SYNTHETIC and hand-written (`fixtures/`):
 ## GB10 live run (repo root, model served by vLLM)
 ```bash
 python -m experiments.oncall_infer run --live --base-url http://127.0.0.1:8000/v1   # --model auto (default) = served id from /v1/models
-# --live fails loudly (exit 2, nothing written) on any model failure; --allow-fallback opts into a labelled RECORDED_SIMULATION
+# --live fails loudly (exit 2, no run or registry written; the per-call audit is saved to `<out stem>.failed.json`) on any model failure; --allow-fallback opts into a labelled RECORDED_SIMULATION
 # a PERSON types the printed command, e.g.
 APP_DB="data/unified/demo/oncall/app.db" SKILLS_DIR="data/unified/demo/oncall/skills" \
   HIDDEN_DIR="experiments/oncall_infer/hidden" python -m app skill approve oncall-serving-config-revert 1 --by "Jane Doe"

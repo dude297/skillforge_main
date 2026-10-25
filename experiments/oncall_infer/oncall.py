@@ -300,6 +300,11 @@ def run(live=False, base_url=None, model=None, state=DEFAULT_STATE, out=DEFAULT_
                 shutil.rmtree(ctx.state, ignore_errors=True)
                 if prev.exists():
                     prev.rename(ctx.state)  # failed strict --live run: the previous registry survives
+                failed = Path(out).with_name(Path(out).stem + ".failed.json")  # audit survives; no prompt, key or hidden suite in it
+                write(failed, {"schema": "skillforge.oncall_failed_run/1", "mode": "LIVE_FAILED", "error": str(e)[:500],
+                               "model": {"id": model, "endpoint": base_url}, "generated_at": now(),
+                               "host": socket.gethostname(), "audit": log})
+                e.failure_log = str(failed)
                 raise
             model_block["note"] = f"endpoint unavailable ({str(e)[:200]}); fell back to the RECORDED reference skill"
             audit("model_unavailable", str(e)[:300])

@@ -1,5 +1,5 @@
 """python -m experiments.oncall_infer run [--live --base-url URL --model ID|auto] [--allow-fallback] [--state DIR] [--out PATH] | reuse
---live fails loudly (exit 2, nothing written) when the endpoint, the model id or the synthesis fails. Only
+--live fails loudly (exit 2, no run or registry written; the audit goes to <out>.failed.json) when the endpoint, the model id or the synthesis fails. Only
 --allow-fallback turns that into a labelled RECORDED_SIMULATION. --model auto = the id the server lists in /v1/models
 (the served name, which can differ from the Hugging Face repo name)."""
 import argparse
@@ -24,7 +24,7 @@ if a.cmd == "run":
         d = oncall.run(a.live, a.base_url if a.live else None, model if a.live else None, a.state, a.out,
                        allow_fallback=a.allow_fallback or not a.live)
     except llm_mod.LLMUnavailable as e:
-        print(f"LIVE RUN FAILED (nothing written, no fallback): {e}", file=sys.stderr)
+        print(f"LIVE RUN FAILED (no run or registry written, no fallback); failure log: {getattr(e, 'failure_log', 'none, failed before the run started')}\n  {e}", file=sys.stderr)
         print("  check: curl -s <base-url>/models ; python -m app check-llm ; or pass --model <served id>", file=sys.stderr)
         sys.exit(2)
     print(f"mode: {d['mode']}   provenance: {d['synthesis']['provenance']}   model: {d['model']['id']}   "

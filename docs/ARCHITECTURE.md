@@ -68,7 +68,7 @@ it after a verified solve. `propose_skill` (`app/skillforge.py`) then:
 In all recorded runs the author was a scripted MOCK flow, a human-written fixture
 (`tests/fixtures/mock_authored_skill/`) or, for OnCall, a hand-written reference skill
 (`experiments/oncall_infer/reference_skill/`). `experiments/oncall_infer` has a `--live` path that sends the prompt to
-an OpenAI-compatible endpoint and counts calls; it fails loudly (exit 2, nothing written) instead of falling back, unless `--allow-fallback` is given. It is tested only against a stub server
+an OpenAI-compatible endpoint and counts calls; it fails loudly (exit 2, no run or registry written; audit in `<out stem>.failed.json`) instead of falling back, unless `--allow-fallback` is given. It is tested only against a stub server
 (`test_live_path_counts_calls_and_tokens_against_a_stub_server`).
 
 ## C. Independent verification
