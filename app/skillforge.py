@@ -215,6 +215,10 @@ def sandbox(mode, skill_dir, payload=None, timeout=15):
             # Strong isolation for the host-side trusted service: throwaway container, no network, read-only FS,
             # no host mounts except the skill copy (ro), unprivileged user, no capabilities, CPU/mem/pid limits.
             shutil.copy(RUNNER, tmp / "_runner.py")
+            # mkdtemp is 0700: the container's uid 65534 could not read the ro mount (exit 2, Permission denied).
+            # Grant read/traverse only; the mount stays read-only and it is a throwaway copy.
+            for p in [tmp, *tmp.rglob("*")]:
+                p.chmod(0o755 if p.is_dir() else 0o644)
             name = f"skillrun-{uuid.uuid4().hex[:12]}"
             cmd = ["docker", "run", "--rm", "-i", "--name", name, "--network", "none", "--read-only",
                    "--memory", "512m", "--memory-swap", "512m",  # swap == memory: no extra swap headroom
