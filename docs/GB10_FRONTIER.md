@@ -1,6 +1,6 @@
 # GB10 compute frontier: what to measure, in what order, and what we can honestly claim
 
-**Status:** harness only. **Nothing in this file or in `experiments/gb10_bench/frontier*` has been run on a GB10.** It was tested only against a local stub OpenAI server on a Windows dev box (`experiments/gb10_bench/test_frontier.py`, labels `fixture-not-gb10*`). Every GB10 number below is a blank to fill on the day.
+**Status:** the harness ran on the GB10 on 2026-10-25 for the served 35B model (c=1/2/4, 70 requests, 0 errors, plus a Qwen-only bench after the serving change); the numbers are in [BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25). The 120B-class and 200B parts below were not run. Before the GB10 runs it was tested against a local stub OpenAI server on a Windows dev box (`experiments/gb10_bench/test_frontier.py`, labels `fixture-not-gb10*`). The comparison template in section (d) is a blank template.
 
 Rules from `docs/GB10_BENCH_RUNBOOK.md` apply: GPU inference is **AUTHORIZATION REQUIRED** (a named operator says yes, and the name goes in the label or notes); unknown stays `null` / "not measured", never 0; no serve-flag, host-setting, driver or profiler changes; no downloads without authorization.
 
@@ -23,7 +23,7 @@ Rules from `docs/GB10_BENCH_RUNBOOK.md` apply: GPU inference is **AUTHORIZATION 
 
 Safety guards (env overrides): abort before any load if MemAvailable < `FRONTIER_MIN_MEM_GIB` (16) or GPU temp > `FRONTIER_MAX_TEMP_C` (85); unreadable sensors also abort (the `FRONTIER_ALLOW_UNKNOWN_SENSORS=1` override is for stub tests and is recorded in `stages.tsv`); the guard re-runs before every stage; a stage is killed mid-way if temp exceeds the limit or it passes `FRONTIER_STAGE_TIMEOUT_S` (600; OnCall `FRONTIER_ONCALL_TIMEOUT_S` 1200); concurrency is capped at 4. The 35B profile serves with `--max-num-seqs 4`, so c=4 is its ceiling anyway.
 
-## (a) Order on the day: 35B baseline FIRST
+## (a) Order: 35B baseline first
 
 1. Gates 0–2 GO (`docs/GB10_RUNBOOK.md`). Verify the demo endpoint works: `python3 -m app check-llm`, `curl -sf -H "Authorization: Bearer $LLM_API_KEY" http://127.0.0.1:8000/v1/models`.
 2. Record the recovery config **before** anything else, into `results/frontier/recovery-<date>.txt`:
@@ -34,14 +34,14 @@ Safety guards (env overrides): abort before any load if MemAvailable < `FRONTIER
 3. With authorization: `bash experiments/gb10_bench/frontier.sh gb10-qwen36-35b --concurrency 1,2,4`. A person approves the OnCall skill (printed command), then `--after-approval`. Then `frontier_report report`.
 4. Re-check the demo still works (step 1). The harness does not change serving, but the GPU was loaded.
 
-## (b) 120B-class: only after the judged demo, or on a second machine
+## (b) 120B-class: not run (needs the demo model taken down or a second machine)
 
 - The only switch path we have is `scripts/switch_model.sh` → `nemoclaw onboard --profile <id>`, which **stops the managed vLLM and recreates the NemoClaw sandbox**. Only one model is resident; there is no hot standby. Expect minutes of downtime per switch plus a rollback.
 - Memory: a 120B NVFP4 model is roughly 120e9 × ~0.56 bytes ≈ **60–75 GB of weights** (to be confirmed from the model card). The 35B runs at `--gpu-memory-utilization 0.4`, i.e. it reserves ≈ 0.4 × 128 GB ≈ 51 GB of the shared 128 GB LPDDR5x pool. 51 + 60–75 GB, before OS, containers, CUDA context and the 120B's own KV cache, does not leave a safe margin, and NemoClaw manages one vLLM anyway. **A 120B test means taking the demo model down.**
-- Do it **only** if all of these hold: the judged demo is over (or a second machine is used); `nemoclaw profiles list` **on the GB10** lists a supported or experimental 120B-class profile (do **not** assume "Nemotron 3.5 Super VL" or any other name exists: **unverified**; nothing 120B is in `DEPLOY_MANIFEST.md` and nothing 120B is staged); the weights are staged or a named person authorizes the download.
+- Do it **only** if all of these hold: the demo is over (or a second machine is used); `nemoclaw profiles list` **on the GB10** lists a supported or experimental 120B-class profile (do **not** assume "Nemotron 3.5 Super VL" or any other name exists: **unverified**; nothing 120B is in `DEPLOY_MANIFEST.md` and nothing 120B is staged); the weights are staged or a named person authorizes the download.
 - Then: `bash scripts/switch_model.sh <120b-profile> <35b-profile>` (rolls back automatically if the probe fails), `frontier.sh gb10-<model>-120b --concurrency 1,2`, and switch back with the recorded rollback command. Re-run Gate 2 afterwards.
 
-## (c) 200B: feasibility assessment only (no test planned)
+## (c) 200B: feasibility assessment only (no test run)
 
 - Arithmetic: NVFP4 ≈ 4 bits/weight plus block scales ≈ **~0.56 bytes/param** → 200e9 × 0.56 ≈ **112 GB of weights**. The GB10 has 128 GB unified memory shared by OS, Docker, the NemoClaw sandbox, the CUDA context/runtime and the KV cache. 128 − 112 = 16 GB for all of that is at best marginal, with little or no room for useful context. Treat as **unproven, likely impractical for agent workloads on one GB10**.
 - NVIDIA markets DGX Spark as able to run models "up to 200B parameters". That is a **vendor claim to verify, not our measurement**, and its conditions (quantization, context length, batch size) are not stated in our sources.

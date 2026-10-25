@@ -3,7 +3,7 @@
 Step-by-step for the operator on the GB10. Telegram uses **long-polling**, so the GB10 needs no inbound port, tunnel or webhook,
 only outbound HTTPS to `api.telegram.org`.
 
-Status labels: **VERIFIED** = checked on this GB10 · **FROM DOCS** = NemoClaw/Telegram or repo docs, not yet run here ·
+Status labels: **VERIFIED** = checked on this GB10 · **FROM DOCS** = NemoClaw/Telegram or repo docs, not run here ·
 **INFERRED** = our reading, unconfirmed.
 
 | File | Purpose |
@@ -77,17 +77,17 @@ preset after a dry run; unsets the secrets and prints the next steps.
 
 Checks 1-3 passed on 2026-10-25 (OCSF: getUpdates -> inference.local -> sendChatAction -> sendMessage, all ALLOWED by
 `telegram_bot`; Qwen served the replies; OpenClaw's own telemetry to `telemetry.openclaw.ai` was DENIED by the restricted tier).
-Checks 4-5 are still open. That is a **Telegram <-> local model round trip**, not yet a Telegram <-> SkillForge workflow.
+Checks 4-5 are not done. That is a **Telegram <-> local model round trip**, not a Telegram <-> SkillForge workflow.
 
-## Step 6 (more work): let Telegram call SkillForge tools
-Intended path (INFERRED, not yet run):
+## Step 6: let Telegram call SkillForge tools
+The two halves are each verified on the GB10 (Telegram <-> local model above; OpenClaw in the sandbox -> SkillForge host tools, Gate 2, records-ops tools, [CLAIMS.md](../../docs/CLAIMS.md) #23c). The joined chain is not recorded. Path (INFERRED):
 ```
 Telegram -> NemoClaw/OpenClaw bridge (allowlist) -> OpenClaw agent + SkillForge skill
         -> client.py <tool> '<json>' -> POST /call -> SkillForge tool service (python -m app serve, bridge-bound)
         -> result -> agent -> Telegram reply           (approval: host CLI only)
 ```
-Needs the tool service bound to the openshell bridge gateway (never `0.0.0.0`; refused by design, VERIFIED), the
-`adapters/openclaw/presets/host-tools.yaml` policy applied after a dry run, and the skill packaged into the sandbox. Limits are in
+Needs the tool service bound to the openshell bridge gateway (never `0.0.0.0`; refused by design, VERIFIED; done for Gate 2 with `--bind 172.18.0.1`), the
+`adapters/openclaw/presets/host-tools.yaml` policy applied after a dry run (done for Gate 2), and the skill packaged into the sandbox. Limits are in
 `GAPS.md`.
 
 ## Step 7: Troubleshooting

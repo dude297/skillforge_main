@@ -2,9 +2,12 @@
 
 Scope: what the code in this repository enforces, how it was checked, and where the known gaps are. Everything
 marked "tested" was tested on a Windows 11 x86_64 dev box without a GPU, with synthetic data and a MOCK agent.
-**Isolation has not been verified on a GB10:** the GB10 live runs used the subprocess runner (Docker was
-permission-denied for the GB10 user and the docker path fails closed), and the OnCall runs did not run under NemoClaw/OpenShell (installed on the GB10 on 2026-10-25, see Network exposure), so
-the SkillForge egress policy was never exercised. Live-model results: [BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25). Design detail: [ARCHITECTURE.md](ARCHITECTURE.md)
+**Isolation on the GB10:** the timed live OnCall runs used the subprocess runner (Docker was permission-denied for
+the GB10 user at first and the docker path fails closed); after a fix, the approved skill was re-verified on a copy under
+the Docker runner ([LIMITATIONS.md](LIMITATIONS.md#evidence)). The OnCall runs did not run under NemoClaw/OpenShell
+(installed on the GB10 on 2026-10-25, see Network exposure). The SkillForge `host-tools` egress policy was applied and
+exercised on the GB10 for the Gate 2 records-ops round trip only. Live-model results:
+[BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25). Design detail: [ARCHITECTURE.md](ARCHITECTURE.md)
 sections C to E. Claims with their tests: [CLAIMS.md](CLAIMS.md).
 
 ## Trust model
@@ -58,7 +61,7 @@ implemented.
 | runner | flags | checked |
 |---|---|---|
 | `SKILL_RUNNER=subprocess` (default) | `python -I -B`, scrubbed env, temp copy, timeout; POSIX rlimits | dev box. **rlimits are not applied on Windows** |
-| `SKILL_RUNNER=docker` | `--network none --read-only --cap-drop ALL --security-opt no-new-privileges`, user 65534, 512 MB memory and swap, 1 CPU, 64 pids, skill copy mounted read-only, killed on timeout | locally on the dev box with Docker Desktop only; **not run on the GB10** |
+| `SKILL_RUNNER=docker` | `--network none --read-only --cap-drop ALL --security-opt no-new-privileges`, user 65534, 512 MB memory and swap, 1 CPU, 64 pids, skill copy mounted read-only, killed on timeout | dev box with Docker Desktop; on the GB10 only the re-verification of the approved skill on a copy ran under Docker, not the timed OnCall runs |
 
 The static lint (AST import and call allowlist) is an early filter, not a security boundary. The runner is the
 boundary.
@@ -89,8 +92,8 @@ so the guarantees above hold only for paths through the tool interface
 - The OpenShell egress preset (`adapters/openclaw/presets/host-tools.yaml`) allows only POST `/call` to the host
   service. **Exercised on the GB10 (Gate 2 GO, 13/13) for the records-ops round trip only:** the OpenShell policy `host-tools` (dry-run reviewed, then applied) allows only `host.openshell.internal:8765`, rest/enforce, allowed IP `172.18.0.1/32`, POST `/call`, binary `/usr/bin/python3`; OCSF shows the agent call ALLOWED and `denied_action_count`=0. A negative test (another destination denied) is not recorded here.
 - GB10 sandbox `skillforge` (operator report): the policies are `telegram_bot` (`api.telegram.org:443`, rest, enforce) and, since Gate 2, `host-tools`; inference goes to the local model as `https://inference.local`. OpenClaw's own telemetry (`telemetry.openclaw.ai:443`) was DENIED by the restricted tier. Verified in OpenShell OCSF logs for one Telegram <-> local model round trip and the Gate 2 host-tools round trip only; a non-allowlisted-sender check and a full egress review are **not done**. See [integrations/telegram/telegram_setup.md](../integrations/telegram/telegram_setup.md) and [integrations/telegram/GAPS.md](../integrations/telegram/GAPS.md).
-- Gate 2 tool service (GB10 operator report, GB10 report sha256 `25a552fe863dcbcce74fb4c5b66c0d4243ec66e95a959d750af6c7f046b99885`): `python3 -m app serve --bind 172.18.0.1 --port 8765`, on the openshell docker bridge only (no 0.0.0.0), 401 without the agent token, `SKILL_RUNNER=docker`, on a scratch state so the approved OnCall registry was not touched. `decide_approval` is not in the agent's tool set (called from the sandbox: `unknown_tool`), so approval stays host-CLI only. The service now writes one access-log line per request (method, path, status, tool, ok; no body, no token), commit `2f8c6e7`. Not covered: the OnCall flow under OpenClaw (Gates 3/4 in progress).
-- **Exception to the no-0.0.0.0 rule.** NemoClaw's auth proxy listens on `0.0.0.0:11435` (token-protected, 401 without the token; hard-coded at `scripts/ollama-auth-proxy.mts:478`, not configurable). The rule binds SkillForge's own services (`app/server.py` still refuses `0.0.0.0`); this third-party listener conflicts with its intent. Proposed mitigation: UFW allow loopback and 172.18.0.0/16 to 11435, deny the rest. **Not applied; pending operator decision.** Other new listeners are loopback/bridge only (127.0.0.1:8080 gateway, 127.0.0.1:18789 dashboard, 172.18.0.1:8080).
+- Gate 2 tool service (GB10 operator report, GB10 report sha256 `25a552fe863dcbcce74fb4c5b66c0d4243ec66e95a959d750af6c7f046b99885`): `python3 -m app serve --bind 172.18.0.1 --port 8765`, on the openshell docker bridge only (no 0.0.0.0), 401 without the agent token, `SKILL_RUNNER=docker`, on a scratch state so the approved OnCall registry was not touched. `decide_approval` is not in the agent's tool set (called from the sandbox: `unknown_tool`), so approval stays host-CLI only. The service now writes one access-log line per request (method, path, status, tool, ok; no body, no token), commit `2f8c6e7`. Not covered: the OnCall flow under OpenClaw (Gate 3: pipeline verified end to end, no candidate passed the independent verifier, 0 accepted; every `host-tools` call was ALLOWED and the only DENIED was OpenClaw telemetry; the hidden suite never left the host).
+- **Exception to the no-0.0.0.0 rule.** NemoClaw's auth proxy listens on `0.0.0.0:11435` (token-protected, 401 without the token; hard-coded at `scripts/ollama-auth-proxy.mts:478`, not configurable). The rule binds SkillForge's own services (`app/server.py` still refuses `0.0.0.0`); this third-party listener conflicts with its intent. Proposed mitigation: UFW allow loopback and 172.18.0.0/16 to 11435, deny the rest. **Not applied; awaiting an operator decision.** Other new listeners are loopback/bridge only (127.0.0.1:8080 gateway, 127.0.0.1:18789 dashboard, 172.18.0.1:8080).
 - The agent tool allowlist is fixed in code (`AGENT_TOOLS`). These isolation settings must not be weakened to make a
   check pass.
 
@@ -117,7 +120,7 @@ The reuse path also runs with a `NoModel` guard that counts any attempt to build
 
 ## Secrets
 
-- No secrets are in this tree (grep-based scan; see [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md#part-3-tests-on-this-tree)).
+- No secrets are in this tree (grep-based scan over the tree and history; see [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md#part-3-tests-on-this-tree)). A GitHub token that was exposed earlier is treated as compromised and must be revoked; none is stored in any tree or commit.
 - `data/.agent_token`, `data/.operator_token`, `.env*` and runtime databases are gitignored.
 - `deploy/gb10/sf-gb10.sh` reads the vLLM API key from a file into `LLM_API_KEY` and never prints it.
 - `deploy/gb10/make_bundle.sh` refuses to build if the bundle contains this machine's hostname, git email or a
@@ -126,6 +129,6 @@ The reuse path also runs with a `NoModel` guard that counts any attempt to build
 ## Reporting a vulnerability
 
 This is a hackathon prototype with no production deployment. Please do **not** open a public issue for a security
-problem. If the repository is published, use GitHub's private vulnerability reporting ("Security" tab, "Report a
-vulnerability") on the repository. Include the commit, the steps to reproduce and the impact. There is no bug bounty
+problem. Use GitHub's private vulnerability reporting ("Security" tab, "Report a vulnerability") on the repository;
+it works only if it is enabled in the repository settings. Include the commit, the steps to reproduce and the impact. There is no bug bounty
 and no response-time commitment.

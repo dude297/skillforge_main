@@ -4,10 +4,12 @@ This file has two parts. **Portable bundle path** is the short procedure for run
 portable bundle. **Setup notes** cover installing NemoClaw and choosing a model. The deep, gate-by-gate procedure is [GB10_RUNBOOK.md](GB10_RUNBOOK.md); measurement methodology is
 in [GB10_FRONTIER.md](GB10_FRONTIER.md) and [BENCHMARKS.md](BENCHMARKS.md).
 
-**Status.** Reported by the operator so far: an aarch64 GB10 host with the GPU detected, about 121 GiB
-memory, Docker 29.6.2. **Live inference with Qwen is not confirmed**: `sf-gb10.sh preflight` has not passed on the
-GB10. Results go to `results/gb10-evidence/` and are summarised in
-[DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md#gb10-results-event-day-2026-10-25).
+**Status (2026-10-25, GB10 operator report).** An aarch64 GB10 host with the GPU detected, about 121 GiB memory and
+Docker 29.6.2. Live inference with Qwen3.6-35B-A3B-NVFP4 (vLLM 0.21.0, served as `skillforge-qwen`) is confirmed, and the
+bundle tooling drove the live OnCall runs, the approval, the reuse trials and the frontier bench. NemoClaw v0.0.137,
+OpenShell 0.0.116 and OpenClaw v2026.9.2 are installed (operator-authorized, no sudo) and Gate 2 is GO (13/13). Results go
+to `results/gb10-evidence/` and are summarised in
+[DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md#gb10-results-event-day-2026-10-25) and [BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25).
 
 ## Portable bundle path
 
@@ -67,14 +69,12 @@ Sources:
 - NemoClaw docs: https://docs.nvidia.com/nemoclaw/latest/
 - OpenClaw skills docs: https://docs.openclaw.ai/tools/skills
 
-NemoClaw is **alpha**. Nothing below has been run on a GB10 yet. Commands are quoted from the docs. Treat behaviour as unverified until you tick the go/no-go list.
+NemoClaw is **alpha**. The commands below are quoted from the docs. On the GB10 the first `channels add telegram` rebuild deleted the original sandbox `my-assistant`; it was recreated as `skillforge` ([telegram_setup.md](../integrations/telegram/telegram_setup.md)), so substitute your sandbox name for `my-assistant`. What is recorded as run on the GB10 is listed in the go / no-go section at the end.
 
 > **Dell ≠ DGX Spark.** The playbook targets DGX Spark running DGX OS (Ubuntu 24.04). The platform table lists DGX OS as *Tested* and generic Linux as supported. Don't assume Express Install behaves the same on the Dell image. Run the checks in step 1 first.
 
 ## 0. Preparation (needs internet; approve each step yourself)
-- [ ] Clone this repo onto a USB stick, along with `pip download pytest -d wheels/` built for aarch64/py3.
-- [ ] Ask the organisers whether the GB10s come with NemoClaw and a model preinstalled. The model is roughly 20+ GB. A past listing advised bringing models on USB because the venue Wi-Fi is slow.
-- [ ] Prepare a Telegram bot: get a token from @BotFather and your numeric user ID from @userinfobot. Keep both in a password manager, never in the repo.
+The offline clone and wheels are covered by the portable bundle path above and [DEPLOY_MANIFEST.md](DEPLOY_MANIFEST.md); the model weights are on the SSD. A Telegram bot needs a token from @BotFather and a numeric user ID from @userinfobot, kept in a password manager and never in the repo.
 
 ## 1. Hardware and OS checks (read-only)
 ```bash
@@ -132,6 +132,8 @@ Default to the Express Install model. Only switch if another model is clearly mo
 | 4 | `qwen3.5:9b` | Ollama (listed in the playbook) | Small and fast. Emergency fallback if memory or latency is a problem. | Weakest reasoning |
 
 **Downloads are tens of GB each.** Pre-stage them in advance and get team approval before pulling anything.
+
+Outcome on the GB10: Qwen3.6-35B-A3B-NVFP4 is the model in use. Nemotron 3.5 Lightning was tried on the live OnCall synthesis (0 of 2) and stopped, container kept ([BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25)). The Stage A/B scorecard below is a procedure; no filled scorecard is recorded.
 
 ### Switch models
 ```bash
@@ -230,7 +232,10 @@ nemoclaw my-assistant policy-add telegram       # egress preset (docs also show 
 | Logs | `nemoclaw my-assistant logs --follow --since 5m`, `nemoclaw my-assistant status --json` |
 | Demo state dirty | `python3 -m app reset` (inside the sandbox) |
 
-## Go / no-go (all must be ✅ before building features)
+## Go / no-go checklist
+
+Recorded on the GB10: local inference (`check-llm`, 127.0.0.1:8000), Gate 2 (OpenClaw calls host tools; approval refused outside the host CLI), and a Telegram round trip. The other items are not recorded in this repository.
+
 - [ ] `bash scripts/gb10_preflight.sh` prints GO
 - [ ] `nemoclaw my-assistant status` is healthy
 - [ ] `check-llm` against 127.0.0.1:8000 reports `structured_output_ok: true`

@@ -1,6 +1,6 @@
 # GB10 benchmark runbook: hardware-aware execution readiness (branch `research/gb10-bench`)
 
-**Status:** research and docs only. Nothing here was run on the GB10. No core change (`app/`, `adapters/` untouched). Nothing is merged, pushed or deployed.
+**Status:** the measurement matrix below is a method. The GB10 runs of 2026-10-25 used the frontier harness (`experiments/gb10_bench`, M3/M5-style streaming TTFT and decode) and the OnCall flow; their numbers are in [BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25). The other rows (CPU skill compute, Docker start floor, power sampling, hypotheses H1 to H9) are not recorded as run on the GB10. No core change (`app/`, `adapters/` untouched).
 
 **Rules that apply to every row below:**
 - Each result file carries a `label`: `GB10`, `DEV BOX` or `FAKE SERVER`. Only `GB10` rows are hardware evidence.
@@ -126,11 +126,11 @@ Not implemented. Nothing reads this record to decide where work runs. No schedul
 
 ## 6. Limitations
 
-- Every number in the repo is DEV BOX (Windows, x86_64, Docker Desktop on WSL2). There are no GB10 numbers anywhere.
-- `ttft.py` has only been run against a fake local server (`experiments/gb10_bench/test_ttft.py`). That checks the plumbing, not a measurement. Its client TTFT includes HTTP and Python overhead, and with reasoning models "first token" means the first reasoning chunk.
+- The numbers in `experiments/perf/results/` are DEV BOX (Windows, x86_64, Docker Desktop on WSL2). GB10 numbers are only those in [BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25).
+- `test_ttft.py` runs `ttft.py` against a fake local server, which checks the plumbing, not a measurement; the GB10 TTFT numbers come from the frontier harness runs. Its client TTFT includes HTTP and Python overhead, and with reasoning models "first token" means the first reasoning chunk.
 - `decode_tok_s` needs `stream_options.include_usage`. If the served vLLM build ignores it, throughput stays `null`; use the `/metrics` aggregate instead.
 - `/metrics` names vary across vLLM versions (`inter_token_latency_seconds` vs `time_per_output_token_seconds`, `kv_cache_usage_perc`, `prefix_cache_*`). A name that's absent yields `null`. Histograms give only a mean and coarse quantiles.
-- Unified memory: there is no clean split between CPU and GPU use. nvidia-smi memory and power fields may be `[N/A]` on GB10; this is unknown until run natively.
+- Unified memory: there is no clean split between CPU and GPU use. nvidia-smi memory fields may be `[N/A]` on GB10; the frontier run recorded MemAvailable, temperature and power (62 C, 42.07 W peak).
 - Runner container RSS isn't sampled (the containers are too short-lived). `runner_peak_kb` is Python heap only.
 - Harness Docker samples are small (n=3 at one size). M2b adds a floor but no skill work.
 - "Cold" never means "after dropping the page cache": that would be a host-setting change.

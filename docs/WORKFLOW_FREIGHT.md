@@ -1,6 +1,6 @@
-# Freight exception workflow: employee request → verified result (branch `exp/workflow`)
+# Freight exception workflow: employee request → verified result
 
-This is an experiment built on rc1 (`integ/live`). It is **not merged**. The data is **SYNTHETIC**: Bramblewood Outfitters and Kestrel Freight Lines are fictional. The agent in every run below is a **scripted MOCK**, and the channel is **SIMULATED**. No real model and no real Slack or Telegram were used.
+This workflow was built on rc1 (`integ/live`, branch `exp/workflow`) and is part of this tree. The data is **SYNTHETIC**: Bramblewood Outfitters and Kestrel Freight Lines are fictional. The agent in every run below is a **scripted MOCK**, and the channel is **SIMULATED**. No real model and no real Slack or Telegram were used.
 
 ## 1. Event requirements → evidence
 
@@ -21,9 +21,9 @@ Published wording:
 
 | requirement | existing implementation | real test evidence | missing integration | demo proof |
 |---|---|---|---|---|
-| GB10 local inference | `adapters/llm.py`, `models.json`, `models probe`, runbook Gates 0–5 | fake vLLM servers only | everything on hardware | `models probe` PASS on the GB10 (not run) |
+| GB10 local inference | `adapters/llm.py`, `models.json`, `models probe`, runbook Gates 0–5 | fake vLLM servers only | everything on hardware | `models probe` PASS on the GB10 (not recorded; local inference itself is verified, [BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25)) |
 | NemoClaw | onboarding profiles, `nemoclaw exec` agent command, `switch_model.sh` | fake `nemoclaw` binaries | real onboard, sandbox, `channels add` | `nemoclaw <sb> status` |
-| OpenClaw | `adapters/openclaw/skill/SKILL.md` + `client.py`; `bench.OpenClawAgent` (Gateway JSON) | contract parsed from source; never run | a real agent turn following SKILL.md | TUI or channel transcript |
+| OpenClaw | `adapters/openclaw/skill/SKILL.md` + `client.py`; `bench.OpenClawAgent` (Gateway JSON) | contract parsed from source; fixtures hand-written | a real agent turn following SKILL.md (Gate 2 ran OpenClaw against the records-ops skill on the GB10, [CLAIMS.md](CLAIMS.md) #23c) | TUI or channel transcript |
 | OpenShell | Docker skill runner flags; `host.openshell.internal` preset; no-0.0.0.0 bind | Docker runner tests (when Docker exists); docs | policy `--dry-run`, `openshell term` egress view | "nothing left the box" screenshot |
 | Slack / Discord / Telegram | **none of ours, by design**: NemoClaw `channels add` | **none** | tokens, `channels add`, rebuild, round trip | real message in, reply out |
 | autonomous execution | agent tools, skill reuse (`run_skill`), `fastpath` | MOCK agent over the real HTTP tool service (rehearsals, e2e) | real model choosing the tools | unscripted model run |
@@ -40,7 +40,7 @@ Published wording:
 
 ## 2. Messaging (no second framework)
 
-The channel belongs to NemoClaw, and SkillForge adds no messaging code. This is from the NVIDIA NemoClaw docs (`messaging-channels/set-up-slack`, `set-up-telegram`) and is **not run here**:
+The channel belongs to NemoClaw, and SkillForge adds no messaging code. This is from the NVIDIA NemoClaw docs (`messaging-channels/set-up-slack`, `set-up-telegram`) and is **not run for this workflow** (the Telegram path on the GB10 is in [integrations/telegram/telegram_setup.md](../integrations/telegram/telegram_setup.md)):
 - **Slack (preferred).** It uses Socket Mode, so the GB10 needs no public URL (inferred).
 
   ```bash

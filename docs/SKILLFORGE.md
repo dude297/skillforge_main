@@ -97,7 +97,7 @@ The original 45 automated tests cover the list below. §10 lists the 15 added si
 
 ## 7. Hackathon acceptance test (REAL local model, GB10)
 
-This has not been run yet. All steps use `scripts/ro.sh` on the host, with `SKILL_DIR` set to the installed skill dir.
+This `scripts/ro.sh` procedure (the records-ops, three-mode path) is not recorded as run on the GB10; the OnCall equivalent ran there ([BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25)). All steps use `scripts/ro.sh` on the host, with `SKILL_DIR` set to the installed skill dir.
 
 Start from scratch: delete `/sandbox/skillforge` and `/sandbox/records-ops.db` inside the sandbox.
 
@@ -342,7 +342,7 @@ sandbox (agent, exec)                         host (trusted)
 | subprocess | about 0.16 s | about 2.2 s |
 | docker | about 0.72 s | about 11.7 s |
 
-Use docker on the GB10 host, because generated code then runs outside OpenShell. The 0.6 s is expected to be small next to real model latency, but that is not yet measured.
+Use docker on the GB10 host, because generated code then runs outside OpenShell. Measured on the GB10 for the OnCall skill: reuse about 28 ms (p50 of 6 trials) in the subprocess runner and 275.5 ms under Docker (container start-up included), against 173.0 s for the one-time synthesis model call (attempt 4); see [BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25) and [LIMITATIONS.md](LIMITATIONS.md#evidence).
 
 **Still not isolated:**
 - If the remote service is unreachable, the `--local` package is the fallback, and it reverts to the old in-sandbox trust model.
@@ -438,9 +438,9 @@ The formula is computed separately for automated seconds and for model calls. An
 
 **Measured (mock):** L = 1.77 s, a = 0.061 s, r = 0.176 s, p = 1.0. That gives **n\* = never**, for the reason above.
 
-**Model calls:** **pending**, because the mock has no model.
+**Model calls:** not computed in the mock (it has no model). On the GB10 the OnCall learning cost was one model call (attempt 4, 173.0 s) and reuse made 0, but no agent-path baseline was measured, so no break-even is computed.
 
-On the GB10 this becomes meaningful: a will be several model calls and probably tens of seconds, while r in mode C is 0 model calls. Expect n\* to be small, but nothing here proves that yet.
+On the GB10 the learning cost is measured for OnCall (one model call, 173.0 s) and r in mode C is 0 model calls, but the agent-path cost `a` was not measured, so n\* is not computed.
 
 **What it does not capture yet:**
 - the human time to review a skill
@@ -490,7 +490,7 @@ Before trusting the real numbers, verify:
 - **AGENT_CMD:** the flags come from the docs. If `--no-tty` or `--json` differ, override with `AGENT_CMD='...'`.
 - **The OpenClaw memory/bootstrap files.** A fresh `--session-id` resets the conversation, but if OpenClaw memory persists across sessions, earlier trials could leak into later ones. Check and clear it between modes.
 
-## 16. Model assumptions (from vendor docs; not run)
+## 16. Model assumptions (from vendor docs)
 
 | model | id | serve | notes |
 |---|---|---|---|
@@ -502,7 +502,7 @@ Before trusting the real numbers, verify:
 - **Model load time** has no vLLM metric. Measure container start → `/v1/models` responding by hand.
 - **Peak GPU memory** comes from `nvidia-smi` and may read N/A on GB10 unified memory, which is recorded as null.
 
-## 17. OnCall interfaces (prepared, not implemented)
+## 17. OnCall interfaces (implemented as the experiment `experiments/oncall_infer`)
 
 **Monitor → Detect → Investigate → Patch → Test → Human review → Learn → Reuse** maps onto what already exists. An OnCall scenario would supply:
 - **records:** services and incidents
@@ -525,9 +525,9 @@ Not built: monitoring integrations, patch generation, CI/test execution or PR au
 | Least privilege: `APP_AGENT_TOOLS` allowlist (can only remove tools), wildcard bind refused, tools listed at startup | implemented and tested |
 | Resource limits bite: docker 512 MB kill (tested locally), POSIX `RLIMIT_AS` stops a 2 GB allocation (tested on Linux, Python 3.11) | tested |
 | Docker runner isolation | **tested locally** (Docker 29, `python:3.12-slim`) |
-| OpenShell admits the sandbox → `host.openshell.internal:8765` (`host-tools.yaml`) | **not verified** |
+| OpenShell admits the sandbox → `host.openshell.internal:8765` (`host-tools.yaml`) | **verified on the GB10 for records-ops tools** (Gate 2 GO, 13/13); not for the OnCall flow |
 | `openclaw agent --json` driver, session isolation, tool counts | from docs only; **not verified** |
-| vLLM `/metrics` names and access from the host | from docs, parser tested against a fake; **not verified on GB10** |
-| A real model solves, writes a skill that passes the hidden suite, then reuses it | **not run; needs GB10** |
+| vLLM `/metrics` names and access from the host | parser tested against a fake; vLLM request counters were read on the GB10 before and after the reuse trials; other metric names **not verified** |
+| A real model writes a skill that passes the hidden suite, a person approves it, then it is reused | **run on the GB10 for OnCall** (attempt 4: hidden 9/9; INC-2 reused with 0 model calls); generation is not reliable (about 3 of 7 later attempts pass). The records-ops solve-and-learn path with an agent is not recorded as run |
 | Any real-model latency or model-call improvement | **none claimed** |
 | `--local` fallback package / `scripts/ro.sh` | kept for when the remote boundary can't be set up; weaker trust model |

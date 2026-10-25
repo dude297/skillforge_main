@@ -38,7 +38,7 @@ Source: `ui/public/demo/oncall-run.recorded.json` (`mode: RECORDED_SIMULATION`, 
 
 Reuse cut tool calls by about 2.5–3×. It made latency **worse** in mock (0.06 s → 0.17 s): the mock agent costs
 nothing to think, while a skill run costs about 150 ms of process start-up. Learning break-even in seconds is
-"never" under mock; in model calls it is **pending** ([SKILLFORGE.md §14](SKILLFORGE.md#14-learning-break-even-benchbreakeven)).
+"never" under mock; in model calls it is not computed, because no per-task model-call comparison was measured ([SKILLFORGE.md §14](SKILLFORGE.md#14-learning-break-even-benchbreakeven)).
 
 ### Indexed freight skill variant (research)
 
@@ -110,8 +110,7 @@ check and a hidden suite of 9 cases the model never sees.
 - **Prompt revision, disclosed.** Between attempts 3 and 4 the operator revised the prompt after seeing the 7/9 result. It
   adds an evidence-sufficiency rule: propose only with trusted OOM evidence and exactly one memory key raised; otherwise
   refuse with `requires_review` / `insufficient_evidence` / `not_applicable`. The authoring agent did not read the hidden suite.
-- **Pass rate.** Original prompt: 0 of 3 passed. Revised prompt: 1 of 2 passed (9/9, then 8/9). Two samples are not a
-  success rate. Every failing candidate was rejected by the verifier and none was staged.
+- **Pass rate.** Original prompt: 0 of 3 passed. Revised prompt: 1 of 2 passed (9/9, then 8/9), and 3 of 7 with thinking on plus 0 of 1 with thinking off in the later evaluation below: 4 passes in 9 attempts under the revised prompt. Every failing candidate was rejected by the verifier and none was staged.
 - **Attempt 6 (Nemotron, failed).** A thinking-budget problem, not formatting: both calls exhausted 32000 tokens while reasoning. Nemotron total **0 of 2** (attempts 3 and 6). Wall time 13.7 min, contended by the NemoClaw install, so do not read it as clean latency. GPU 823 samples, utilization p50 96%, temperature max 74 C, power max 46.2 W. Evidence on the GB10: `console.txt` sha256 `c103565e937f9a1254d934d8982f4a0e2ef33dd1d4411518a30d09f1d2521cee` (not in this repo). **Overall tally: Qwen 1 pass in 4 (1 of 2 with the disclosed revision); Nemotron 0 of 2.**
 - **Extra bench numbers (GB10 operator report).** Qwen: TTFT p50 0.081 s, decode about 69-76 tok/s, structured JSON 12/12, tool calls 12/12, 0 of 33 errors. Nemotron: TTFT 0.244 s, first answer token 8.1 s. `check-llm` warm-after-idle 0.35-0.56 s (cold start not measured). No file hashes were supplied for these.
 - **Not deterministic.** Attempts 4 and 5 used the same configuration at temperature 0 and produced different code and
@@ -133,6 +132,22 @@ check and a hidden suite of 9 cases the model never sees.
 - **Lint-bypass finding.** The attempt-4 candidate imports only `json` and `typing`, uses no file, attribute or dunder
   access, passes the hardened lint, and its hash is unchanged, so its 9/9 is not contaminated by the finding in SECURITY.md.
 
+**Qwen skill-synthesis evaluation (GB10, 2026-10-25; GB10 operator report).** Current serving config (0.80 / `max_model_len` 131072 / 16 seqs, fp8 KV), `ONCALL_MAX_TOKENS` 40000, the committed prompt including the one disclosed revision. Scratch states only: nothing was staged or approved. The evaluator never read the hidden suite. Timings are CONTENDED (parallel runs).
+
+| setting | runs | passed (hidden 9/9 and regression 5/5) | failed |
+|---|---|---|---|
+| thinking on | 7 | 3 | 4, each hidden 8/9 |
+| thinking off | 1 | 0 | 1, hidden 8/9 |
+
+- Regression passed 5/5 in all 8 runs. All 5 failures are the same hidden case, `oom_without_memory_key_change_escalates`: the model maps "OOM present, zero memory keys changed" to `not_applicable` instead of `requires_review`. That is an instruction-following miss, not truncation or format (completion tokens 7.8k to 16.0k, far under the cap).
+- Pooled with live attempts 4 and 5 under the revised prompt: 4 passes in 9 attempts. The 95% confidence interval for 3 of 7 is roughly 16% to 75%.
+- 275 to 469 s per run (mean about 422 s), contended, so not clean latency.
+- The verifier rejected every failing candidate: no false accepts.
+- **Decision: no further prompt revision.** The failing hidden case name is now known, so any change would be teaching to the test.
+- **Verdict.** Generation is not reliable enough for unattended use (about 3 of 7 per attempt). The verifier plus human approval is what makes it safe; reuse of an approved skill is deterministic.
+- The `app bakeoff` `skill_codegen` probe at its committed 4096-token cap truncates with thinking on (0 of 2); at 40000 it passes 1 of 2 (one lint failure on `import pytest`, one hidden 11/11 pass).
+- Evidence on the GB10 (not in this repo): summary `005-qwen-skill-eval.md` and the SSD folder `eval-20261025-165709/` with `MANIFEST.sha256`.
+
 **Approval and reuse on the GB10 (2026-10-25, GB10 commit `35d5820`; the GB10 operator's report).**
 
 - **Approval.** At 20:25:02Z a person (the operator) typed `python -m app skill approve oncall-serving-config-revert 1 --by "<operator>"` on the GB10 host CLI. Result: status approved, active, sha256 `7fe0c025039b11b93617ba63955f3fe9da0ec55c7e7a0ed11bbae3982fa3aa0e` (matches the attempt-4 tree hash). The command re-ran the hidden suite (`hidden_validation.ok` true). Audit actor `human:<operator>`, `approval.kind` `host_cli`. Caveat: the `--by` name is not identity-verified.
@@ -145,15 +160,15 @@ check and a hidden suite of 9 cases the model never sees.
 - **Caveats.** Subprocess runner (no Docker isolation); unauthenticated `--by` identity; small n (1 of 2 passes with the disclosed revision; 6 reuse trials); disclosed prompt revision after attempt 2. Overall live status: GO.
 - **Docker follow-up (after the runs above).** The GB10 Docker path first failed closed on every run (the 0700 temp dir was unreadable by the container's uid 65534; fixed in this release, `tests/test_docker_runner.py`). With the fix, the approved attempt-4 skill was re-verified on a copy with `SKILL_RUNNER=docker` (`--network none`, read-only, 512 MB, 1 CPU, pids 64, no capabilities, uid 65534, only the skill copy mounted, so the hidden suite is unreachable): hidden 9/9, regression 5/5, same hash `7fe0c025...` (GB10 evidence `docker-reverify.json`, sha256 `4b7d54fd1cbd3462ce8a3b5d0127c9113152edfc51fbb58c2a8a790717148f02`, not committed). INC-2 reuse under Docker: 0 model calls, 275.5 ms (container start-up included), INC-3 refused. The original attempt-4 verification and the 6 timed reuse trials still ran in the subprocess runner.
 
-**OnCall not run under NemoClaw; Gate 2 was.** NemoClaw v0.0.137, OpenShell 0.0.116 and OpenClaw v2026.9.2 were installed on the GB10 on 2026-10-25, during attempt 6 and after the OnCall runs above (operator-authorized, no sudo); nothing on the OnCall path ran under them. Afterwards Gate 2 passed 13/13 (GB10 report sha256 `25a552fe863dcbcce74fb4c5b66c0d4243ec66e95a959d750af6c7f046b99885`): an OpenClaw agent in the sandbox called `search_skills`, `read_records` (records A-101..A-105; 4 tool calls, 0 failures) and `get_audit` on the host tool service through the `host-tools` policy. That is a records-ops round trip, not a benchmark and not the OnCall flow (Gates 3/4 in progress) ([CLAIMS.md](CLAIMS.md) #23c). A Telegram <-> local model round trip was verified separately ([CLAIMS.md](CLAIMS.md) #26, [integrations/telegram/telegram_setup.md](../integrations/telegram/telegram_setup.md)).
+**OnCall not run under NemoClaw; Gate 2 was.** NemoClaw v0.0.137, OpenShell 0.0.116 and OpenClaw v2026.9.2 were installed on the GB10 on 2026-10-25, during attempt 6 and after the OnCall runs above (operator-authorized, no sudo); nothing on the OnCall path ran under them. Afterwards Gate 2 passed 13/13 (GB10 report sha256 `25a552fe863dcbcce74fb4c5b66c0d4243ec66e95a959d750af6c7f046b99885`): an OpenClaw agent in the sandbox called `search_skills`, `read_records` (records A-101..A-105; 4 tool calls, 0 failures) and `get_audit` on the host tool service through the `host-tools` policy. That is a records-ops round trip, not a benchmark and not the OnCall flow (Gate 3: pipeline verified end to end, no candidate passed the independent verifier, 0 accepted; details in [CLAIMS.md](CLAIMS.md) #23b) ([CLAIMS.md](CLAIMS.md) #23c). A Telegram <-> local model round trip was verified separately ([CLAIMS.md](CLAIMS.md) #26, [integrations/telegram/telegram_setup.md](../integrations/telegram/telegram_setup.md)).
 
 ### Methodology
 
 From [GB10_FRONTIER.md](GB10_FRONTIER.md), [GB10_BENCH_RUNBOOK.md](GB10_BENCH_RUNBOOK.md) and [EXEC_PERF.md](EXEC_PERF.md) §5–6:
 
 - **Authorization.** GPU inference needs a named operator's yes; the name goes in the label.
-- **Order.** The 35B demo model (Qwen3.6-35B-A3B NVFP4) first, at concurrency 1, 2, 4. Larger models only after the
-  judged demo, because switching recreates the NemoClaw sandbox.
+- **Order.** The 35B demo model (Qwen3.6-35B-A3B NVFP4) first, at concurrency 1, 2, 4 (done). Larger models are not
+  measured; switching recreates the NemoClaw sandbox ([GB10_FRONTIER.md](GB10_FRONTIER.md)).
 - **Identity.** `identity.json` records GPU name and driver, the served model id from `/v1/models`, `max_model_len`,
   vLLM version, container image and serve args (keys redacted). Quantization and revision are null unless read from
   config, never guessed from the name.

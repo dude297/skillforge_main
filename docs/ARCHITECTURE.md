@@ -1,16 +1,19 @@
 # Architecture and security
 
-Scope: what the code in this repository does, and which parts are only intended. Everything marked "verified" was
-verified on a Windows 11 x86_64 dev box without a GPU, with synthetic data and a MOCK agent. **Nothing was verified
-on a GB10.** Security model and known gaps: [SECURITY.md](SECURITY.md).
+Scope: what the code in this repository does and where each part was checked. Everything marked "verified" was
+verified on a Windows 11 x86_64 dev box without a GPU, with synthetic data and a MOCK agent, unless stated as GB10.
+On the GB10 (2026-10-25) the following ran: vLLM serving, live OnCall synthesis and verification, approval and reuse
+(subprocess runner), the NemoClaw/OpenShell/OpenClaw install, and the Gate 2 records-ops round trip through the sandbox.
+The OnCall flow under OpenClaw (Gates 3/4) is in progress and is not verified. Security model and known gaps:
+[SECURITY.md](SECURITY.md).
 
 ```mermaid
 flowchart TB
-  subgraph SB["A. OpenShell sandbox on GB10 - intended, unverified"]
+  subgraph SB["A. OpenShell sandbox on GB10 - Gate 2 (records-ops tools) verified; OnCall flow not run through it"]
     Agent["OpenClaw agent"]
     Client["client.py - forwards agent tools only"]
   end
-  VLLM["A. vLLM local model endpoint - intended, unverified"]
+  VLLM["A. vLLM local model endpoint - served on the GB10"]
   subgraph HOST["Host - trusted"]
     Service["app/server.py - POST /call, bearer token"]
     Tools["app/tools.py - policy check, approval gate, execute once"]
@@ -39,15 +42,15 @@ flowchart TB
   Person --> Registry
 ```
 
-## A. Local inference: GB10, NemoClaw, OpenShell, vLLM (intended, unverified)
+## A. Local inference: GB10, NemoClaw, OpenShell, vLLM
 
-| piece | intended design | state |
+| piece | design | state |
 |---|---|---|
-| Model serving | vLLM with an OpenAI-compatible API on the GB10; primary `nvidia/Qwen3.6-35B-A3B-NVFP4`, alternate Nemotron 3.5 Lightning (`data/models.json`) | not run; no model in any recorded result |
-| Agent | OpenClaw inside a NemoClaw/OpenShell sandbox; SkillForge does not implement its own agent loop | not run |
+| Model serving | vLLM with an OpenAI-compatible API on the GB10; primary `nvidia/Qwen3.6-35B-A3B-NVFP4`, alternate Nemotron 3.5 Lightning (`data/models.json`) | run on the GB10 (2026-10-25): vLLM 0.21.0 serving Qwen3.6-35B-A3B-NVFP4 as `skillforge-qwen`; Nemotron attempted, 0 of 2 on OnCall ([BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25)). The committed recording contains no model output |
+| Agent | OpenClaw inside a NemoClaw/OpenShell sandbox; SkillForge does not implement its own agent loop | installed on the GB10; Gate 2 (records-ops tools) GO 13/13; driving the OnCall flow (Gates 3/4) is in progress |
 | Boundary | the sandbox holds only `SKILL.md`, `client.py`, `client.json`; the DB, verifier, hidden suite and approvals live on the host behind `python -m app serve` | service and client tested locally ([SKILLFORGE.md §11](SKILLFORGE.md#11-trust-boundary-v2-trusted-service-outside-the-sandbox)) |
-| Egress policy | preset `adapters/openclaw/presets/host-tools.yaml`: host `host.openshell.internal`, POST `/call` only | **not verified on runtime** |
-| Model client | `adapters/llm.py`; `LLM_BASE_URL` unset or `mock` selects the MOCK client | MOCK only |
+| Egress policy | preset `adapters/openclaw/presets/host-tools.yaml`: host `host.openshell.internal`, POST `/call` only | applied and exercised on the GB10 for the Gate 2 records-ops round trip (no negative test recorded) |
+| Model client | `adapters/llm.py`; `LLM_BASE_URL` unset or `mock` selects the MOCK client | MOCK when unset; the live OnCall runs used `--live` against the vLLM endpoint |
 | Capability gate and failover | a model must pass a probe (endpoint, identity, tool call, schema, multi-step, latency) before it may write skills ([RESILIENCE.md](RESILIENCE.md)) | tested with mock and stubs |
 
 Runbook: [GB10_RUNBOOK.md](GB10_RUNBOOK.md); setup notes: [GB10_SETUP.md](GB10_SETUP.md);
@@ -55,7 +58,7 @@ offline staging: [DEPLOY_MANIFEST.md](DEPLOY_MANIFEST.md).
 
 ## B. Program synthesis
 
-A skill is a directory with `SKILL.md`, `scripts/helper.py` and `tests/test_helper.py`. The model is meant to write
+A skill is a directory with `SKILL.md`, `scripts/helper.py` and `tests/test_helper.py`. The model writes
 it after a verified solve. `propose_skill` (`app/skillforge.py`) then:
 
 1. copies the draft to `candidates/<name>/vN` (over the service, it accepts file contents only, never a host path);
@@ -133,13 +136,13 @@ so the guarantees above hold only for paths through the tool interface ([SKILLFO
 |---|---|---|
 | Skip the model when an approved skill matches exactly | implemented | `app/bench.py` mode C; [SKILLFORGE.md §13](SKILLFORGE.md#13-three-mode-benchmark-python--m-app-bench) (MOCK) |
 | Count model calls and tokens; unknown stays null | implemented | `adapters/metrics.py`, `bench`; OnCall `model_calls` |
-| Learning break-even | implemented as a formula; model-call input pending | [SKILLFORGE.md §14](SKILLFORGE.md#14-learning-break-even-benchbreakeven) |
+| Learning break-even | implemented as a formula; the model-call input is not yet computed (no measured per-task model-call comparison) | [SKILLFORGE.md §14](SKILLFORGE.md#14-learning-break-even-benchbreakeven) |
 | Faster skill variants | research only; the indexed freight variant is human-authored and was not promoted | [EXEC_PERF.md](EXEC_PERF.md) |
-| TTFT probe for GB10 | prepared, not run | `experiments/gb10_bench/`, [GB10_BENCH_RUNBOOK.md](GB10_BENCH_RUNBOOK.md) |
+| TTFT probe for GB10 | run on the GB10 (frontier harness, 70 requests) | `experiments/gb10_bench/`, [GB10_BENCH_RUNBOOK.md](GB10_BENCH_RUNBOOK.md) |
 | GPU-aware scheduling | **proposed only** | none |
 | Model sleep/wake | **proposed only**; `experiments/router/power.py` is read-only detection and advice | [experiments/router/README.md](../experiments/router/README.md) |
 
-No resource number in this repository was measured on a GB10.
+GB10 numbers are TTFT, decode tok/s, memory, temperature and power for the served model and the OnCall reuse latency ([BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25)). No GPU, power or token saving versus an alternative is measured.
 
 ## Modules
 

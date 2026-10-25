@@ -1,8 +1,8 @@
 # Enterprise slice: authorized task → approved capability, agent, or person (branch `exp/enterprise`)
 
-This branch is `exp/workflow` (the freight workflow) with `exp/router` (the router and catalog) merged in, plus the work below. It is **not merged** anywhere, and the rc1 core changes are **proposals for review**. Everything ran on a dev box with a MOCK library: a scripted solve and human-written skills. No model, no GB10, no real channel. The data is SYNTHETIC.
+This slice was developed on `exp/enterprise` (the freight workflow `exp/workflow` with the router and catalog `exp/router` merged in, plus the work below). Its code is part of this tree (`experiments/`, and the namespace, contract v2 and pinned-verifier changes in `app/`). Whether the core changes were reviewed is not recorded. Everything in this document ran on a dev box with a MOCK library: a scripted solve and human-written skills. No model, no GB10, no real channel. The data is SYNTHETIC.
 
-## 1. P0: three correctness and security gaps (all real; fixed here, core changes pending review)
+## 1. P0: three correctness and security gaps (all real; fixed in the core)
 
 | gap (audit finding) | fix | core files | tests |
 |---|---|---|---|
@@ -105,17 +105,17 @@ That is every file in `tests/` (188 passed, 2 skipped) plus 71 experiment tests.
 | Bootstrap Lite | **GO for the backend manifest**, **NO-GO for the UI** | real read-only manifest; UI view not built |
 | communication channel | **NO-GO** | no real round trip; identity and correlation gaps (§5) |
 | live console | **GO with a caveat** | real data; a mixed batch reads "Partly done, needs a person" (Investigations and History), and a verified change lists the business rule that held (`ui/screenshots/partial-*.png`); router events don't create console tasks yet |
-| real-model learning | **NO-GO** | not run; needs GB10 Gate 3 |
-| GB10 hardware | **NO-GO** | nothing run on hardware |
+| real-model learning | **NO-GO** (freight story) | not run with a real model on the freight data; the OnCall equivalent ran on the GB10 ([BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25)) |
+| GB10 hardware | **NO-GO** (dev-box verdict) | nothing of this slice ran on hardware |
 
-## 9. GB10-only requirements (unchanged, plus these)
+## 9. Open GB10-only questions for this slice
 - Real model on `data/freight/case_primary.json`: does it call `freight_invoice`, propose 1379.69, stop for approval, and report `needs_person` for `mixed.json`?
 - Does `serve` with `APP_AGENT_NAMESPACE` set behave identically through the sandbox (`host.openshell.internal`)?
 - Can NemoClaw surface inbound channel messages, or the sender id, to the host? That decides the §5 fix.
 - Measure model calls per task (vLLM `/metrics`) for the known versus unknown case.
 
-## 10. Continuation (where to pick up)
-1. Review the proposed core changes as three separable commits: P0-3 `80a1f2d`, P0-2 `c0d1956`, P0-1 `b266684`.
+## 10. Open items
+1. A review of the core changes, which were made as three separable commits in the engineering history: P0-3 `80a1f2d`, P0-2 `c0d1956`, P0-1 `b266684`. No review is recorded.
 2. Console: router events as console tasks. This needs a `mode` for router-handled tasks, which is a core change. The "partly done" state and the visible business-rule check are done.
 3. The Bootstrap Lite UI view from `docs/PRODUCT_CONTRACTS.md`, in the `exp/bootstrap` worktree.
-4. The channel bridge (§5) once NemoClaw inbound behaviour is known on the GB10.
+4. The channel bridge (§5). NemoClaw inbound behaviour: a Telegram <-> local model round trip is verified on the GB10, but the sender id reaching SkillForge is not ([integrations/telegram/GAPS.md](../integrations/telegram/GAPS.md)).

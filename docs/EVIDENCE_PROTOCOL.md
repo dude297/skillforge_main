@@ -1,6 +1,6 @@
 # Evidence protocol: first-time LLM execution vs deterministic reuse (GB10)
 
-For the Dell operator. Status: **nothing here has been run on a GB10.** The report generator was tested only on synthetic fixtures (`experiments/gb10_bench/fixtures/synthetic_*`, which it rejects on purpose). Unknown stays "not measured", never 0. GPU inference needs a named operator's authorization (`docs/GB10_BENCH_RUNBOOK.md` section 2); put that name in the run label or your notes.
+For the Dell operator. Status: the frontier harness, live OnCall synthesis, a person's approval and six reuse trials ran on the GB10 on 2026-10-25 and are recorded in [BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25). The full procedure in section 3 (K = 3 labelled runs, N = 10 reuse trials each, then `evidence_report`) is not recorded as run; the report generator was tested only on synthetic fixtures (`experiments/gb10_bench/fixtures/synthetic_*`, which it rejects on purpose). Unknown stays "not measured", never 0. GPU inference needs a named operator's authorization (`docs/GB10_BENCH_RUNBOOK.md` section 2); put that name in the run label or your notes.
 
 ## 1. Definitions (use these words, and only these, in the pitch)
 
@@ -94,7 +94,7 @@ Warm vs cold, stated plainly:
 5. Quote reuse and first-time as two latencies with their scopes (section 1). The ratio line is context, not the headline.
 6. Anything shown as "not measured" stays "not measured" in the slides.
 
-Until these files exist, every GB10 figure in the pitch stays **pending GB10 evidence**.
+A GB10 figure in the pitch or the docs is quoted only from [BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25), where each number names its source file and sha256. A figure without such a file is the operator's report and is labelled that way.
 
 ## 6. Evidence map: item, source file, claim it supports
 

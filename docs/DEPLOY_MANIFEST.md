@@ -51,7 +51,7 @@ We use NemoClaw's fixed recipe, which rejects overrides. Gate 1's `check-llm` te
 
 ```bash
 bash scripts/offline.sh stage   ../gb10-stage   # wheels + arm64 runner image (pinned digest) + git bundle + SHA256SUMS + inventory.json
-LARGE_OK=1 bash scripts/offline.sh large ../gb10-stage   # heavy: vLLM image + model weights. NOT run: needs approval
+LARGE_OK=1 bash scripts/offline.sh large ../gb10-stage   # heavy: vLLM image + model weights. Not run (needs approval); the models were already on the SSD
 bash scripts/offline.sh verify  /media/usb/gb10-stage   # on the GB10: sha256 -c + inventory
 bash scripts/offline.sh restore /media/usb/gb10-stage   # docker load, pip --no-index, git clone from bundle
 ```

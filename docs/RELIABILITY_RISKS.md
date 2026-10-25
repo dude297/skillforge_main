@@ -24,11 +24,12 @@ skill fails the hidden suite and is not staged; a runaway skill gets "timeout af
 2. **Core structural matcher accepts INC-3** (known gap). Protection depends on `oncall._decide` (fingerprint) and on the
    hidden suite run at approval. Any caller using core `match_skills` alone is not protected.
 3. **Sandbox on the Windows dev box has no rlimits** (`preexec_fn` is POSIX only); only the wall-clock timeout applies.
-   The GB10 run must use `SKILL_RUNNER=docker` or Linux rlimits for memory/CPU bounds.
+   The GB10 timed runs used the subprocess runner with Linux rlimits (CPU 10 s, AS 1 GiB, FSIZE 1 MiB, NOFILE 64);
+   `SKILL_RUNNER=docker` adds network isolation and keeps the hidden suite unreachable.
 4. **`meta.json` is excluded from the artifact hash**, so `approved_by` in meta can be edited without detection. The
    authoritative provenance is the DB row and audit table, not meta.json.
 5. **Live synthesis timeout is fixed at 300 s per call, 2 attempts** (up to ~10 min before a loud failure). Acceptable
-   but slow to fail on event day if the endpoint hangs after /models answers.
+   but slow to fail if the endpoint hangs after /models answers.
 6. **`oncall.run()` default is `allow_fallback=True`** (the CLI passes False for `--live`). Library callers must pass
    `allow_fallback=False`; the output is always labelled RECORDED_SIMULATION when it falls back.
 7. Running `pytest experiments/oncall_infer` (directory) also collects `reference_skill/tests` and errors on `import helper`;

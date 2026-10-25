@@ -2,7 +2,7 @@
 
 **Status:**
 - Research only.
-- No core change. Nothing is merged.
+- No core change.
 
 **Measured where:** the dev box only (Windows 11, x86_64, 22 logical CPUs, Python 3.14.3; Docker Desktop on WSL2, 8 GB VM). **There are no GB10 numbers** in this document.
 
@@ -134,7 +134,7 @@ Generated native binaries are never executed. Variants are source-level Python i
    - **Stop if** the GPU path isn't at least 2× faster end to end at a batch size a customer actually has, or if any output differs from the truth.
 7. **Triton/CUDA kernel:** only if steps 5–6 show a GPU-suitable, profiled bottleneck that cuDF can't serve. **Not expected for this workload.**
 
-## 6. Quantitative evaluation design (for the GB10 run)
+## 6. Quantitative evaluation design (not run on the GB10)
 
 **Per (workload size, variant, runner):**
 - correctness against the truth: must be 100%

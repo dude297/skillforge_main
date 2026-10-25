@@ -7,6 +7,8 @@
 - The script writes a human-readable log to `data/preflight.log` and a machine-readable one to `data/preflight.jsonl`.
 - Evidence goes in `results/` (gitignored), then gets copied to the USB.
 
+**Gate status on the GB10 (2026-10-25, GB10 operator report):** Gate 2 is GO (13/13, records-ops tools through the applied `host-tools` policy; [CLAIMS.md](CLAIMS.md) #23c). Gate 3 (OpenClaw driving the OnCall synthesis and verification) is NOT PASSED: the pipeline works end to end but no candidate passed the independent verifier (0 accepted; [CLAIMS.md](CLAIMS.md) #23b). Gate 4 (promotion) did not apply, since nothing was staged. The OnCall synthesis, approval and reuse themselves ran on the GB10 through `deploy/gb10/sf-gb10.sh` and the host harness ([BENCHMARKS.md](BENCHMARKS.md#3-gb10-live-measurements-2026-10-25)). A GO record for Gates 0, 1 and 5 is not in this repository.
+
 **Related docs:**
 - Pins and sizes: [DEPLOY_MANIFEST.md](DEPLOY_MANIFEST.md)
 - Background: [GB10_SETUP.md](GB10_SETUP.md), [SKILLFORGE.md](SKILLFORGE.md)
