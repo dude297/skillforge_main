@@ -1,6 +1,6 @@
 # Data modes: PREVIEW and LIVE
 
-> Status: **proposed**. This describes what the frontend does today. The authoritative operator-API contract comes from the integration team; `CONTRACT.md` is the original proposal and `docs/LIVE_CONSOLE.md` (repo root) describes `app/ui_api.py`. Where this file and the backend disagree, the backend wins and `src/data/live.ts` (the `V` validators) is what has to change.
+> Status: **proposed**. This describes what the frontend does today. The authoritative operator-API contract comes from the integration team; `CONTRACT.md` is the original proposal and `docs/ARCHITECTURE.md` (repo root) describes `app/ui_api.py`. Where this file and the backend disagree, the backend wins and `src/data/live.ts` (the `V` validators) is what has to change.
 
 Code entry point: `src/data/index.ts` (a barrel; `dataMode()` returns `"preview" | "live"`). No screen imports it yet; consumers still import the individual modules.
 

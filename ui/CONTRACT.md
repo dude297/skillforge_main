@@ -1,6 +1,6 @@
 # UI ↔ SkillForge integration contract
 
-**Status: IMPLEMENTED** as `app/ui_api.py` (`python -m app ui`); endpoints, security review and tests in `docs/LIVE_CONSOLE.md`. Differences from the proposal: same origin as the console (no CORS), session cookie from a one-time URL, plus `/ui/events`, `/ui/actions/{id}`, `/ui/skills/{name}/{v}`. Original proposal below.
+**Status: IMPLEMENTED** as `app/ui_api.py` (`python -m app ui`); endpoints, security review and tests in `docs/ARCHITECTURE.md`. Differences from the proposal: same origin as the console (no CORS), session cookie from a one-time URL, plus `/ui/events`, `/ui/actions/{id}`, `/ui/skills/{name}/{v}`. Original proposal below.
 
 **Original status: PROPOSED.** The trusted service (`app/server.py`) deliberately exposes only the agent's tools to the sandbox, behind the agent token. The UI must not use that token, and it must not get any write path. This document defines the smallest read-only surface the console needs, for review before anyone adds it to the host.
 

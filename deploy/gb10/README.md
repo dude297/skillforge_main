@@ -1,7 +1,7 @@
 # SkillForge on the GB10
 
 The procedure (build the bundle, transfer, preflight, live OnCall, known risks, rollback) is in
-[docs/GB10_SETUP.md](../../docs/GB10_SETUP.md#portable-bundle-path). The deep runbook is
+[docs/GB10_RUNBOOK.md](../../docs/GB10_RUNBOOK.md). The deep runbook is
 [docs/GB10_RUNBOOK.md](../../docs/GB10_RUNBOOK.md).
 
 ```bash
