@@ -280,7 +280,7 @@ The reuse path also runs with a `NoModel` guard that counts any attempt to build
 
 ### Secrets
 
-- No secrets are in this tree (grep-based scan over the tree and history; see [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md#part-3-tests-on-this-tree)). A GitHub token that was exposed earlier is treated as compromised and must be revoked; none is stored in any tree or commit.
+- No secrets are in this tree (grep-based scan over the tree and history; see [CLAIMS.md](CLAIMS.md)). A GitHub token that was exposed earlier is treated as compromised and must be revoked; none is stored in any tree or commit.
 - `data/.agent_token`, `data/.operator_token`, `.env*` and runtime databases are gitignored.
 - `deploy/gb10/sf-gb10.sh` reads the vLLM API key from a file into `LLM_API_KEY` and never prints it.
 - `deploy/gb10/make_bundle.sh` refuses to build if the bundle contains this machine's hostname, git email or a

@@ -309,7 +309,7 @@ Docker 29.6.2. Live inference with Qwen3.6-35B-A3B-NVFP4 (vLLM 0.21.0, served as
 bundle tooling drove the live OnCall runs, the approval, the reuse trials and the frontier bench. NemoClaw v0.0.137,
 OpenShell 0.0.116 and OpenClaw v2026.9.2 are installed (operator-authorized, no sudo) and Gate 2 is GO (13/13). Results go
 to `results/gb10-evidence/` and are summarised in
-[DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md#gb10-results-event-day-2026-10-25) and [CLAIMS.md](CLAIMS.md).
+[CLAIMS.md](CLAIMS.md) and [CLAIMS.md](CLAIMS.md).
 
 ### Portable bundle path
 

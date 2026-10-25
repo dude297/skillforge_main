@@ -67,7 +67,6 @@ GB10: `bash deploy/gb10/sf-gb10.sh preflight | oncall | reuse | bench | demo`; p
 - [docs/CLAIMS.md](docs/CLAIMS.md): every claim with its evidence, plus measurements and limitations
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): how it works and the security model
 - [docs/GB10_RUNBOOK.md](docs/GB10_RUNBOOK.md): GB10 setup, gates, demo route, evidence protocol
-- [docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md): present state, then history
 - [moonshot_ui.md](moonshot_ui.md): UI spec; [integrations/telegram/](integrations/telegram/telegram_setup.md): Telegram setup and gaps
 
 ## Team, licence
