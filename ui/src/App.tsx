@@ -17,19 +17,22 @@ const Bootstrap = lazy(() => import("./world/Bootstrap").then((m) => ({ default:
 // EXPERIMENT (exp/bootstrap-lite): functional, read-only onboarding over the real manifest, same world below.
 const BootstrapLite = lazy(() => import("./world/BootstrapLite").then((m) => ({ default: m.BootstrapLite })));
 const WorldLab = lazy(() => import("./world/Lab").then((m) => ({ default: m.Lab })));
+// Ember Living System: read-only projection, its own chunk; nothing in the core imports it.
+const LivingSystem = lazy(() => import("./moonshot/LivingSystem").then((m) => ({ default: m.LivingSystem })));
 
-type Route = "story" | "console" | "demo" | "pitch" | "world" | "lab" | "bootstrap" | "onboard";
+type Route = "story" | "console" | "demo" | "pitch" | "world" | "lab" | "bootstrap" | "onboard" | "moonshot";
 const NAV: { href: string; label: string; routes: Route[] }[] = [
   { href: "#/", label: "How it works", routes: ["story"] },
   { href: "#/world/onboard", label: "Set up", routes: ["onboard", "bootstrap"] },
   { href: "#/world", label: "Office", routes: ["world"] },
+  { href: "#/world/moonshot", label: "Living System", routes: ["moonshot"] },
   { href: "#/console", label: "Console", routes: ["console"] },
   { href: "#/demo", label: "Guided demo", routes: ["demo", "pitch"] },
 ];
 const SECTIONS: Section[] = ["overview", "investigations", "skills", "history", "benchmarks", "system"];
 const routeFromHash = (): Route => {
   const h = window.location.hash;
-  return h.startsWith("#/console") ? "console" : h.startsWith("#/demo/pitch") ? "pitch" : h.startsWith("#/demo") ? "demo" : h.startsWith("#/world/lab") ? "lab" : h.startsWith("#/world/bootstrap") ? "bootstrap" : h.startsWith("#/world/onboard") ? "onboard" : h.startsWith("#/world") ? "world" : "story";
+  return h.startsWith("#/console") ? "console" : h.startsWith("#/demo/pitch") ? "pitch" : h.startsWith("#/demo") ? "demo" : h.startsWith("#/world/moonshot") ? "moonshot" : h.startsWith("#/world/lab") ? "lab" : h.startsWith("#/world/bootstrap") ? "bootstrap" : h.startsWith("#/world/onboard") ? "onboard" : h.startsWith("#/world") ? "world" : "story";
 };
 const sectionFromHash = (): Section => {
   const s = window.location.hash.split("/")[2] as Section | undefined;
@@ -140,6 +143,7 @@ export default function App() {
         {route === "console" ? <ConsoleShell product={product} section={section} view={view} /> : route === "demo" ? <GuidedDemo /> : route === "pitch" ? <Presenter product={product} />
           : route === "world" ? <World /> : route === "bootstrap" ? <World prelude={(theme, desktop) => <Bootstrap theme={theme} desktop={desktop} />} />
           : route === "onboard" ? <World prelude={(theme, desktop) => <BootstrapLite theme={theme} desktop={desktop} />} />
+          : route === "moonshot" ? <LivingSystem />
           : route === "lab" ? <WorldLab /> : <Story product={product} />}
       </Suspense>
       </ErrorBoundary>
