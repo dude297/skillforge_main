@@ -1,0 +1,18 @@
+# Fallback template only: NemoClaw's built-in 'telegram' preset (telegram_bot: api.telegram.org:443, rest, enforce)
+# is what the GB10 sandbox applied at creation and supersedes this file.
+preset:
+  name: telegram-egress
+  description: "Allow Telegram Bot API (long-polling) to api.telegram.org:443 only"
+network_policies:
+  telegram-egress:
+    name: telegram-egress
+    endpoints:
+      - host: api.telegram.org
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow: { method: GET,  path: "/bot*/**" }
+          - allow: { method: POST, path: "/bot*/**" }
+    binaries:
+      - { path: /usr/bin/node }   # UNVERIFIED guess; confirm via openshell term
