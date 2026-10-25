@@ -1,3 +1,4 @@
+import "./index.css";
 // TIME-BOXED 3D SPIKE: the same office and the same recorded events as the 2.5D scene, in React Three Fiber.
 // Shares the event adapter, scene-state fold and sprite frames with ui/src/world (imported, not copied).
 import { StrictMode, useEffect, useMemo, useRef, useState } from "react";
@@ -95,8 +96,9 @@ function App() {
         onCreated={({ camera }) => camera.lookAt(7.5, 0, 7.5)} dpr={[1, 2]}>
         <Office state={state} onOpen={setOpen} />
       </Canvas>
-      <div style={{ position: "absolute", top: 12, left: 12, background: "#fff", border: "2px solid #14203A", padding: "6px 10px", borderRadius: 6 }}>
-        3D spike, recorded run: {at} of {EVENTS.length}: {state.current?.title ?? "start"}{open ? `  |  ${DEPTS[open].name}` : ""}
+      <div style={{ position: "absolute", top: 12, left: 12, right: 12, maxWidth: 560, background: "#fff", border: "2px solid #14203A", padding: "6px 10px", borderRadius: 6, fontSize: 14 }}>
+        <b>3D prototype · recorded data (not live)</b> · <a href="/#/">back to the console</a>
+        <div>Replay of a recorded mock-agent run (no model, no backend): step {at} of {EVENTS.length}: {state.current?.title ?? "start"}{open ? `  |  ${DEPTS[open].name}` : ""}</div>
       </div>
     </div>
   );

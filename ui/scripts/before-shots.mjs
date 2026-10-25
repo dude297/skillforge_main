@@ -1,6 +1,7 @@
 // Before shots (earlier build): landing + console, for comparison with the guided demo work.
 import { chromium } from "@playwright/test";
-const b = await chromium.launch({ channel: "msedge" });
+import { launchBrowser } from "./browser.mjs";
+const b = await launchBrowser();
 for (const [w, h] of [[1440, 900], [390, 844]]) {
   const page = await b.newPage({ viewport: { width: w, height: h } });
   for (const [name, url] of [["landing", "#/"], ["console", "#/console/investigations"], ["demo", "#/demo"]]) {

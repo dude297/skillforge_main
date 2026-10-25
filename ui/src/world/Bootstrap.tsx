@@ -11,6 +11,7 @@ import { DEPTS, sceneState, type Dept } from "./events";
 import { MANIFEST, RIGHTS, SCENES, STATUS, SYSTEMS, type Status } from "./bootstrap-data";
 import { THEMES, type ThemeName } from "./theme";
 import { SourceTag } from "./World";
+import { PREVIEW } from "../lib/preview";
 
 const VIEW = "-320 -72 640 400"; // the office's whole-company framing (Scene, focus=null): shared coordinates
 const AT: Record<Dept, [number, number]> = Object.fromEntries(
@@ -142,10 +143,9 @@ function ManifestFrame({ p }: { p: MotionValue<number> }) {
   const opacity = useTransform(p, [0.58, 0.63, 0.8, 0.86], [0, 1, 1, 0]);
   return (
     <motion.g style={{ opacity }} aria-hidden>
-      <rect x={-166} y={18} width={338} height={186} rx={4} fill="#14203A" />
-      <rect x={-169} y={15} width={338} height={186} rx={4} fill="#FFF4D6" stroke="#14203A" strokeWidth={2} />
+      <rect x={-169} y={15} width={338} height={186} rx={10} fill="#FFFFFF" stroke="#14203A" strokeWidth={1.25} />
       <text x={-155} y={38} fontSize={12} fontWeight={700} fill="#14203A">Environment manifest</text>
-      <text x={155} y={38} textAnchor="end" fontSize={9} fontFamily="JetBrains Mono Variable, monospace" fill="#4A5A70">example, nothing granted</text>
+      <text x={155} y={38} textAnchor="end" fontSize={9.5} fill="#4A5A70">example, nothing granted</text>
     </motion.g>
   );
 }
@@ -231,7 +231,7 @@ const COPY: { heading: ReactNode; body: ReactNode; extra?: ReactNode; h1?: boole
     body: "The manifest becomes the office. Requests arrive at operations intake, Ember works in the local AI room, people decide at the review desk, every change passes the independent check, and proven skills go on the library shelf.",
     extra: (
       <div className="flex flex-wrap gap-3 pt-1">
-        <a href="#/world/onboard" className="world-btn world-btn-primary">Set up a real workspace (read-only)</a>
+        <a href="#/world/onboard" className="world-btn world-btn-primary">{PREVIEW ? "Walk through Set up" : "Set up a real workspace (read-only)"}</a>
         <a href="#story" onClick={(e) => { e.preventDefault(); document.getElementById("story")?.scrollIntoView(); }} className="world-btn">Follow one problem</a>
       </div>
     ) },
@@ -255,7 +255,7 @@ function Truth() {
     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-meta">
       <SourceTag source="story" />
       <span className="world-muted">An illustration: nothing on this page connects to anything.</span>
-      <a className="world-link" href="#/world/onboard">Try the read-only version on a real workspace</a>
+      <a className="world-link" href="#/world/onboard">{PREVIEW ? "Walk through Set up step by step" : "Try the read-only version on a real workspace"}</a>
       <a className="world-link" href="#story" onClick={(e) => { e.preventDefault(); document.getElementById("story")?.scrollIntoView(); }}>Skip to the office</a>
       <a className="world-link" href="#/console">Open the console</a>
     </div>
@@ -276,7 +276,7 @@ function Scrubbed({ theme }: { theme: ThemeName }) {
     <section ref={ref} aria-labelledby="bs-h" className="relative mx-auto grid max-w-[88rem] gap-x-8 px-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
       <h2 id="bs-h" className="sr-only">Bootstrap: from a new machine to your company (illustration)</h2>
       {/* 768-1023: the stage stays landscape on top and the copy scrolls beneath it; from 1024 it sits on the left */}
-      <div className="sticky top-14 z-10 h-[56dvh] py-3 lg:top-16 lg:h-[calc(100dvh-5rem)] lg:py-4" style={{ background: THEMES[theme].bg }}>
+      <div className="sticky top-[var(--header-h,3.5rem)] z-10 h-[56dvh] py-3 lg:h-[calc(100dvh-var(--header-h,3.5rem))] lg:py-4" style={{ background: THEMES[theme].bg }}>
         <div className="world-scene-frame relative h-full overflow-hidden">
           <Stage p={p} theme={theme} still={false} label={`Illustration, scene ${at + 1} of ${SCENES.length}: ${SCENES[at].short}`} />
           <div className="absolute top-3 left-3"><SourceTag source="story" /></div>
@@ -307,9 +307,9 @@ function Settled({ theme, cards }: { theme: ThemeName; cards: boolean }) {
     <section aria-labelledby="bs-h-s" className={`mx-auto max-w-[60rem] space-y-6 ${cards ? "px-4" : "px-6"} pt-6`}>
       <h2 id="bs-h-s" className="sr-only">Bootstrap: from a new machine to your company (illustration)</h2>
       <Truth />
-      <ol className="space-y-8">
+      <ol className="space-y-12">
         {COPY.map((_, i) => (
-          <li key={i} id={SCENES[i].id} className="world-card space-y-4 p-4">
+          <li key={i} id={SCENES[i].id} className="space-y-4">
             <div className={`world-scene-frame overflow-hidden ${cards ? "h-56" : "h-80"}`}>
               <Stage p={frames[i]} theme={theme} still label={`Illustration, scene ${i + 1} of ${SCENES.length}: ${SCENES[i].short}`} />
             </div>

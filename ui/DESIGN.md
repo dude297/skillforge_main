@@ -135,3 +135,32 @@ A "Skip to console" link sits in the top bar at all times, and the hero has an "
 ```
 
 These map 1:1 onto the backend's derived states (`app/ops.py`: PENDING, WAITING_APPROVAL, READY, VERIFYING, COMPLETED, NEEDS_REVIEW, CANCELLED).
+
+## 8. Daylight World and the console: one product
+
+The landing page, the console and the guided demo are the dark instrument panel. The office (`#/world`), Set up (`#/world/onboard`) and the Bootstrap illustration (`#/world/bootstrap`) are a deliberate **pale daylight scene**: the product's personality, the place where Ember lives. They are not a second product. The bridge:
+
+**What is shared (never forked)**
+- **Meaning.** cyan = the agent acting, green = an independent verifier passed, amber = a person is needed or something is only an example, rose = failure, grey = idle. Daylight uses the darker text-grade twins of the same four hues (`--color-day-signal`, `-verified`, `-warn`, `-fail`, each at least 4.8:1 on the day canvas and on white). Nothing in Daylight is green unless a verifier passed.
+- **Type.** Schibsted Grotesk only; display weight 600 at −0.035 em; the same 13 / 15 / 18 / 24 / 36 / 56 scale (`.world-h1` is `--text-h1` at most, `.world-lead` is `--text-lead`). Mono is for machine output only, so step counters are tabular sans ("3 of 7") and the illustration's room signs are sans, not mono.
+- **Frames.** One 1 px hairline, three radii: 4 px chips and tags, 10 px panels (`.world-card`, key, popovers), 16 px stage frames (`.world-scene-frame`, `.world-stage-card`). The pixel-art look lives inside the art (Ember, the office tiles), never in the chrome: no 2 px borders, no hard offset shadows.
+- **Provenance.** `SourceTag` is the console's `SourceBadge` in day ink: same chip, same icon (flask = illustration, film = recorded, radio = live), same wording. An illustration is always labelled "Illustration".
+- **Controls.** Same button metrics as `.btn` (8 px radius, weight 560, 160 ms colour transition, 1 px press), primary = the ink colour of the surface (white on night, navy on day), 44 px minimum on phones.
+
+**What differs on purpose**
+- Light canvas (`--color-day-bg`, `#DCEBF5`) with white panels and one raised tone (`--color-day-raised`). The pixel companion and the isometric office are drawn for daylight; the console never shows them.
+- The beat rail replaces the console's list selection: a 1 px rail with a dot per beat, the current beat's dot is cyan. No coloured stripes on cards.
+
+**The bridge between the two**
+- **One header, two surfaces.** `.site-header[data-surface]` switches between night and day with a 240 ms colour transition; layout, type and link metrics are identical, so navigating Story → Office changes only the light. The current page is bold and carries `aria-current`.
+- **The preview strip keeps its meaning on both surfaces** (amber text, "Read-only preview · recorded/synthetic data"): warm paper tint on day, surface tint on night. `scripts/preview-check.mjs` asserts the exact string, so it is unchanged.
+- `<html data-surface>`, `meta[theme-color]` and `color-scheme` follow the route so overscroll and browser chrome never flash dark under a pale page.
+- The header's height is published as `--header-h` (it grows by the preview strip) so every sticky stage starts exactly under it.
+- Phones (<768 px): the five links become one "Menu" button that names the current page; the menu opens below the bar with 48 px rows, closes on navigation, Escape and outside click.
+
+**Ember**
+- Stage: Ember stands on a tile of the office floor at whole-pixel scale (14 px per sprite pixel on desktop, 9 on phones), `image-rendering: pixelated`, with a contact shadow. Its one idle motion is the sprite's own bob and blink; it stops under reduced motion and when off screen.
+- Poses track events only (`events.ts`): the hero says "Ember: idle, nothing is running on this page"; the office follows the scripted illustration, a recorded run or live data. "Verified" is shown only after every applied change passed its independent check (`e2e/world-truth.spec.ts`).
+
+**Set up in the hosted preview**
+- The preview has no host, so `BootstrapLite` renders `BootstrapPreview`: the same five steps over `bootstrap-data.ts`, labelled "Illustration", with one line saying that on the GB10 this step reads the real workspace read-only. It performs no request and no check, never says "connected" or "healthy", and grants nothing. The live component is unchanged.

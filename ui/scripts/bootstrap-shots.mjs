@@ -3,12 +3,13 @@
 // Desktop widths scroll the real page to exact progress values (settled scenes + transition frames); 390 and
 // reduced motion capture the settled cards. Any non-local request fails the run (assets must be bundled).
 import { chromium } from "@playwright/test";
+import { launchBrowser } from "./browser.mjs";
 import { mkdirSync } from "node:fs";
 
 const out = process.argv[2] ?? "screenshots/bootstrap";
 const BASE = process.env.BASE ?? "http://127.0.0.1:4173/";
 mkdirSync(out, { recursive: true });
-const browser = await chromium.launch({ channel: "msedge" });
+const browser = await launchBrowser();
 const problems = [];
 const FRAMES = [["1-appliance", 0], ["2-connect", 0.25], ["3-discover", 0.5], ["4-permissions", 0.75],
   ["t1-transition", 0.84], ["t2-transition", 0.9], ["t3-transition", 0.95], ["5-office", 1]];

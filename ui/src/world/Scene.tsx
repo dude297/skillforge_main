@@ -45,7 +45,7 @@ function Room({ id, theme, children, onOpen, active }: { id: Exclude<Dept, "gate
         fill={(i + j) % 2 ? t.floorA : t.floorB} />);
   const sign = SIGN[id];
   const [sx, sy] = P(...sign.at);
-  const tw = DEPTS[id].name.length * 5.5 + 10;
+  const tw = DEPTS[id].name.length * 5.4 + 12;
   const rx = sign.anchor === "start" ? -4 : sign.anchor === "end" ? -tw + 4 : -tw / 2;
   return (
     <g role="button" tabIndex={0} aria-label={`${DEPTS[id].name}. Show what happens here`} className="world-dept cursor-pointer outline-none"
@@ -59,7 +59,7 @@ function Room({ id, theme, children, onOpen, active }: { id: Exclude<Dept, "gate
       {children}
       <g transform={`translate(${sx} ${sy + sign.dy})`}>
         <rect x={rx} y={-10} width={tw} height={14} fill={t.sign} rx={1} />
-        <text x={rx + tw / 2} y={0} textAnchor="middle" fontSize={9} fontFamily="JetBrains Mono Variable, monospace" fill={t.signText}>{DEPTS[id].name}</text>
+        <text x={rx + tw / 2} y={0} textAnchor="middle" fontSize={9.5} fontWeight={600} fontFamily="Schibsted Grotesk Variable, system-ui, sans-serif" fill={t.signText}>{DEPTS[id].name}</text>
       </g>
       <title>{DEPTS[id].name}</title>
     </g>
@@ -184,7 +184,7 @@ export function Scene({ state, theme, focus, zoom = 1, onOpen, open, label, stil
         <Box x={6.7} y={7.3} z={2.4} w={1.6} d={0.35} h={0.35} top={gateColor} left={gateColor} right={gateColor} />
         <g transform={`translate(${P(4.4, 7.6)[0]} ${P(4.4, 7.6)[1] + 4})`}>
           <rect x={-48} y={-10} width={96} height={14} fill={t.sign} rx={1} />
-          <text x={0} y={0} textAnchor="middle" fontSize={9} fontFamily="JetBrains Mono Variable, monospace" fill={t.signText}>Independent check</text>
+          <text x={0} y={0} textAnchor="middle" fontSize={9.5} fontWeight={600} fontFamily="Schibsted Grotesk Variable, system-ui, sans-serif" fill={t.signText}>Independent check</text>
         </g>
         <title>{DEPTS.gate.name}</title>
       </g>

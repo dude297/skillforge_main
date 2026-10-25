@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { Fingerprint, History } from "lucide-react";
+import { Fingerprint, Hand, History } from "lucide-react";
 import { CopyCommand } from "../../components/CopyCommand";
 import type { SkillEntry, SkillVersion } from "../../data/registry";
 import type { Source } from "../../data/types";
@@ -8,6 +8,8 @@ import { SourceBadge } from "../../components/SourceBadge";
 import { useSkillCode } from "../live/LiveInvestigations";
 import { disableCommand, promoteCommand, rollbackCommand } from "../../data/live";
 import { rise, useT } from "../../lib/motion";
+import { StageChips, stagesOf } from "../SkillPanel";
+import type { SkillArtifact } from "../../data/types";
 
 const STATUS: Record<SkillVersion["status"], { text: string; cls: string }> = {
   approved: { text: "Approved", cls: "text-text" },
@@ -18,6 +20,16 @@ const STATUS: Record<SkillVersion["status"], { text: string; cls: string }> = {
   rolled_back: { text: "Rolled back", cls: "text-text-3" },
   not_retained: { text: "Optimisation not retained", cls: "text-text-3" },
 };
+
+/** A registry version as the artifact the lifecycle is derived from. Own tests: a version that reached "tested" or "approved" passed
+ * them, a "failed_tests" one failed them, the rest are not reported. The registry carries verdicts, never case counts. */
+function asArtifact(name: string, v: SkillVersion): SkillArtifact {
+  return {
+    name, version: v.version, sha256: v.sha256, code: "", hidden: v.hiddenOk,
+    selfTests: v.status === "failed_tests" ? false : v.status === "tested" || v.status === "approved" ? true : null,
+    status: v.status === "approved" ? (v.active ? "approved" : "approved_inactive") : v.status === "tested" ? "awaiting_promotion" : v.status === "failed_tests" ? "failed" : "not_in_use",
+  };
+}
 
 /** Registry with versions. Rollback and promotion are host commands; the browser cannot change a skill. */
 export function Skills({ entries, source }: { entries: SkillEntry[]; source: Source }) {
@@ -37,16 +49,17 @@ export function Skills({ entries, source }: { entries: SkillEntry[]; source: Sou
   return (
     <div className="grid min-h-full grid-cols-1 lg:grid-cols-[20rem_minmax(0,1fr)]">
       <nav aria-label="Skills" className="border-b border-line p-4 lg:border-r lg:border-b-0">
-        <div className="mb-3 flex items-center justify-between gap-2 px-2"><h1 className="text-lead font-semibold">Skills</h1><SourceBadge source={source} /></div>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-2"><h1 className="text-lead font-semibold">Skills</h1><SourceBadge source={source} /></div>
         <ul className="space-y-1">
           {entries.map((s) => {
             const act = s.versions.find((v) => v.active);
             return (
               <li key={s.name}>
                 <button type="button" aria-current={s.name === sel ? "true" : undefined} onClick={() => setSel(s.name)}
-                  className={`w-full rounded-lg px-3 py-2 text-left transition-colors duration-150 ${s.name === sel ? "bg-surface-2" : "hover:bg-surface"}`}>
+                  className={`min-h-11 w-full rounded-lg px-3 py-2 text-left transition-colors duration-150 ${s.name === sel ? "bg-surface-2" : "hover:bg-surface"}`}>
                   <span className="block font-medium">{s.name}</span>
                   <span className={`block text-meta ${act ? "text-text-2" : "text-text-3"}`}>{act ? `Active: v${act.version}` : "No active version"}</span>
+                  {s.versions.some((v) => v.status === "tested") ? <span className="mt-0.5 flex items-center gap-1.5 text-meta text-warn"><Hand aria-hidden size={12} />A version waits for a person</span> : null}
                 </button>
               </li>
             );
@@ -59,19 +72,20 @@ export function Skills({ entries, source }: { entries: SkillEntry[]; source: Sou
           <p className="max-w-prose text-text-2">{skill.description}</p>
           <p className="text-meta text-text-3">May change only: <span className="font-mono text-text-2">{skill.touches.join(", ")}</span></p>
         </header>
-        <ol aria-label="Versions" className="relative space-y-3">
-          {skill.versions.map((v) => (
+        <ol aria-label="Versions, newest first" className="relative space-y-3">
+          {[...skill.versions].reverse().map((v) => (
             <li key={v.version} className={`panel relative p-4 ${v.active ? "border-line-strong bg-surface-2" : ""}`}>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <p className="font-semibold">v{v.version}{v.parent ? <span className="font-normal text-text-3"> optimised from v{v.parent}</span> : null}</p>
                 <p className={`text-meta font-medium ${(STATUS[v.status] ?? STATUS.rejected).cls}`}>{v.active ? "Active" : (STATUS[v.status] ?? { text: v.status }).text}{v.decidedBy ? `, by ${v.decidedBy}` : ""}</p>
               </div>
               <p className="mt-1 text-text-2">{v.note}</p>
-              <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 text-meta sm:grid-cols-4">
-                <div><dt className="text-text-3">Hidden tests</dt><dd className={v.hiddenOk ? "text-verified" : "text-text-2"}>{v.hiddenOk == null ? "Not run" : v.hiddenOk ? "Passed" : "Failed"}</dd></div>
+              <div className="mt-3"><StageChips stages={stagesOf(asArtifact(skill.name, v))} /></div>
+              <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-meta sm:grid-cols-4">
+                <div><dt className="text-text-3">Hidden tests</dt><dd className={v.hiddenOk == null ? "text-text-3" : v.hiddenOk ? "text-verified" : "text-fail"}>{v.hiddenOk == null ? "Not run" : v.hiddenOk ? "Passed" : "Failed"}</dd></div>
                 <div><dt className="text-text-3">Runs</dt><dd>{v.runs.ok} ok, {v.runs.refused} refused</dd></div>
                 <div><dt className="text-text-3">Verified</dt><dd>{v.runs.verifiedPass} passed, {v.runs.verifiedFail} failed</dd></div>
-                <div><dt className="text-text-3">Locked version</dt><dd className="flex min-w-0 items-center gap-1 font-mono text-text-2 [overflow-wrap:anywhere]"><Fingerprint aria-hidden size={12} />{v.sha256}</dd></div>
+                <div><dt className="text-text-3">sha256, locked version</dt><dd className="flex min-w-0 items-center gap-1 font-mono text-text-2 [overflow-wrap:anywhere]"><Fingerprint aria-hidden size={12} />{v.sha256}</dd></div>
               </dl>
             </li>
           ))}

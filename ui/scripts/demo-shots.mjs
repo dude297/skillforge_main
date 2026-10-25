@@ -1,5 +1,6 @@
 import { chromium } from "@playwright/test";
-const b = await chromium.launch({ channel: "msedge" });
+import { launchBrowser } from "./browser.mjs";
+const b = await launchBrowser();
 for (const [w, h] of [[1440, 900], [390, 844]]) {
   const page = await b.newPage({ viewport: { width: w, height: h } });
   await page.goto("http://127.0.0.1:4173/#/demo");

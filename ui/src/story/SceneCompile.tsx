@@ -1,7 +1,8 @@
 // Act 3 centrepiece: investigation → generated code → independent tests → human approval → verified skill.
 // A progress rail on top; a workbench below whose artifact changes per stage. Driven by p (0..1); p=1 is the
 // static end state used on mobile and under reduced motion.
-import { motion, useTransform, type MotionValue } from "motion/react";
+import { useState } from "react";
+import { motion, useMotionValueEvent, useTransform, type MotionValue } from "motion/react";
 import { Check, Fingerprint, Hand, Search, ShieldCheck, FileCode2, FlaskConical } from "lucide-react";
 
 const STAGES = [
@@ -34,7 +35,7 @@ function RailStep({ i, p }: { i: number; p: MotionValue<number> }) {
         <motion.span style={{ opacity: on }} className={`absolute inset-0 rounded-full border ${verified ? "border-verified" : i === 3 ? "border-warn" : "border-signal"}`} />
         <Icon size={15} className="text-text-2" />
       </span>
-      <span className="hidden text-[0.75rem] leading-tight text-text-2 sm:block">{label}</span><span className="sr-only sm:hidden">{label}</span>
+      <span className="hidden text-meta leading-tight text-text-2 sm:block">{label}</span><span className="sr-only sm:hidden">{label}</span>
     </li>
   );
 }
@@ -70,15 +71,19 @@ function TestDot({ i, p, hidden }: { i: number; p: MotionValue<number>; hidden?:
 
 export function SceneCompile({ p }: { p: MotionValue<number> }) {
   const fill = useTransform(p, [0, 1], [0, 1]);
+  // the stage names are hidden on phones (five icons fit, five words do not): say the current one in a caption instead
+  const [stage, setStage] = useState(() => Math.min(N - 1, Math.floor(p.get() * N)));
+  useMotionValueEvent(p, "change", (v) => setStage(Math.min(N - 1, Math.floor(v * N))));
   return (
     <div className="flex w-full max-w-xl flex-col gap-6">
       <div className="relative">
         <span aria-hidden className="absolute top-[1.125rem] right-[10%] left-[10%] h-px bg-line" />
         <motion.span aria-hidden style={{ scaleX: fill }} className="absolute top-[1.125rem] right-[10%] left-[10%] h-px origin-left bg-signal/70" />
         <ol className="relative flex">{STAGES.map((_, i) => <RailStep key={i} i={i} p={p} />)}</ol>
+        <p aria-hidden className="mt-2 text-center text-meta text-text-2 sm:hidden">Stage {stage + 1} of {N}: {STAGES[stage].label}</p>
       </div>
 
-      <div className="relative h-64">
+      <div className="relative h-72 sm:h-64">
         <Layer i={0} p={p}>
           <p className="mb-3 text-meta text-text-3">What the agent proved</p>
           <ul className="space-y-2 font-mono text-[0.8125rem] text-text-2">
@@ -89,7 +94,7 @@ export function SceneCompile({ p }: { p: MotionValue<number> }) {
           </ul>
         </Layer>
         <Layer i={1} p={p}>
-          <p className="mb-3 flex items-center justify-between text-meta text-text-3"><span className="font-mono">scripts/helper.py</span><span>written by the local model</span></p>
+          <p className="mb-3 flex items-center justify-between text-meta text-text-3"><span className="font-mono">scripts/helper.py</span><span>written by the agent</span></p>
           <div className="font-mono text-[0.8125rem] leading-relaxed text-text-2">
             {CODE.map((line, i) => <CodeLine key={line} text={line} i={i} p={p} />)}
           </div>
@@ -116,12 +121,17 @@ export function SceneCompile({ p }: { p: MotionValue<number> }) {
         </Layer>
         <Layer i={4} p={p}>
           <div className="w-full">
-            <div className="rounded-[var(--radius-stage)] border border-verified/80 bg-canvas p-6 shadow-[0_30px_80px_-40px_rgba(101,233,183,0.25)]">
-              <div className="flex items-center justify-between gap-3">
+            <div className="rounded-[var(--radius-stage)] border border-verified/80 bg-canvas p-5 shadow-[0_30px_80px_-40px_rgba(101,233,183,0.25)] sm:p-6">
+              <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                 <p className="font-semibold">line-total-reconcile <span className="font-normal text-text-3">v1</span></p>
-                <span className="flex items-center gap-1 text-meta text-verified"><ShieldCheck size={14} />Verified skill</span>
+                <span className="flex items-center gap-1 text-meta text-verified"><ShieldCheck aria-hidden size={14} />Verified skill</span>
               </div>
-              <p className="mt-1.5 flex items-center gap-1.5 font-mono text-[0.75rem] text-text-3"><Fingerprint size={12} />locked version (sha256) 41506b7c7fdec463…</p>
+              <p className="mt-1.5 flex items-start gap-1.5 font-mono text-[0.75rem] text-text-3"><Fingerprint aria-hidden size={12} className="mt-0.5 shrink-0" /><span>sha256 41506b7c7fdec463…</span></p>
+              <ul aria-label="How it became a skill" className="mt-4 space-y-1.5 border-t border-line pt-3 text-meta">
+                {[["Own tests, in an isolated sandbox", "3 of 3 passed"], ["Hidden tests on the host, never shown to the agent", "11 of 11 passed"], ["Promotion by a person", "approved"]].map(([k, v]) => (
+                  <li key={k} className="flex items-start justify-between gap-3"><span className="flex min-w-0 items-start gap-2 text-text-2"><Check aria-hidden size={13} className="mt-0.5 shrink-0 text-verified" />{k}</span><span className="tnum shrink-0 text-verified">{v}</span></li>
+                ))}
+              </ul>
               <p className="mt-3 text-meta text-text-2">Runs without the model. Changes only <span className="font-mono">total</span>. Every fix it proposes still needs approval.</p>
             </div>
           </div>

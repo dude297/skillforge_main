@@ -1,9 +1,15 @@
-import { useEffect, useRef } from "react";
+import { lazy, Suspense, useEffect, useRef } from "react";
 import { motion, motionValue, useReducedMotion, useScroll, useTransform, type MotionValue } from "motion/react";
 import { PRODUCTS, type ProductConfig } from "../config/product";
 import { SceneCompile, SceneInvestigate, SceneProblem, SceneProduct, SceneReuse } from "./scenes";
 import { DUR, EASE } from "../lib/motion";
 import { HeroPreview } from "./HeroPreview";
+
+// The Forge: the cinematic opening (three.js). Its own lazy chunk, so the story text never waits for it and no other
+// route ever loads it. It is an illustration and says so on screen; it ends on the same three doors as the hero.
+const Forge = lazy(() => import("../cinematic").then((m) => ({ default: m.Cinematic })));
+const FORGE_SEEN = "skillforge.forge.seen";
+const forgeSeen = () => { try { return window.sessionStorage.getItem(FORGE_SEEN) === "1"; } catch { return false; } };
 
 type Act = { id: string; n: number; title: string; body: string; tall?: boolean; Scene: (props: { p: MotionValue<number>; product: ProductConfig }) => React.ReactNode };
 
@@ -27,12 +33,12 @@ function ScrubbedActs({ list, product }: { list: Act[]; product: ProductConfig }
           <section key={a.id} id={`act-${a.n}`} aria-labelledby={`act-${a.n}-h`} className={a.tall ? "relative h-[280vh]" : "flex min-h-[100dvh] items-center py-24"}>
             {a.tall ? (
               /* the centrepiece pins its copy while the five compile stages play on the stage */
-              <div className="sticky top-14 flex h-[calc(100dvh-3.5rem)] items-center"><ActCopy act={a} /></div>
+              <div className="sticky top-[var(--header-h,3.5rem)] flex h-[calc(100dvh-var(--header-h,3.5rem))] items-center"><ActCopy act={a} /></div>
             ) : <ActCopy act={a} />}
           </section>
         ))}
       </div>
-      <div className="sticky top-14 flex h-[calc(100dvh-3.5rem)] items-center self-start">
+      <div className="sticky top-[var(--header-h,3.5rem)] flex h-[calc(100dvh-var(--header-h,3.5rem))] items-center self-start">
         <div className="hairline-grid relative grid aspect-[5/4] w-full place-items-center overflow-hidden rounded-[var(--radius-stage)] border border-line bg-canvas">
           {list.map((a, i) => <StageLayer key={a.id} act={a} i={i} count={list.length} product={product} />)}
         </div>
@@ -63,13 +69,13 @@ function ActCopy({ act, suffix = "" }: { act: Act; suffix?: string }) {
   return (
     <div className="max-w-[34rem]">
       <p className="tnum mb-4 text-meta text-text-3">{act.n} of 5</p>
-      <h2 id={`act-${act.n}-h${suffix}`} className="text-h1 leading-[1.05] font-semibold tracking-[-0.03em] text-balance">{act.title}</h2>
+      <h2 id={`act-${act.n}-h${suffix}`} className="text-[clamp(2.25rem,9.5vw,var(--text-h1))] leading-[1.05] font-semibold tracking-[-0.03em] text-balance">{act.title}</h2>
       <p className="mt-5 text-lead leading-relaxed text-text-2">{act.body}</p>
       {act.n === 5 ? (
-        <div className="mt-8 flex flex-wrap gap-3">
-          <a href="#/console" className="btn btn-primary">Open the console</a>
-          <a href="#/world/onboard" className="btn btn-quiet">Set up a workspace (read-only)</a>
-          <a href="#/world" className="btn btn-quiet">Visit the office</a>
+        <div className="mt-8 flex flex-wrap gap-3 max-sm:flex-col max-sm:items-stretch">
+          <a href="#/console" className="btn btn-primary max-sm:h-12 max-sm:justify-center">Open the console</a>
+          <a href="#/world/onboard" className="btn btn-quiet max-sm:h-12 max-sm:justify-center">Set up a workspace (read-only)</a>
+          <a href="#/world" className="btn btn-quiet max-sm:h-12 max-sm:justify-center">Visit the office</a>
         </div>
       ) : null}
     </div>
@@ -81,7 +87,7 @@ function StaticActs({ list, product, always }: { list: Act[]; product: ProductCo
   return (
     <div className={always ? "" : "lg:hidden"}>
       {list.map((a) => (
-        <section key={a.id} id={always ? `act-${a.n}` : `act-${a.n}-s`} aria-labelledby={`act-${a.n}-h${always ? "" : "-s"}`} className="space-y-8 py-16">
+        <section key={a.id} id={always ? `act-${a.n}` : `act-${a.n}-s`} aria-labelledby={`act-${a.n}-h${always ? "" : "-s"}`} className="space-y-8 py-14 sm:py-16">
           <ActCopy act={a} suffix={always ? "" : "-s"} />
           <div className="hairline-grid grid place-items-center rounded-[var(--radius-stage)] border border-line p-6">
             <a.Scene p={FULL} product={product} />
@@ -97,7 +103,13 @@ export function Story({ product }: { product: ProductConfig }) {
   const list = acts(product);
   return (
     <main id="main" tabIndex={-1}>
-      <section className="mx-auto grid min-h-[calc(100dvh-3.5rem)] max-w-[88rem] items-center gap-14 overflow-x-clip px-5 py-16 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:px-10">
+      <div style={{ ["--forge-top" as string]: "var(--header-h, 3.5rem)" }}>
+        {/* reserve the film's height while its chunk loads (no layout shift); returning visitors get the compact band */}
+        <Suspense fallback={forgeSeen() ? null : <div aria-hidden className="h-[calc(100dvh-var(--header-h,3.5rem))] min-h-[32rem] bg-[#05080D]" />}>
+          <Forge mode="intro" />
+        </Suspense>
+      </div>
+      <section className="mx-auto grid min-h-[calc(100dvh-var(--header-h,3.5rem))] max-w-[88rem] items-center gap-12 overflow-x-clip px-5 py-12 sm:py-16 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-14 lg:px-10">
         <div>
         <motion.h1
           initial={reduce ? false : { opacity: 0, y: 18 }}
@@ -105,7 +117,7 @@ export function Story({ product }: { product: ProductConfig }) {
           transition={{ duration: DUR.major * 1.3, ease: EASE.emphasis }}
           className="text-display leading-[0.95] font-semibold tracking-[-0.045em]"
         >
-          {product.tagline.map((line) => <span key={line} className="block lg:whitespace-nowrap">{line}</span>)}
+          {product.tagline.map((line) => <span key={line} className="block text-balance lg:whitespace-nowrap">{line}</span>)}
         </motion.h1>
         <motion.div
           initial={reduce ? false : { opacity: 0 }}
@@ -115,22 +127,22 @@ export function Story({ product }: { product: ProductConfig }) {
           <p className="mt-8 max-w-[38rem] text-lead leading-relaxed text-text-2">
             SkillForge is a local AI appliance that learns how your company works. It solves new problems with a person approving every change, proves each fix with code the AI doesn&apos;t control, and turns repeated work into verified skills that run without the model.
           </p>
-          <div className="mt-10 flex flex-wrap gap-3">
-            <a href="#/demo" className="btn btn-primary h-12 px-6 text-[1rem]">Launch demo</a>
-            <a href="#/world/bootstrap" className="btn btn-quiet h-12 px-6 text-[1rem]">See it learn a company</a>
-            <a href="#/world" className="btn btn-quiet h-12 px-6 text-[1rem]">Visit the office</a>
+          <div className="mt-10 flex flex-wrap gap-3 max-sm:flex-col max-sm:items-stretch">
+            <a href="#/demo" className="btn btn-primary h-12 px-6 text-[1rem] max-sm:justify-center">Launch demo</a>
+            <a href="#/world/bootstrap" className="btn btn-quiet h-12 px-6 text-[1rem] max-sm:justify-center">See it learn a company</a>
           </div>
-          <p className="mt-4 text-meta text-text-3">
-            <a href="#/console" className="underline-offset-4 hover:text-text hover:underline">Open the console</a>
-            <span aria-hidden>, or </span>
-            <a href="#acts" className="underline-offset-4 hover:text-text hover:underline">scroll: one problem, from first fix to reuse</a>
+          {/* the other doors, quieter: the demo is the one thing to do first */}
+          <p className="mt-3 flex flex-wrap gap-x-6 text-meta text-text-2">
+            <a href="#/world" className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-text">Visit the office</a>
+            <a href="#/console" className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-text">Open the console</a>
+            <a href="#acts" className="inline-flex min-h-11 items-center underline underline-offset-4 hover:text-text">Scroll: one problem, from first fix to reuse</a>
           </p>
         </motion.div>
         </div>
         <HeroPreview />
       </section>
 
-      <div id="acts" className="mx-auto max-w-[88rem] scroll-mt-14 px-5 lg:px-10">
+      <div id="acts" className="mx-auto max-w-[88rem] scroll-mt-[var(--header-h,3.5rem)] px-5 lg:px-10">
         {reduce ? <StaticActs list={list} product={product} always /> : <><ScrubbedActs list={list} product={product} /><StaticActs list={list} product={product} always={false} /></>}
       </div>
 

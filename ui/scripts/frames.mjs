@@ -1,9 +1,10 @@
 // Story frames at precise scroll positions (desktop): checks the scrubbed choreography, not just the top.
 import { chromium } from "@playwright/test";
+import { launchBrowser } from "./browser.mjs";
 import { mkdirSync } from "node:fs";
 const out = process.argv[2] ?? "screenshots/latest";
 mkdirSync(out, { recursive: true });
-const b = await chromium.launch({ channel: "msedge" });
+const b = await launchBrowser();
 const page = await b.newPage({ viewport: { width: 1440, height: 900 } });
 await page.goto("http://127.0.0.1:4173/");
 await page.waitForSelector("#act-2", { state: "attached" }); // story chunk is lazy-loaded

@@ -10,11 +10,11 @@ const step = (page: Page, name: string | RegExp) => page.getByRole("button", { n
 async function runToReuse(page: Page) {
   await page.goto("#/console/investigations");
   await step(page, /^Start/);
-  await step(page, "Approve change");
-  await step(page, "Turn this fix into a skill");
-  await step(page, "Promote skill");
+  await step(page, "Simulate approval");
+  await step(page, "Simulate learning a skill");
+  await step(page, "Simulate promotion");
   await step(page, "Run on new data");
-  await step(page, "Approve both fixes");
+  await step(page, "Simulate approval of both fixes");
 }
 
 test.describe("story", () => {
@@ -28,7 +28,7 @@ test.describe("story", () => {
   });
 
   test("reduced motion renders every act statically", async ({ browser }) => {
-    const ctx = await browser.newContext({ reducedMotion: "reduce", baseURL: "http://127.0.0.1:4173/" });
+    const ctx = await browser.newContext({ reducedMotion: "reduce", baseURL: `http://127.0.0.1:${process.env.PORT ?? 4173}/` });
     const page = await ctx.newPage();
     await page.goto("/");
     await expect(page.getByText("line-total-reconcile").first()).toBeVisible();
@@ -50,7 +50,7 @@ test.describe("console workflow (synthetic preview)", () => {
     await step(page, /^Start/);
     await expect(page.getByText("Waiting for your approval")).toBeVisible();
     await expect(page.getByText("Apply the approved fix")).toHaveCount(0);
-    await step(page, "Reject");
+    await step(page, "Simulate rejection");
     await expect(page.getByText("No change was made")).toBeVisible();
     await expect(page.getByText("Apply the approved fix")).toHaveCount(0);
   });
@@ -67,7 +67,7 @@ test.describe("console workflow (synthetic preview)", () => {
     await page.goto("#/console/investigations");
     await page.getByLabel(/Connection drops/).check();
     await step(page, /^Start/);
-    await step(page, "Approve change");
+    await step(page, "Simulate approval");
     await expect(page.getByText("already executed")).toBeVisible();
     await expect(page.getByText("4 of 4 checks passed")).toBeVisible();
   });
@@ -76,9 +76,34 @@ test.describe("console workflow (synthetic preview)", () => {
     await page.goto("#/console/investigations");
     await page.getByLabel(/Verification fails/).check();
     await step(page, /^Start/);
-    await step(page, "Approve change");
+    await step(page, "Simulate approval");
     await expect(page.getByRole("alert").filter({ hasText: "Verification failed" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Needs review" })).toBeVisible();
+  });
+
+  test("a waiting approval is unmistakable and the scripted buttons say they approve nothing real", async ({ page }) => {
+    await page.goto("#/console/investigations");
+    await step(page, /^Start/);
+    const panel = page.getByRole("region", { name: "Approve this change?" });
+    await expect(panel.getByText("A person is needed")).toBeVisible();
+    await expect(panel.getByText("They approve nothing real")).toBeVisible();
+    await expect(panel.getByText("untrusted source")).toBeVisible(); // evidence carries its trust mark as words
+    await expect(page.getByRole("list", { name: "Agent steps" }).getByText("Needs a person").last()).toBeVisible();
+  });
+
+  test("a scripted decision reads as a simulation, with the real host command beside it", async ({ page }) => {
+    await page.goto("#/console/investigations");
+    await step(page, /^Start/);
+    await step(page, "Simulate approval");
+    await expect(page.getByText("Simulated approval, by you")).toBeVisible();
+    await expect(page.getByText("Approved by you")).toHaveCount(0); // never worded as a person's approval
+    const sim = page.getByTestId("simulated-decision");
+    await expect(sim).toContainText("Simulated approval");
+    await expect(sim).toContainText("python3 -m app approve 7 --by");
+    await step(page, "Simulate learning a skill");
+    await step(page, "Simulate promotion");
+    await expect(page.getByTestId("simulated-decision")).toContainText("Simulated promotion");
+    await expect(page.getByText("Promoted by you")).toHaveCount(0);
   });
 
   test("approval on a real system is a host command, never a browser call", async ({ page }) => {
@@ -127,9 +152,26 @@ test.describe("navigation, keyboard, layout, accessibility", () => {
     expect(outline).not.toBe("none");
   });
 
+  test("phone: every section tab is on screen, history is stacked rows, targets are 44px", async ({ browser }) => {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, baseURL: `http://127.0.0.1:${process.env.PORT ?? 4173}/` });
+    const page = await ctx.newPage();
+    await page.goto("#/console/history");
+    for (const name of ["Overview", "Investigations", "Skills", "History", "Benchmarks", "System"]) {
+      const box = await page.getByRole("navigation", { name: "Console" }).getByRole("link", { name }).boundingBox();
+      expect(box, name).not.toBeNull();
+      expect(box!.x + box!.width, `${name} inside the viewport`).toBeLessThanOrEqual(390);
+      expect(box!.height, `${name} target height`).toBeGreaterThanOrEqual(44);
+    }
+    await expect(page.getByRole("list", { name: "Past runs, newest first" })).toBeVisible();
+    await expect(page.getByRole("table", { name: /Past runs/ })).toBeHidden();
+    const row = page.getByRole("list", { name: "Past runs, newest first" }).getByRole("listitem").first();
+    expect((await row.boundingBox())!.width).toBeGreaterThan(300); // the run name is not squeezed into a letter-wide column
+    await ctx.close();
+  });
+
   for (const width of [390, 768]) {
     test(`no horizontal overflow at ${width}px`, async ({ browser }) => {
-      const page = await browser.newPage({ viewport: { width, height: 800 }, baseURL: "http://127.0.0.1:4173/" });
+      const page = await browser.newPage({ viewport: { width, height: 800 }, baseURL: `http://127.0.0.1:${process.env.PORT ?? 4173}/` });
       for (const path of ["", "#/console/investigations", "#/console/skills", "#/console/history", "#/console/system"]) {
         await page.goto(path || "/");
         await page.waitForTimeout(300);
@@ -251,10 +293,10 @@ test.describe("keyboard flow (accessibility review findings)", () => {
     await page.goto("#/console/investigations");
     await page.getByRole("button", { name: /^Start/ }).focus();
     await page.keyboard.press("Enter");
-    await expect(page.getByRole("button", { name: "Approve change" })).toBeFocused({ timeout: 15000 });
+    await expect(page.getByRole("button", { name: "Simulate approval" })).toBeFocused({ timeout: 15000 });
     await page.keyboard.press("Enter");
-    await expect(page.getByRole("button", { name: "Turn this fix into a skill" })).toBeFocused({ timeout: 15000 });
+    await expect(page.getByRole("button", { name: "Simulate learning a skill" })).toBeFocused({ timeout: 15000 });
     await page.keyboard.press("Enter");
-    await expect(page.getByRole("button", { name: "Promote skill" })).toBeFocused({ timeout: 15000 });
+    await expect(page.getByRole("button", { name: "Simulate promotion" })).toBeFocused({ timeout: 15000 });
   });
 });

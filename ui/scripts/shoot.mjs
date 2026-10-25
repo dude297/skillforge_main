@@ -2,6 +2,7 @@
 // Playwright's channel option: no browser download. Deterministic: fonts awaited, fixed viewport sizes.
 //   node scripts/shoot.mjs [outDir] [--reduced]
 import { chromium } from "@playwright/test";
+import { launchBrowser } from "./browser.mjs";
 import { mkdirSync } from "node:fs";
 
 const out = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : "screenshots";
@@ -11,7 +12,7 @@ const ALL = [[1440, 900], [1024, 768], [768, 1024], [390, 844]];
 const WIDTHS = process.env.ONLY ? ALL.filter(([w]) => String(w) === process.env.ONLY) : ALL;
 mkdirSync(out, { recursive: true });
 
-const browser = await chromium.launch({ channel: "msedge" });
+const browser = await launchBrowser();
 for (const [w, h] of WIDTHS) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, reducedMotion: reduced ? "reduce" : "no-preference" });
   const page = await ctx.newPage();

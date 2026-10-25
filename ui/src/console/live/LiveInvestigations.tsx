@@ -211,7 +211,6 @@ function LiveInspector({ t, detail, pending, skills, tasks }: { t: LiveTask; det
               { mode: "C", title: "Learned skill", model_calls: t.model_calls, seconds: t.latency_s, tool_calls: t.tool_calls },
             ],
           }} />
-          <p className="tnum mt-3 text-meta text-text-3">Tool calls: {agentTask.tool_calls ?? "not measured"} with the agent, {t.tool_calls ?? "not measured"} with the skill.</p>
         </div>
       ) : null}
 
@@ -319,7 +318,7 @@ export function LiveInvestigations({ data, product }: { data: LiveData; product:
             return (
               <li key={t.id}>
                 <button type="button" onClick={() => setPicked(t.id)} aria-current={t.id === selected?.id ? "true" : undefined}
-                  className={`w-full rounded-lg px-3 py-2 text-left transition-colors duration-150 ${t.id === selected?.id ? "bg-surface-2" : "hover:bg-surface"}`}>
+                  className={`min-h-11 w-full rounded-lg px-3 py-2 text-left transition-colors duration-150 ${t.id === selected?.id ? "bg-surface-2" : "hover:bg-surface"}`}>
                   <span className={`block [overflow-wrap:anywhere] ${t.id === selected?.id ? "font-medium" : "text-text-2"}`}>{t.label}</span>
                   <span className="block text-meta text-text-3">Task {t.id}, {provenance(t.mode).short}</span>
                   <span className={`block text-meta ${s.tone}`}>{s.text}</span>

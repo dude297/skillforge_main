@@ -91,7 +91,7 @@ export function Overview({ run, product, recorded, live }: { run: SyntheticRun; 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-10 p-6 lg:p-10">
       <section aria-labelledby="ov-h" className="space-y-5">
-        <h1 id="ov-h" className="text-h1 leading-tight font-semibold tracking-[-0.03em] text-balance">{s.headline}</h1>
+        <h1 id="ov-h" className="text-h2 leading-tight font-semibold tracking-[-0.03em] [overflow-wrap:anywhere] text-balance sm:text-h1">{s.headline}</h1>
         <a href={s.waiting && live && !live.approvals.length ? "#/console/skills" : "#/console/investigations"} className={`btn ${s.waiting ? "btn-primary" : "btn-quiet"}`}>
           {s.waiting ? <Hand aria-hidden size={16} /> : <CheckCircle2 aria-hidden size={16} />}
           {s.cta}
@@ -103,12 +103,12 @@ export function Overview({ run, product, recorded, live }: { run: SyntheticRun; 
         <div>
           <p className="tnum text-h2 font-semibold">{s.activeSkills}</p>
           <p className="text-text-2">approved skill{s.activeSkills === 1 ? "" : "s"} in use, {s.pendingSkills} waiting to be promoted</p>
-          <a className="mt-2 inline-block text-meta text-signal hover:underline" href="#/console/skills">Open the registry</a>
+          <a className="mt-1 inline-flex min-h-11 items-center text-meta text-signal hover:underline md:min-h-0 md:mt-2" href="#/console/skills">Open the registry</a>
         </div>
         <div>
           <p className="tnum text-h2 font-semibold">{s.bySkill} of {s.runs}</p>
           <p className="text-text-2">{s.runsNote}</p>
-          <a className="mt-2 inline-block text-meta text-signal hover:underline" href="#/console/history">See the history</a>
+          <a className="mt-1 inline-flex min-h-11 items-center text-meta text-signal hover:underline md:min-h-0 md:mt-2" href="#/console/history">See the history</a>
         </div>
         <div>
           {s.compare ? (
@@ -122,7 +122,7 @@ export function Overview({ run, product, recorded, live }: { run: SyntheticRun; 
               <p className="text-text-2">{live ? "Appears once a skill has handled a task the agent first solved." : "Load a benchmark result to compare the agent with its skills."}</p>
             </>
           )}
-          <a className="mt-2 inline-block text-meta text-signal hover:underline" href="#/console/benchmarks">Benchmarks</a>
+          <a className="mt-1 inline-flex min-h-11 items-center text-meta text-signal hover:underline md:min-h-0 md:mt-2" href="#/console/benchmarks">Benchmarks</a>
         </div>
       </section>
       {live ? <RanNothing live={live} /> : null}

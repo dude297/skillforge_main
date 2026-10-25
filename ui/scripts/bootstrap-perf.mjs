@@ -1,9 +1,10 @@
 // Runtime cost of the Bootstrap prelude vs the world without it (same method as perf.mjs: CDP metrics in the
 // installed Edge). Needs `npm run preview`. Numbers are this dev box only; the GB10 runs inference beside the browser.
 import { chromium } from "@playwright/test";
+import { launchBrowser } from "./browser.mjs";
 
 const BASE = "http://127.0.0.1:4173/";
-const b = await chromium.launch({ channel: "msedge" });
+const b = await launchBrowser();
 
 async function measure(hash) {
   const page = await b.newPage({ viewport: { width: 1440, height: 900 } });

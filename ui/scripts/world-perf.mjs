@@ -1,6 +1,7 @@
 // EXPERIMENT: same measurements for the 2.5D scene (ui, :4173 #/world replay playing) and the 3D spike (:4175).
 // Installed Edge with the hardware GPU (ANGLE/D3D11). Prints one JSON object; numbers are from THIS dev box.
 import { chromium } from "@playwright/test";
+import { launchBrowser } from "./browser.mjs";
 import { execSync, spawn } from "node:child_process";
 
 const WINDOW_MS = 6000;
@@ -70,7 +71,7 @@ async function measure(browser, name, { width = 1440, height = 900, throttle = 1
   };
 }
 
-const browser = await chromium.launch({ channel: "msedge", args: ["--enable-gpu", "--ignore-gpu-blocklist"] });
+const browser = await launchBrowser({ args: ["--enable-gpu", "--ignore-gpu-blocklist"] });
 const results = [];
 const baseline = await burner(WINDOW_MS / 1000);
 for (const name of Object.keys(TARGETS)) {

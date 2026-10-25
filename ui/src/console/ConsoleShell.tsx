@@ -144,19 +144,19 @@ export function ConsoleShell({ product, section, view = "" }: { product: Product
   else body = <System status={status} source={source} />;
 
   return (
-    <div className="flex min-h-[calc(100dvh-3.5rem)] flex-col">
+    <div className="flex min-h-[calc(100dvh-var(--header-h,3.5rem))] flex-col">
       <StatusBar source={source} onSource={choose} sources={PREVIEW ? ["synthetic", "recorded"] : undefined} status={status}
         connected={source === "synthetic" || (source === "live" ? liveData.conn === "connected" : !!recorded)} />
       <div className="flex flex-1 flex-col md:flex-row">
         <nav aria-label="Console" className="border-b border-line md:w-52 md:shrink-0 md:border-r md:border-b-0">
-          <ul className="flex gap-1 overflow-x-auto p-2 md:flex-col md:p-3">
+          <ul className="grid grid-cols-3 gap-1 p-2 md:flex md:flex-col md:p-3">
             {NAV.map(({ key, label, Icon }) => (
               <li key={key}>
                 <a href={`#/console/${key}`} aria-current={section === key ? "page" : undefined}
-                  className={`flex min-h-11 items-center gap-2.5 rounded-lg px-3 py-2 whitespace-nowrap md:min-h-0 transition-colors duration-150 ${section === key ? "bg-surface-2 text-text" : "text-text-2 hover:bg-surface hover:text-text"}`}>
-                  <Icon aria-hidden size={16} className={section === key ? "text-signal" : "text-text-3"} />
+                  className={`flex min-h-11 items-center justify-center gap-2.5 rounded-lg px-2 py-2 text-meta whitespace-nowrap transition-colors duration-150 md:min-h-0 md:justify-start md:px-3 md:text-body ${section === key ? "bg-surface-2 text-text" : "text-text-2 hover:bg-surface hover:text-text"}`}>
+                  <Icon aria-hidden size={16} className={`hidden md:block ${section === key ? "text-signal" : "text-text-3"}`} />
                   {label(product)}
-                  {key === "investigations" && waiting ? <span className="ml-auto size-2 rounded-full bg-warn" title="Waiting for you"><span className="sr-only">: waiting for you</span></span> : null}
+                  {key === "investigations" && waiting ? <span className="ml-1.5 size-2 rounded-full bg-warn md:ml-auto" title="Waiting for you"><span className="sr-only">: waiting for you</span></span> : null}
                 </a>
               </li>
             ))}
@@ -167,7 +167,7 @@ export function ConsoleShell({ product, section, view = "" }: { product: Product
             <nav aria-label="Investigation views" className="flex gap-1 border-b border-line px-4 pt-2 text-meta lg:px-6">
               {[["", "Workflow"], ["incident", "OnCall incident"]].map(([v, label]) => (
                 <a key={v} href={`#/console/investigations${v ? `/${v}` : ""}`} aria-current={view === v ? "page" : undefined}
-                  className={`-mb-px border-b-2 px-3 py-2 ${view === v ? "border-signal text-text" : "border-transparent text-text-2 hover:text-text"}`}>{label}</a>
+                  className={`-mb-px inline-flex min-h-11 items-center border-b-2 px-3 sm:min-h-0 sm:py-2 ${view === v ? "border-signal text-text" : "border-transparent text-text-2 hover:text-text"}`}>{label}</a>
               ))}
             </nav>
           ) : null}

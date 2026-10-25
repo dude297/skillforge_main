@@ -1,6 +1,6 @@
 // Judge presenter mode (#/demo): seven beats for the 90-second pitch. Keyboard: → / Space next, ← back, N notes.
 // Every beat says what it is; illustrations are never presented as a live or recorded run.
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, motionValue } from "motion/react";
 import { ChevronLeft, ChevronRight, NotebookText } from "lucide-react";
 import type { ProductConfig } from "../config/product";
@@ -8,27 +8,28 @@ import { SceneInvestigate, SceneProblem, SceneReuse } from "./scenes";
 import { SceneCompile } from "./SceneCompile";
 import { HeroPreview } from "./HeroPreview";
 import { useT } from "../lib/motion";
+import { SceneNav } from "../components/SceneNav";
 import { provenance, RealApproval, RealCompare, RealSkill, useRealRun, type RealRun } from "./realBeats";
 
 const END = motionValue(1);
 const PITCH_S = 90;
 
-type Beat = { title: string; body: string; visual: React.ReactNode; note: string; provenance: string };
+type Beat = { title: string; short: string; body: string; visual: React.ReactNode; note: string; provenance: string };
 
 const beats = (product: ProductConfig, real: RealRun | null): Beat[] => withReal([
-  { title: product.story.problem, body: product.story.problemDetail, visual: <SceneProblem p={END} product={product} />, provenance: "Illustration",
+  { title: product.story.problem, short: "Problem", body: product.story.problemDetail, visual: <SceneProblem p={END} product={product} />, provenance: "Illustration",
     note: "Open with the pain: discrepancies are fixed by hand, again and again, and the data is too sensitive for a cloud model." },
-  { title: "Nothing leaves this machine.", body: "The model, the data and the verifier are designed to run on one Dell GB10, with no cloud model anywhere. In the full agent setup, the agent's sandbox can reach one host endpoint and nothing else.", visual: <LocalDiagram />, provenance: "Architecture (design)",
+  { title: "Nothing leaves this machine.", short: "Local", body: "The model, the data and the verifier are designed to run on one Dell GB10, with no cloud model anywhere. In the full agent setup, the agent's sandbox can reach one host endpoint and nothing else.", visual: <LocalDiagram />, provenance: "Architecture (design)",
     note: "Why local: confidentiality plus control. Say plainly what has run on the GB10 today; the NemoClaw/OpenShell boundary applies to the agent path, not the OnCall script." },
-  { title: "The agent investigates.", body: product.story.investigate, visual: <SceneInvestigate p={END} />, provenance: "Illustration",
+  { title: "The agent investigates.", short: "Investigate", body: product.story.investigate, visual: <SceneInvestigate p={END} />, provenance: "Illustration",
     note: "Point at the trusted evidence and the ignored untrusted note. The agent proposes one bounded fix and stops." },
-  { title: "A person approves. Code verifies.", body: "Nobody wrote a rule for this, so a script can't do it. The agent handles what's new; a person approves, independent code checks the result, and the agent can't approve its own work.", visual: <ApprovalCard />, provenance: "Illustration",
+  { title: "A person approves. Code verifies.", short: "Approve", body: "Nobody wrote a rule for this, so a script can't do it. The agent handles what's new; a person approves, independent code checks the result, and the agent can't approve its own work.", visual: <ApprovalCard />, provenance: "Illustration",
     note: "This is why it isn't just automation: the agent handles the unfamiliar part; approval and verification stay deterministic." },
-  { title: "Experience becomes a skill.", body: product.story.compile, visual: <SceneCompile p={END} />, provenance: "Illustration",
+  { title: "Experience becomes a skill.", short: "Skill", body: product.story.compile, visual: <SceneCompile p={END} />, provenance: "Illustration",
     note: "The centrepiece. The model writes the program and its tests; hidden tests it never saw decide; a person promotes it. If asked about trust, open Console > Skills: versions, refusal and failure counts, rollback." },
-  { title: "The next one needs no model call.", body: product.story.reuse, visual: <SceneReuse p={END} />, provenance: "Example values",
+  { title: "The next one needs no model call.", short: "Reuse", body: product.story.reuse, visual: <SceneReuse p={END} />, provenance: "Example values",
     note: "Say clearly that these are example values. Then open the console and show the measured benchmark if Gate 5 ran." },
-  { title: "Now watch it run.", body: product.story.product, visual: <HeroPreview instant />, provenance: "Illustration",
+  { title: "Now watch it run.", short: "Console", body: product.story.product, visual: <HeroPreview instant />, provenance: "Illustration",
     note: "Switch to the console. Live if the GB10 is up; otherwise the recorded run, labelled as recorded." },
 ], real);
 
@@ -51,13 +52,18 @@ export function Presenter({ product }: { product: ProductConfig }) {
   const [i, setI] = useState(0);
   const [notes, setNotes] = useState(false);
   const tr = useT("major");
-  const go = useCallback((d: number) => setI((x) => Math.min(list.length - 1, Math.max(0, x + d))), [list.length]);
+  const focusNext = useRef(false); // a beat you step to moves focus to its heading
+  const to = useCallback((k: number) => { focusNext.current = true; setI(Math.min(list.length - 1, Math.max(0, k))); }, [list.length]);
+  const go = useCallback((d: number) => { focusNext.current = true; setI((x) => Math.min(list.length - 1, Math.max(0, x + d))); }, [list.length]);
 
   useEffect(() => {
     const on = (e: KeyboardEvent) => {
       // keys belong to the focused control (Space presses a button) and never hijack browser shortcuts
       if (e.altKey || e.ctrlKey || e.metaKey) return;
-      if (e.target instanceof HTMLElement && e.target.closest("input, textarea, select, button, a, [contenteditable]")) return;
+      // the bar's own buttons keep Space/Enter (they press themselves) but not the arrows and N, so a mouse click never strands the keyboard
+      const t = e.target instanceof HTMLElement ? e.target : null;
+      if (t?.closest("input, textarea, select, [contenteditable]")) return;
+      if (t?.closest("button, a") && !(t.closest("[data-demo-controls]") && e.key !== " " && e.key !== "Enter")) return;
       if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") { e.preventDefault(); go(1); }
       if (e.key === "ArrowLeft" || e.key === "PageUp") { e.preventDefault(); go(-1); }
       if (e.key.toLowerCase() === "n") setNotes((v) => !v);
@@ -68,13 +74,14 @@ export function Presenter({ product }: { product: ProductConfig }) {
 
   const beat = list[i];
   return (
-    <main id="main" tabIndex={-1} className="flex min-h-[calc(100dvh-3.5rem)] flex-col">
+    <main id="main" tabIndex={-1} className="flex min-h-[calc(100dvh-var(--header-h,3.5rem))] flex-col">
       <div className="mx-auto grid w-full max-w-[88rem] flex-1 items-center gap-12 px-5 py-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:px-10">
         <AnimatePresence mode="wait" initial={false}>
           <motion.section key={i} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={tr}
+            ref={(el: HTMLElement | null) => { if (el && focusNext.current) { focusNext.current = false; el.querySelector<HTMLElement>("#beat-h")?.focus({ preventScroll: true }); window.scrollTo({ top: 0 }); } }}
             aria-labelledby="beat-h" className="space-y-5">
             <p className="tnum text-meta text-text-3">{i + 1} of {list.length}</p>
-            <h1 id="beat-h" className="text-h1 leading-[1.05] font-semibold tracking-[-0.03em] text-balance">{beat.title}</h1>
+            <h1 id="beat-h" tabIndex={-1} className="scroll-mt-[calc(var(--header-h,3.5rem)+1rem)] text-h2 leading-[1.05] lg:text-h1 font-semibold tracking-[-0.03em] text-balance">{beat.title}</h1>
             <p className="max-w-[36rem] text-lead leading-relaxed text-text-2">{beat.body}</p>
             {i === list.length - 1 ? <a href="#/console/investigations" className="btn btn-primary h-12 px-6">Open the console</a> : null}
           </motion.section>
@@ -90,24 +97,16 @@ export function Presenter({ product }: { product: ProductConfig }) {
 
       <p className="sr-only" aria-live="polite">{`Beat ${i + 1} of ${list.length}: ${beat.title}`}</p>
       {notes ? <p role="note" className="mx-auto mb-2 w-full max-w-[88rem] px-5 text-text-2 lg:px-10"><span className="text-text-3">Notes: </span>{beat.note}</p> : null}
-      <div className="border-t border-line">
-        <div className="mx-auto flex max-w-[88rem] items-center gap-4 px-5 py-3 lg:px-10">
-          <button type="button" className="btn btn-quiet size-10 justify-center px-0" onClick={() => go(-1)} disabled={i === 0} aria-label="Previous beat"><ChevronLeft aria-hidden size={18} /></button>
-          <ol className="flex flex-1 gap-1.5" aria-label="Beats">
-            {list.map((b, k) => (
-              <li key={b.title} className="flex-1">
-                <button type="button" onClick={() => setI(k)} aria-current={k === i ? "step" : undefined} aria-label={`Beat ${k + 1}: ${b.title}`}
-                  className="group grid h-6 w-full place-items-center">
-                  <span className={`block h-1.5 w-full rounded-full transition-colors duration-150 ${k <= i ? "bg-text-2" : "bg-surface-2 group-hover:bg-line-strong"}`} />
-                </button>
-              </li>
-            ))}
-          </ol>
+      <div data-demo-controls className="sticky bottom-0 z-20 border-t border-line bg-canvas pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto flex max-w-[88rem] flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2 sm:px-5 lg:px-10">
+          <button type="button" className="btn btn-quiet size-11 justify-center px-0 md:size-10" onClick={() => go(-1)} disabled={i === 0} aria-label="Previous beat"><ChevronLeft aria-hidden size={18} /></button>
+          <button type="button" className="btn btn-primary size-11 justify-center px-0 md:size-10" onClick={() => go(1)} disabled={i === list.length - 1} aria-label="Next beat"><ChevronRight aria-hidden size={18} /></button>
+          <SceneNav label="Beats" prefix="Beat" items={list} index={i} onSelect={to} className="order-last w-full md:order-none md:w-auto md:min-w-0 md:flex-1" />
+          <p className="hidden text-meta text-text-3 xl:block">Arrows step, N shows notes</p>
           <Clock />
-          <button type="button" className={`btn btn-quiet h-10 px-3 ${notes ? "border-text-3" : ""}`} onClick={() => setNotes((v) => !v)} aria-pressed={notes}>
-            <NotebookText aria-hidden size={16} /><span className="hidden sm:inline">Notes</span>
+          <button type="button" className={`btn btn-quiet ml-auto h-11 px-3 md:ml-0 md:h-10 ${notes ? "border-text-3" : ""}`} onClick={() => setNotes((v) => !v)} aria-pressed={notes}>
+            <NotebookText aria-hidden size={16} />Notes
           </button>
-          <button type="button" className="btn btn-primary size-10 justify-center px-0" onClick={() => go(1)} disabled={i === list.length - 1} aria-label="Next beat"><ChevronRight aria-hidden size={18} /></button>
         </div>
       </div>
     </main>

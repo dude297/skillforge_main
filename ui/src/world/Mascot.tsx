@@ -18,7 +18,7 @@ export function Mascot({ state, px = 4, title, still = false }: { state: MascotS
   }, [reduce, spec.ms]);
   const f = frames[reduce ? 0 : tick % frames.length];
   return (
-    <svg ref={ref} viewBox={`0 0 ${W} ${H}`} width={W * px} height={H * px} shapeRendering="crispEdges" role="img"
+    <svg ref={ref} viewBox={`0 0 ${W} ${H}`} width={W * px} height={H * px} shapeRendering="crispEdges" role="img" style={{ imageRendering: "pixelated" }} className="block"
       aria-label={title ?? `Ember, the SkillForge agent: ${spec.label.toLowerCase()}`}>
       {f.map((r, i) => <rect key={i} x={r.x} y={r.y} width={r.w} height={1} fill={r.c} />)}
     </svg>

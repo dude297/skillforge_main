@@ -5,6 +5,7 @@
 //   frame-by-frame recording of real backend state. --video also records .webm (needs Playwright's ffmpeg:
 //   `npx playwright install ffmpeg`, a small one-time download into the Playwright cache).
 import { chromium } from "@playwright/test";
+import { launchBrowser } from "./browser.mjs";
 import { mkdirSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 
@@ -17,7 +18,7 @@ const PORT = new URL(BASE).port || "8766";
 const link = () => execFileSync(process.env.PYTHON ?? "python", ["-m", "app", "ui", "--link", "--port", PORT], { cwd: "..", encoding: "utf-8" }).trim();
 mkdirSync(out, { recursive: true });
 
-const browser = await chromium.launch({ channel: "msedge" });
+const browser = await launchBrowser();
 const errors = [];
 for (const [w, h] of watch ? [[1440, 900]] : [[1440, 900], [390, 844]]) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, reducedMotion: watch ? "no-preference" : "reduce",

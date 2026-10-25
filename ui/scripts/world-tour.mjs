@@ -1,6 +1,7 @@
 // EXPERIMENT: walk #/world in a treatment: hero, each scroll beat, a department popover, the replay.
 //   node scripts/world-tour.mjs <outDir> <daylight|night> [width] [--reduced]
 import { chromium } from "@playwright/test";
+import { launchBrowser } from "./browser.mjs";
 import { mkdirSync } from "node:fs";
 
 const [out = "screenshots/world", theme = "daylight", width = "1440"] = process.argv.slice(2).filter((a) => !a.startsWith("--"));
@@ -8,7 +9,7 @@ const reduced = process.argv.includes("--reduced");
 const BASE = process.env.BASE ?? "http://127.0.0.1:4173/";
 mkdirSync(out, { recursive: true });
 const w = Number(width), h = w < 600 ? 844 : 900;
-const browser = await chromium.launch({ channel: "msedge" });
+const browser = await launchBrowser();
 const page = await browser.newPage({ viewport: { width: w, height: h }, reducedMotion: reduced ? "reduce" : "no-preference" });
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));

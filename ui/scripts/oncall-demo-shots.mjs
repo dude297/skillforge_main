@@ -1,6 +1,7 @@
 // Guided demo (#/demo) scene screenshots, desktop 1440 and mobile 390, against `vite preview` on :4173.
 import { chromium } from "@playwright/test";
-const b = await chromium.launch({ channel: "msedge" });
+import { launchBrowser } from "./browser.mjs";
+const b = await launchBrowser();
 const out = process.argv[2] ?? "screenshots/demo";
 for (const [w, h] of [[1440, 900], [390, 844]]) {
   const page = await b.newPage({ viewport: { width: w, height: h } });

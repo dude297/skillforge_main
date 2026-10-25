@@ -66,6 +66,30 @@ test.describe("guided demo", () => {
     await scene(page, 5);
   });
 
+  test("a scene you step to takes focus; the arrows still work after using the control bar", async ({ page }) => {
+    await serve(page, FIXTURE);
+    await page.goto("#/demo");
+    await page.getByRole("button", { name: "Next", exact: true }).click();
+    await scene(page, 2);
+    await expect(page.locator("#scene-h")).toBeFocused();
+    await page.getByRole("button", { name: "Next", exact: true }).focus(); // focus sits in the bar after a mouse click
+    await page.keyboard.press("ArrowRight");
+    await scene(page, 3);
+    await page.getByRole("button", { name: /^Scene 5/ }).focus();
+    await page.keyboard.press("ArrowLeft");
+    await scene(page, 2);
+    await expect(page.getByRole("list", { name: "Scenes" }).getByRole("button", { name: /^Scene 2/ })).toHaveAttribute("aria-current", "step");
+  });
+
+  test("simulated approval: wording never calls it a person's decision", async ({ page }) => {
+    await serve(page, { ...FIXTURE, approval: { ...FIXTURE.approval!, state: "approved", by: "recorded-sim", kind: "simulated" as const, at: "2026-10-25 09:00:04" } });
+    await page.goto("#/demo");
+    await page.getByRole("button", { name: /^Scene 4/ }).click();
+    await expect(page.getByTestId("approval-state")).toHaveText("Simulated approval, not a person's decision");
+    await page.getByRole("button", { name: /^Scene 5/ }).click();
+    await expect(page.getByTestId("reuse-simulated")).toContainText("simulated approval");
+  });
+
   test("autoplay stops at the approval desk when the skill is not approved", async ({ page }) => {
     test.setTimeout(90_000);
     await serve(page, FIXTURE);
@@ -98,7 +122,7 @@ test.describe("guided demo", () => {
   });
 
   test("reduced motion: no running animations on the demo stage", async ({ browser }) => {
-    const ctx = await browser.newContext({ reducedMotion: "reduce", baseURL: "http://127.0.0.1:4173/" });
+    const ctx = await browser.newContext({ reducedMotion: "reduce", baseURL: `http://127.0.0.1:${process.env.PORT ?? 4173}/` });
     const page = await ctx.newPage();
     await serve(page, FIXTURE);
     await page.goto("#/demo");
@@ -131,7 +155,7 @@ test.describe("guided demo", () => {
   });
 
   test("phone width: no horizontal scroll on scenes 4 and 6 and the incident view; office rooms open a detail", async ({ browser }) => {
-    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, baseURL: "http://127.0.0.1:4173/" });
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, baseURL: `http://127.0.0.1:${process.env.PORT ?? 4173}/` });
     const page = await ctx.newPage();
     await serve(page, FIXTURE);
     const noScroll = async () => expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);

@@ -1,13 +1,14 @@
 // EXPERIMENT screenshots for exp/world (vite preview on :4173, installed Edge).
 //   node scripts/world-shots.mjs [outDir] [route...]   e.g. node scripts/world-shots.mjs screenshots/world "#/world/lab"
 import { chromium } from "@playwright/test";
+import { launchBrowser } from "./browser.mjs";
 import { mkdirSync } from "node:fs";
 
 const out = process.argv[2] ?? "screenshots/world";
 const routes = process.argv.slice(3).length ? process.argv.slice(3) : ["#/world/lab", "#/world"];
 const BASE = process.env.BASE ?? "http://127.0.0.1:4173/";
 mkdirSync(out, { recursive: true });
-const browser = await chromium.launch({ channel: "msedge" });
+const browser = await launchBrowser();
 const errors = [];
 for (const [w, h] of (process.env.SIZES ?? "1440x900").split(",").map((s) => s.split("x").map(Number))) {
   const page = await browser.newPage({ viewport: { width: w, height: h } });

@@ -1,7 +1,8 @@
 // Preview build check: no request to /ui/*, the banner is shown, Live is not offered. Usage: node scripts/preview-check.mjs <base>
 import { chromium } from "@playwright/test";
+import { launchBrowser } from "./browser.mjs";
 const base = process.argv[2] ?? "http://127.0.0.1:4174/";
-const b = await chromium.launch({ channel: "msedge" });
+const b = await launchBrowser();
 const page = await b.newPage({ viewport: { width: 1440, height: 900 } });
 const hits = [];
 page.on("request", (r) => { if (new URL(r.url()).pathname.startsWith("/ui")) hits.push(r.url()); });

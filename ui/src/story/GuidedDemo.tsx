@@ -1,11 +1,14 @@
 // Guided demo (#/demo): six scenes over ONE OnCall run (skillforge.oncall_run/1), driven through the same World scene
 // the office uses. Autoplay never walks past the approval desk unless approval.state is "approved"
 // (a scripted approval in a recording is labelled as not a person's decision). The 90-second
-// pitch (illustrations) stays at #/demo/pitch. Keyboard: left/right step, space plays or pauses.
-import { useCallback, useEffect, useMemo, useState } from "react";
+// pitch (illustrations) stays at #/demo/pitch. Keyboard: left/right step, space plays or pauses; a step you take yourself
+// moves focus to the new scene's heading, autoplay never does.
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronLeft, ChevronRight, Compass, Pause, Play, SkipForward, X } from "lucide-react";
+import { SceneNav } from "../components/SceneNav";
 import { useOnCall } from "../data/useOnCall";
+import { PREVIEW } from "../lib/preview";
 import { approved, diagnosisText, humanApproved, fmt, modelWrote, runMode, NM, type OnCallRun } from "../data/oncall";
 import { ModeBanner, modeSentence } from "../components/ModeBanner";
 import { RunInspector } from "../components/RunInspector";
@@ -19,12 +22,14 @@ import { useT } from "../lib/motion";
 import "../world/world.css";
 
 const SCENES = [
-  { title: "Company onboarding", body: "SkillForge starts by reading the company's workspace, read-only: which tools exist, what the agent may do, and what only a person may decide. This is the real onboarding view; nothing on it connects, grants or writes." },
-  { title: "Enter the living company", body: "This is the company SkillForge just read. Ember is the agent. Incidents arrive at intake, Ember works in the local AI room, a person decides at the review desk, the independent check tests every change, and approved skills live in the library. Click a room to see what happened there." },
-  { title: "An incident arrives", body: "The on-call evidence lands at intake: logs, metrics, config and the last deploy, each with the file it came from. Ember takes it to the local AI room." },
-  { title: "The fix becomes a tested skill", body: "A diagnosis skill is written, then checked by regression tests on INC-1 and by hidden tests it never saw. It can't run until a person approves it on the host." },
-  { title: "The next one takes the short path", body: "A compatible incident goes straight from intake to the library: the approved skill runs as fixed code and the AI room is skipped. An incompatible one is refused, not guessed." },
-  { title: "Technical proof", body: "Every claim on the previous screens, as recorded: provenance, verifier results, skill version and hash, who approved and when, model requests, latency, telemetry and the audit trail." },
+  { title: "Company onboarding", short: "Onboarding", body: "SkillForge starts by reading the company's workspace, read-only: which tools exist, what the agent may do, and what only a person may decide. This is the real onboarding view; nothing on it connects, grants or writes.",
+    preview: "SkillForge starts by reading the company's workspace, read-only: which tools exist, what the agent may do, and what only a person may decide. On a host this is the real onboarding view. In this public preview it is an illustrated walkthrough with an example company, and nothing on it connects, grants or writes." },
+  { title: "Enter the living company", short: "The office", body: "This is the company SkillForge just read. Ember is the agent. Incidents arrive at intake, Ember works in the local AI room, a person decides at the review desk, the independent check tests every change, and approved skills live in the library. Click a room to see what happened there.",
+    preview: "This is an illustrated example company. Ember is the agent. Incidents arrive at intake, Ember works in the local AI room, a person decides at the review desk, the independent check tests every change, and approved skills live in the library. Click a room to see what happened there." },
+  { title: "An incident arrives", short: "Incident", body: "The on-call evidence lands at intake: logs, metrics, config and the last deploy, each with the file it came from. Ember takes it to the local AI room." },
+  { title: "The fix becomes a tested skill", short: "Skill", body: "A diagnosis skill is written, then checked by regression tests on INC-1 and by hidden tests it never saw. It can't run until a person approves it on the host." },
+  { title: "The next one takes the short path", short: "Reuse", body: "A compatible incident goes straight from intake to the library: the approved skill runs as fixed code and the AI room is skipped. An incompatible one is refused, not guessed." },
+  { title: "Technical proof", short: "Proof", body: "Every claim on the previous screens, as recorded: provenance, verifier results, skill version and hash, who approved and when, model requests, latency, telemetry and the audit trail." },
 ] as const;
 const PROOF_FOR: Record<Dept, string> = { intake: "incident", server: "synthesis", gate: "verification", review: "approval", library: "reuse" };
 const TICK_MS = 1500, DWELL_MS = 2600;
@@ -45,8 +50,12 @@ export function GuidedDemo() {
   const n = perScene[i].length;
   const isApproved = approved(run);
 
+  // a scene change the person asked for moves focus to the new heading (so keyboard and screen-reader users land at the
+  // top of what they asked for); autoplay changes scenes without touching focus
+  const focusNext = useRef(false);
   const go = useCallback((to: number) => {
     const j = Math.max(0, Math.min(SCENES.length - 1, to));
+    focusNext.current = true;
     setI(j); setK(perScene[j].length); setStopped(false); setOpen(null);
   }, [perScene]);
   const togglePlay = useCallback(() => {
@@ -71,7 +80,12 @@ export function GuidedDemo() {
   useEffect(() => {
     const on = (e: KeyboardEvent) => {
       if (e.altKey || e.ctrlKey || e.metaKey) return;
-      if (e.target instanceof HTMLElement && e.target.closest("input, textarea, select, button, a, [contenteditable], [role=button]")) return;
+      const t = e.target instanceof HTMLElement ? e.target : null;
+      // typing fields keep every key. A focused button or link keeps Space (it presses it); the arrows still step the
+      // scenes when focus sits in the demo's own control bar, so using the bar with the mouse never strands the keyboard.
+      if (t?.closest("input, textarea, select, [contenteditable]")) return;
+      const inBar = !!t?.closest("[data-demo-controls]");
+      if (t?.closest("button, a, [role=button]") && !(inBar && e.key !== " ")) return;
       if (e.key === "ArrowRight") { e.preventDefault(); setPlaying(false); go(i + 1); }
       if (e.key === "ArrowLeft") { e.preventDefault(); setPlaying(false); go(i - 1); }
       if (e.key === " ") { e.preventDefault(); togglePlay(); }
@@ -84,18 +98,18 @@ export function GuidedDemo() {
   const state = useMemo(() => sceneState(shown), [shown]);
   const mode = runMode(run, i === 4 ? "reuse" : "run");
   const sentence = i < 2 && run
-    ? `This scene shows the synthetic workspace${i === 0 ? " read from this host's operator API" : ""}; no model is involved here. The OnCall run that follows: ${modeSentence(mode, run, origin)}`
+    ? `This scene shows ${PREVIEW ? "an illustration of an example company" : `the synthetic workspace${i === 0 ? " read from this host's operator API" : ""}`}; no model is involved here. The OnCall run that follows: ${modeSentence(mode, run, origin)}`
     : modeSentence(mode, run, origin, load.state === "missing" ? load.detail : undefined);
   const wide = i === 0 || i === 5;
   const scene = SCENES[i];
 
   return (
-    <main id="main" tabIndex={-1} className="flex min-h-[calc(100dvh-3.5rem)] flex-col">
+    <main id="main" tabIndex={-1} className="flex min-h-[calc(100dvh-var(--header-h,3.5rem))] flex-col">
       <ModeBanner mode={mode} sentence={sentence} />
       <div className={`mx-auto grid w-full max-w-[88rem] flex-1 grid-cols-[minmax(0,1fr)] gap-8 px-5 py-8 lg:px-10 ${wide ? "" : "lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start"}`}>
         {wide ? null : (
-          <div className="world world-daylight !min-h-0 lg:sticky lg:top-20">
-            <div className="world-scene-frame relative h-[min(60dvh,34rem)] min-h-72 overflow-hidden">
+          <div className="world world-daylight !min-h-0 lg:sticky lg:top-[calc(var(--header-h,3.5rem)+1rem)]">
+            <div className="world-scene-frame relative h-[min(46dvh,34rem)] min-h-64 overflow-hidden lg:h-[min(60dvh,34rem)] lg:min-h-72">
               <Scene state={state} theme="daylight" focus={null} onOpen={setOpen} open={open}
                 label={`OnCall run, scene ${i + 1} of ${SCENES.length}${state.current ? `: ${state.current.title}` : ""}`} />
               <div className="absolute top-3 left-3 flex flex-wrap items-center gap-2">
@@ -111,11 +125,12 @@ export function GuidedDemo() {
           </div>
         )}
         <AnimatePresence mode="wait" initial={false}>
-          <motion.section key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={tr}
+          <motion.section key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={tr}
+            ref={(el: HTMLElement | null) => { if (el && focusNext.current) { focusNext.current = false; el.querySelector<HTMLElement>("#scene-h")?.focus({ preventScroll: true }); window.scrollTo({ top: 0 }); } }}
             aria-labelledby="scene-h" className="min-w-0 space-y-5">
             <p className="tnum text-meta text-text-3">Scene {i + 1} of {SCENES.length}</p>
-            <h1 id="scene-h" className="text-h2 leading-[1.08] font-semibold tracking-[-0.025em] text-balance">{scene.title}</h1>
-            <p className="max-w-[40rem] text-lead leading-relaxed text-text-2">{scene.body}</p>
+            <h1 id="scene-h" tabIndex={-1} className="scroll-mt-[calc(var(--header-h,3.5rem)+1rem)] text-h2 leading-[1.08] font-semibold tracking-[-0.025em] text-balance">{scene.title}</h1>
+            <p className="max-w-[40rem] text-lead leading-relaxed text-text-2">{PREVIEW && "preview" in scene ? scene.preview : scene.body}</p>
             {i === 0 ? (
               <div className="world world-daylight !min-h-0 max-h-[68dvh] overflow-auto rounded-[var(--radius-stage)] border border-line" style={{ background: THEMES.daylight.bg }} data-testid="onboarding">
                 <BootstrapLite theme="daylight" desktop />
@@ -130,6 +145,7 @@ export function GuidedDemo() {
               <div className="flex flex-wrap gap-3">
                 <a href="#/world" className="btn btn-primary">Explore the office</a>
                 <a href="#/console/investigations/incident" className="btn btn-quiet">Open in the console</a>
+                <a href="?product=ops#/demo/pitch" className="inline-flex min-h-11 items-center text-meta text-text-2 underline-offset-4 hover:text-text hover:underline">Second domain: freight accruals (illustrated pitch)</a>
               </div>
             ) : null}
           </motion.section>
@@ -137,25 +153,16 @@ export function GuidedDemo() {
       </div>
 
       <p className="sr-only" aria-live="polite">{`Scene ${i + 1} of ${SCENES.length}: ${scene.title}`}</p>
-      <div className="sticky bottom-0 z-20 border-t border-line bg-canvas">
-        <div className="mx-auto flex max-w-[88rem] flex-wrap items-center gap-3 px-5 py-3 lg:px-10">
-          <button type="button" className="btn btn-quiet size-10 justify-center px-0" onClick={() => { setPlaying(false); go(i - 1); }} disabled={i === 0} aria-label="Back"><ChevronLeft aria-hidden size={18} /></button>
-          <button type="button" className="btn btn-primary h-10 px-4" onClick={togglePlay} aria-pressed={playing}>
+      <div data-demo-controls className="sticky bottom-0 z-20 border-t border-line bg-canvas pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto flex max-w-[88rem] flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-2 sm:px-5 lg:px-10">
+          <button type="button" className="btn btn-quiet size-11 justify-center px-0 md:size-10" onClick={() => { setPlaying(false); go(i - 1); }} disabled={i === 0} aria-label="Back"><ChevronLeft aria-hidden size={18} /></button>
+          <button type="button" className="btn btn-primary h-11 px-4 md:h-10" onClick={togglePlay} aria-pressed={playing}>
             {playing ? <Pause aria-hidden size={16} /> : <Play aria-hidden size={16} />}{playing ? "Pause" : "Play"}
           </button>
-          <button type="button" className="btn btn-quiet size-10 justify-center px-0" onClick={() => { setPlaying(false); go(i + 1); }} disabled={i === SCENES.length - 1} aria-label="Next"><ChevronRight aria-hidden size={18} /></button>
-          <button type="button" className="btn btn-quiet h-10 px-3" onClick={() => { setPlaying(false); go(SCENES.length - 1); }}><SkipForward aria-hidden size={16} /><span className="sr-only sm:not-sr-only">Skip to proof</span></button>
-          <ol className="order-last flex w-full gap-1.5 sm:order-none sm:w-auto sm:flex-1" aria-label="Scenes">
-            {SCENES.map((s, j) => (
-              <li key={s.title} className="flex-1">
-                <button type="button" onClick={() => { setPlaying(false); go(j); }} aria-current={j === i ? "step" : undefined} aria-label={`Scene ${j + 1}: ${s.title}`} className="group grid h-6 w-full place-items-center">
-                  <span className={`block h-1.5 w-full rounded-full transition-colors duration-150 ${j <= i ? "bg-text-2" : "bg-surface-2 group-hover:bg-line-strong"}`} />
-                </button>
-              </li>
-            ))}
-          </ol>
-          <a href="#/world" className="btn btn-quiet h-10 px-3"><Compass aria-hidden size={16} /><span className="sr-only sm:not-sr-only">Explore</span></a>
-          <a href="?product=ops#/demo/pitch" className="hidden text-meta text-text-3 underline-offset-4 hover:text-text hover:underline xl:inline">Second domain: freight accruals</a>
+          <button type="button" className="btn btn-quiet size-11 justify-center px-0 md:size-10" onClick={() => { setPlaying(false); go(i + 1); }} disabled={i === SCENES.length - 1} aria-label="Next"><ChevronRight aria-hidden size={18} /></button>
+          <button type="button" className="btn btn-quiet h-11 px-3 md:h-10" onClick={() => { setPlaying(false); go(SCENES.length - 1); }} title="Skip to proof"><SkipForward aria-hidden size={16} /><span className="sr-only sm:not-sr-only">Skip to proof</span></button>
+          <SceneNav label="Scenes" prefix="Scene" items={SCENES} index={i} onSelect={(j) => { setPlaying(false); go(j); }} className="order-last w-full md:order-none md:w-auto md:min-w-0 md:flex-1" />
+          <a href="#/world" className="btn btn-quiet ml-auto h-11 px-3 md:ml-0 md:h-10" title="Explore the office"><Compass aria-hidden size={16} /><span className="sr-only lg:not-sr-only">Explore</span></a>
         </div>
       </div>
     </main>
@@ -226,9 +233,9 @@ function Synthesis({ run, stopped }: { run: OnCallRun; stopped: boolean }) {
       </Panel>
       <Panel title="Approval desk" tone={human ? "border-verified/50" : st === "rejected" ? "border-fail/50" : "border-warn/60"}>
         <p data-testid="approval-state" className={`text-lead font-semibold ${human ? "text-verified" : st === "rejected" ? "text-fail" : "text-warn"}`}>
-          {st === "approved" ? `Approved by ${a?.by ?? "a person (name not recorded)"}` : st === "rejected" ? `Rejected by ${a?.by ?? "a person"}` : st === "pending" ? "Waiting for a person" : `State: ${fmt(st)}`}
+          {st === "approved" ? (human ? `Approved by ${a?.by ?? "a person (name not recorded)"}` : "Simulated approval, not a person's decision") : st === "rejected" ? `Rejected by ${a?.by ?? "a person"}` : st === "pending" ? "Waiting for a person" : `State: ${fmt(st)}`}
         </p>
-        {a?.at ? <p className="text-meta text-text-3">at {a.at}</p> : null}
+        {a?.at || (st === "approved" && !human && a?.by) ? <p className="text-meta text-text-3">{st === "approved" && !human && a?.by ? `Typed as ${a.by}` : ""}{st === "approved" && !human && a?.by && a?.at ? ", " : ""}{a?.at ? `at ${a.at}` : ""}</p> : null}
         {st === "approved" && !human ? <p className="text-meta text-warn" data-testid="not-human">Not a person&apos;s decision: an agent or test typed this approval (its approver name says so) to show the full sequence.</p> : null}
         {a?.command ? <CopyCommand label="A person runs this on the host. This browser can't approve anything." cmd={a.command} /> : <p className="text-text-3">Approval command not recorded.</p>}
         {stopped ? <p role="status" className="text-meta text-warn" data-testid="autoplay-stopped">Autoplay stopped here: the skill is not approved. Press Next to see what reuse looks like in this recording.</p> : null}
@@ -257,6 +264,7 @@ function Reuse({ run }: { run: OnCallRun }) {
               ))}
             </tbody>
           </table>
+          {approved(run) && !humanApproved(run) ? <p className="text-meta text-warn" data-testid="reuse-simulated">The skill ran under a simulated approval, not a person&apos;s decision.</p> : null}
           <p className="text-meta text-text-2">Diagnosis: {diagnosisText(u.diagnosis)}. Not a speed benchmark: the first run wrote and tested a skill, the reuse only ran it.</p>
         </Panel>
       ) : (

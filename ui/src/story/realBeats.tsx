@@ -101,7 +101,6 @@ export function RealCompare({ r }: { r: RealRun }) {
           { mode: "C", title: "Learned skill", model_calls: r.reuse.model_calls, seconds: r.reuse.latency_s, tool_calls: r.reuse.tool_calls },
         ],
       }} />
-      <p className="tnum mt-3 text-meta text-text-3">Tool calls: {r.agent.tool_calls ?? "not measured"} with the agent, {r.reuse.tool_calls ?? "not measured"} with the skill.</p>
     </div>
   );
 }

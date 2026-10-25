@@ -9,6 +9,7 @@ import { THEMES, type ThemeName } from "./theme";
 import { SourceTag } from "./World";
 import { CopyCommand } from "../components/CopyCommand";
 import { PREVIEW } from "../lib/preview";
+import { BootstrapPreview } from "./BootstrapPreview";
 import { live, type LiteDiscovery, type LiteItem, type LiteState, type LiteWorkspace } from "../data/live";
 
 const STEPS = ["Choose a workspace", "Read-only discovery", "Roles and capabilities", "Workflows and permissions", "Your office"] as const;
@@ -230,7 +231,12 @@ function Office({ d, theme, desktop }: { d: LiteDiscovery; theme: ThemeName; des
   );
 }
 
+/** the hosted preview has no host to read: it shows the illustrated walkthrough instead (BootstrapPreview.tsx) */
 export function BootstrapLite({ theme, desktop }: { theme: ThemeName; desktop: boolean }) {
+  return PREVIEW ? <BootstrapPreview theme={theme} desktop={desktop} /> : <BootstrapLiveLite theme={theme} desktop={desktop} />;
+}
+
+function BootstrapLiveLite({ theme, desktop }: { theme: ThemeName; desktop: boolean }) {
   const [step, setStep] = useState(0);
   const [list, setList] = useState<LiteWorkspace[] | null>(null);
   const [pick, setPick] = useState<string | null>(null);
@@ -269,17 +275,16 @@ export function BootstrapLite({ theme, desktop }: { theme: ThemeName; desktop: b
         <h1 className="world-h1 text-balance">Set up SkillForge on your workspace</h1>
       </div>
       <nav aria-label="Onboarding steps">
-        <ol className="world-key flex flex-wrap gap-1 p-1">
+        <ol className="world-key flex flex-wrap gap-1 p-1 max-sm:flex-nowrap">
           {STEPS.map((s, i) => (
-            <li key={s}><button type="button" disabled={!reachable(i)} onClick={() => setStep(i)} aria-current={step === i ? "step" : undefined}
-              className={`world-seg-item text-meta disabled:cursor-not-allowed disabled:opacity-50 ${step === i ? "is-on" : ""}`}>{i + 1}. {s}</button></li>
+            <li key={s} className="max-sm:flex-1"><button type="button" disabled={!reachable(i)} onClick={() => setStep(i)} aria-current={step === i ? "step" : undefined}
+              className={`world-seg-item text-meta max-sm:min-h-11 max-sm:w-full disabled:cursor-not-allowed disabled:opacity-50 ${step === i ? "is-on" : ""}`}>{i + 1}<span className="max-sm:sr-only">. {s}</span></button></li>
           ))}
         </ol>
       </nav>
       <div className="space-y-5" aria-busy={busy}>
         <h2 id="bl-h" ref={heading} tabIndex={-1} className="world-h2 outline-none">Step {step + 1} of {STEPS.length}: {STEPS[step]}</h2>
         {err ? (
-          PREVIEW ? <Problem title="Not available in the read-only preview"><p>Onboarding reads a real workspace on the host. This hosted preview has no host, so nothing is shown rather than an example. <a className="world-link" href="#/world/bootstrap">See the illustrated version</a>.</p></Problem> :
           <Problem title={err.reason === "unauthorized" ? "Not signed in to this machine's console" : err.reason === "unreachable" ? "The Bootstrap Lite service isn't running" : "Discovery failed"}>
             <p>{err.detail}</p>
             <p className="mt-2">Start it on the host, then open the one-time link it prints:</p>

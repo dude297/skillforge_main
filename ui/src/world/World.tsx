@@ -3,7 +3,7 @@
 //   2. "Watch a real run": a recorded backend run (sanitized operator-API export), or Live when this page is served by
 //      `python -m app ui` with a session. The scene never fills a live gap with story events.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Pause, Play, RotateCcw, SkipBack, SkipForward, X } from "lucide-react";
+import { Film, FlaskConical, Pause, Play, Radio, RotateCcw, SkipBack, SkipForward, X, type LucideIcon } from "lucide-react";
 import { Mascot } from "./Mascot";
 import { Scene } from "./Scene";
 import { BEATS, DEPTS, STORY, consoleLink, fromAudit, fromOnCallAudit, normalize, sceneState, type Dept, type VizEvent, type VizSource } from "./events";
@@ -18,18 +18,19 @@ import "./world.css";
 
 const RECORDED: VizEvent[] = normalize((recorded.events as LiveEvent[]).map(fromAudit));
 
-const SOURCE_LABEL: Record<VizSource, { text: string; cls: string; hint: string }> = {
-  story: { text: "Illustration", cls: "world-tag-story", hint: "A scripted story of how the system works. Not a run." },
-  recorded: { text: "Recorded run", cls: "world-tag-recorded", hint: `A real backend run captured through the read-only API. Agent: scripted mock, no model.` },
-  live: { text: "Live", cls: "world-tag-live", hint: "This system right now, through the read-only operator API." },
-  oncall: { text: "OnCall run", cls: "world-tag-recorded", hint: "The OnCall run's audit trail. Its mode banner in the guided demo says whether a model or a recorded reference wrote the code." },
+// the same icons as the console's SourceBadge: a source reads the same in both worlds
+const SOURCE_LABEL: Record<VizSource, { text: string; cls: string; hint: string; Icon: LucideIcon }> = {
+  story: { text: "Illustration", cls: "world-tag-story", hint: "A scripted story of how the system works. Not a run.", Icon: FlaskConical },
+  recorded: { text: "Recorded run", cls: "world-tag-recorded", hint: `A real backend run captured through the read-only API. Agent: scripted mock, no model.`, Icon: Film },
+  live: { text: "Live", cls: "world-tag-live", hint: "This system right now, through the read-only operator API.", Icon: Radio },
+  oncall: { text: "OnCall run", cls: "world-tag-recorded", hint: "The OnCall run's audit trail. Its mode banner in the guided demo says whether a model or a recorded reference wrote the code.", Icon: Film },
 };
 
 export function SourceTag({ source, stale = false }: { source: VizSource; stale?: boolean }) {
   const s = SOURCE_LABEL[source];
   return (
     <span title={stale ? "Connection lost: this is the last state received, not now" : s.hint} className={`world-tag ${stale ? "world-tag-stale" : s.cls}`}>
-      {s.text}{stale ? " (connection lost)" : ""}<span className="sr-only">: {stale ? "the last state received, not now" : s.hint}</span>
+      <s.Icon aria-hidden size={13} strokeWidth={2} />{s.text}{stale ? " (connection lost)" : ""}<span className="sr-only">: {stale ? "the last state received, not now" : s.hint}</span>
     </span>
   );
 }
@@ -96,11 +97,42 @@ function Popover({ dept, events, source, onClose }: { dept: Dept; events: VizEve
   );
 }
 
-export function Hero({ theme }: { theme: ThemeName }) {
+/** Ember's stage: the office's own tiles and palette, drawn once, with the sprite on top at a whole-pixel scale. */
+function EmberStage({ theme, px }: { theme: ThemeName; px: number }) {
+  const t = THEMES[theme];
+  const TW = 56, TH = 28, N = 3, X0 = 200, Y0 = 24, D = 18;
+  const at = (i: number, j: number): [number, number] => [X0 + (i - j) * TW, Y0 + (i + j) * TH];
+  const tiles = [];
+  for (let i = 0; i < N; i++) for (let j = 0; j < N; j++)
+    tiles.push(<polygon key={`${i}${j}`} points={[at(i, j), at(i + 1, j), at(i + 1, j + 1), at(i, j + 1)].map((q) => q.join(",")).join(" ")} fill={(i + j) % 2 ? t.floorA : t.floorB} />);
+  const L = [at(0, N), at(N, N), [at(N, N)[0], at(N, N)[1] + D], [at(0, N)[0], at(0, N)[1] + D]] as [number, number][];
+  const R = [at(N, 0), at(N, N), [at(N, N)[0], at(N, N)[1] + D], [at(N, 0)[0], at(N, 0)[1] + D]] as [number, number][];
+  const ring = [at(0, 0), at(N, 0), at(N, N), at(0, N)];
+  const c = at(N / 2, N / 2);
   return (
-    <section className="world-hero mx-auto grid max-w-6xl items-center gap-10 px-6 pt-14 pb-10 md:grid-cols-[1.1fr_1fr]">
+    <div className="mx-auto w-full max-w-[28rem]">
+      {/* the sprite stands on the platform: its feet sit on the tile centre (the last two sprite rows are empty) */}
+      <div className="relative z-10 flex justify-center"><Mascot state="idle" px={px} /></div>
+      <svg viewBox={`0 ${Y0} 400 ${2 * N * TH + D + 6}`} className="block w-full" aria-hidden shapeRendering="crispEdges"
+        style={{ marginTop: `calc(${-((c[1] - Y0) / 400) * 100}% - ${2 * px}px + 8px)` }}>
+        <polygon points={L.map((q) => q.join(",")).join(" ")} fill={t.wallB} />
+        <polygon points={R.map((q) => q.join(",")).join(" ")} fill={t.wallA} />
+        {tiles}
+        <polygon points={ring.map((q) => q.join(",")).join(" ")} fill="none" stroke={t.focus} strokeOpacity={0.35} strokeWidth={1} />
+        {/* a stepped, pixel-style contact shadow */}
+        <ellipse cx={c[0]} cy={c[1] + 2} rx={64} ry={16} fill={t.focus} opacity={0.1} />
+        <ellipse cx={c[0]} cy={c[1] + 2} rx={44} ry={11} fill={t.focus} opacity={0.14} />
+      </svg>
+    </div>
+  );
+}
+
+export function Hero({ theme }: { theme: ThemeName }) {
+  const wide = useMedia("(min-width: 768px)");
+  return (
+    <section className="world-hero mx-auto grid max-w-6xl items-center gap-10 px-5 pt-12 pb-12 md:px-6 md:pt-16 md:pb-14 lg:grid-cols-[1.1fr_1fr]">
       <div className="space-y-5">
-        <h1 className="world-h1 text-balance">Meet Ember. It fixes a problem once, then learns the shortcut.</h1>
+        <h1 className="world-h1">Meet Ember. It fixes a problem once, then learns the shortcut.</h1>
         <p className="world-lead max-w-[34rem]">
           Ember is the agent inside SkillForge. It solves new problems with a person watching, proves every fix, and keeps
           what worked as a skill, so the next similar problem takes the short way.
@@ -111,9 +143,14 @@ export function Hero({ theme }: { theme: ThemeName }) {
           <a href="#replay" onClick={(e) => { e.preventDefault(); document.getElementById("replay")?.scrollIntoView(); }} className="world-btn">Watch a real run</a>
         </div>
       </div>
-      <div className="world-stage-card grid place-items-center p-8">
-        <Mascot state="idle" px={theme === "daylight" ? 10 : 9} />
-      </div>
+      <figure className="world-stage-card w-full max-w-[34rem] space-y-4 p-5 md:p-6 lg:justify-self-end" style={{ background: "var(--w-raised)" }}>
+        <EmberStage theme={theme} px={wide ? 14 : 9} />
+        <figcaption className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-[var(--w-line)] pt-4">
+          <SourceTag source="story" />
+          <span className="world-chip">Ember: idle</span>
+          <span className="world-body text-meta">Nothing is running on this page. In the office below, Ember&apos;s pose follows the run.</span>
+        </figcaption>
+      </figure>
     </section>
   );
 }
@@ -135,7 +172,7 @@ function StoryScroll({ theme }: { theme: ThemeName }) {
   return (
     <section id="story" aria-labelledby="story-h" className="relative mx-auto grid max-w-[88rem] gap-8 px-6 md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
       <h2 id="story-h" className="sr-only">One problem, start to finish (illustration)</h2>
-      <div className="sticky top-16 h-[calc(100dvh-5rem)] py-4">
+      <div className="sticky top-[var(--header-h,3.5rem)] h-[calc(100dvh-var(--header-h,3.5rem))] py-4">
         <div className="world-scene-frame relative h-full overflow-hidden">
           <Scene state={state} theme={theme} focus={state.current?.dept ?? null} zoom={1.38} onOpen={setOpen} open={open}
             label={`Illustration, step ${beat + 1} of ${BEATS.length}: ${BEATS[beat].heading}`} />
@@ -144,12 +181,12 @@ function StoryScroll({ theme }: { theme: ThemeName }) {
           <div className="world-key-wrap absolute inset-x-3 bottom-3"><Key /></div>
         </div>
       </div>
-      <ol className="py-[40dvh]">
+      <ol className="world-rail py-[40dvh]">
         {BEATS.map((b, i) => (
           <li key={b.heading} ref={(el) => { refs.current[i] = el; }} data-beat={i} aria-current={beat === i ? "step" : undefined}
-            className={`world-beat mb-[55dvh] space-y-3 border-l-4 pl-5 ${beat === i ? "is-on" : ""}`}>
-            <p className="world-step tnum">{String(i + 1).padStart(2, "0")} of {String(BEATS.length).padStart(2, "0")}</p>
-            <h3 className="world-h3 text-balance">{b.heading}</h3>
+            className={`world-beat mb-[55dvh] space-y-3 pl-7 ${beat === i ? "is-on" : ""}`}>
+            <p className="world-step">{i + 1} of {BEATS.length}</p>
+            <h3 className="world-h3">{b.heading}</h3>
             <p className="world-body">{b.body}</p>
           </li>
         ))}
@@ -164,16 +201,16 @@ function StoryCards({ theme }: { theme: ThemeName }) {
     <section id="story" aria-labelledby="story-h-m" className="space-y-6 px-4">
       <div className="flex items-center justify-between gap-3"><h2 id="story-h-m" className="world-h3">One problem, start to finish</h2><SourceTag source="story" /></div>
       <Key />
-      <ol className="space-y-6">
+      <ol className="space-y-10">
         {BEATS.map((b, i) => {
           const st = sceneState(STORY.slice(0, b.end + 1));
           return (
-            <li key={b.heading} className="world-card space-y-3 p-4">
+            <li key={b.heading} className="space-y-3">
               <div className="world-scene-frame h-56 overflow-hidden">
                 <Scene state={st} theme={theme} focus={st.current?.dept ?? null} zoom={1.7} onOpen={() => {}} open={null} label={`Illustration: ${b.heading}`} still />
               </div>
-              <p className="world-step tnum">{String(i + 1).padStart(2, "0")} of {String(BEATS.length).padStart(2, "0")}</p>
-              <h3 className="world-h3 text-balance">{b.heading}</h3>
+              <p className="world-step pt-1">{i + 1} of {BEATS.length}</p>
+              <h3 className="world-h3">{b.heading}</h3>
               <p className="world-body">{b.body}</p>
             </li>
           );
@@ -273,7 +310,7 @@ function Replay({ theme }: { theme: ThemeName }) {
           <ol aria-label="Events so far, newest first" className="mt-3 max-h-64 min-h-0 flex-1 space-y-1 overflow-y-auto text-meta" tabIndex={0}>
             {events.slice().reverse().slice(0, 40).map((e) => (
               <li key={e.id}>
-                <a href={consoleLink(source, e.dept, e.task).href} className="flex gap-2 rounded px-1 hover:bg-black/5" title={consoleLink(source, e.dept, e.task).label}>
+                <a href={consoleLink(source, e.dept, e.task).href} className="flex min-h-6 items-center gap-2 rounded px-1 hover:bg-black/5" title={consoleLink(source, e.dept, e.task).label}>
                   <span className="world-muted w-20 shrink-0">{DEPTS[e.dept].name.split(" ")[0]}</span><span>{e.title}</span>
                 </a>
               </li>
@@ -286,14 +323,33 @@ function Replay({ theme }: { theme: ThemeName }) {
   );
 }
 
+/** what each pose means in the system's own terms; the tone is the console's colour for that meaning */
+const POSE: Record<MascotState, { says: string; tone: string }> = {
+  idle: { says: "No run in progress, or a person's decision was just recorded.", tone: "var(--w-line-strong)" },
+  investigating: { says: "Reading records and evidence.", tone: "var(--w-accent)" },
+  building: { says: "Proposing one bounded fix, or running an approved skill.", tone: "var(--w-accent)" },
+  verifying: { says: "A change was applied; the independent check has not passed it yet.", tone: "var(--w-accent)" },
+  verified: { says: "Every applied change passed the independent check.", tone: "var(--w-verified)" },
+  waiting: { says: "A person has to approve before anything changes.", tone: "var(--w-warn)" },
+  error: { says: "A refusal or a failed check. Nothing is redone automatically.", tone: "var(--w-fail)" },
+};
+
 function StateLegend() {
   return (
-    <section aria-labelledby="legend-h" className="mx-auto max-w-6xl space-y-4 px-6 pb-20">
-      <h2 id="legend-h" className="world-h2">What Ember is doing</h2>
-      <p className="world-body max-w-[42rem]">Each pose maps to one real system state. Ember only shows what the backend reports.</p>
-      <ul className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-7">
+    <section aria-labelledby="legend-h" className="mx-auto max-w-6xl space-y-6 px-5 pb-24 md:px-6">
+      <div className="space-y-2">
+        <h2 id="legend-h" className="world-h2">What Ember is doing</h2>
+        <p className="world-body max-w-[42rem]">Each pose maps to one real system state. Ember only shows what the backend reports, and never looks finished before the independent check says so.</p>
+      </div>
+      <ul className="grid gap-3 sm:grid-cols-4 lg:grid-cols-7">
         {(Object.keys(STATES) as MascotState[]).map((s) => (
-          <li key={s} className="world-card grid place-items-center gap-2 p-3 text-center text-meta"><Mascot state={s} px={3} /><span>{STATES[s].label}</span></li>
+          <li key={s} className="world-card flex items-center gap-4 p-3 sm:flex-col sm:items-stretch sm:gap-3">
+            <div className="grid shrink-0 place-items-center rounded-lg py-2 max-sm:px-2 sm:py-3" style={{ background: "var(--w-raised)" }}><Mascot state={s} px={4} /></div>
+            <div className="space-y-1 text-meta">
+              <p className="flex items-center gap-2 font-semibold"><span aria-hidden className="size-2 shrink-0 rounded-full" style={{ background: POSE[s].tone }} />{STATES[s].label}</p>
+              <p className="world-muted">{POSE[s].says}</p>
+            </div>
+          </li>
         ))}
       </ul>
     </section>

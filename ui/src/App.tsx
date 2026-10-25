@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ChevronDown, X } from "lucide-react";
 import { currentProduct } from "./config/product";
 import type { Section } from "./console/ConsoleShell";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -60,33 +61,79 @@ export default function App() {
   }, [route, product.name]);
 
   const Logo = product.icon;
+  // the Daylight World routes (office, set up, bootstrap, lab) are a deliberate pale scene: the bar follows them
+  const day = route === "world" || route === "onboard" || route === "bootstrap" || route === "lab";
+  const here = NAV.find((n) => n.routes.includes(route));
+  const [menuFor, setMenuFor] = useState<Route | null>(null); // open for THIS route only: navigating closes it
+  const menu = menuFor === route;
+  const menuBtn = useRef<HTMLButtonElement>(null);
+  const bar = useRef<HTMLElement>(null); // the whole header (bar + preview strip + phone menu)
+
+  // sticky stages below the bar (story, office) start where the bar ends, whatever its height (the preview strip adds a line)
+  useLayoutEffect(() => {
+    const el = bar.current;
+    if (!el) return;
+    const set = () => document.documentElement.style.setProperty("--header-h", `${el.offsetHeight}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.surface = day ? "day" : "night";
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", day ? "#DCEBF5" : "#080C12");
+    document.querySelector('meta[name="color-scheme"]')?.setAttribute("content", day ? "light" : "dark");
+  }, [day]);
+  useEffect(() => {
+    if (!menu) return;
+    const out = (e: PointerEvent) => { if (!bar.current?.contains(e.target as Node)) setMenuFor(null); };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") { setMenuFor(null); menuBtn.current?.focus(); } };
+    document.addEventListener("pointerdown", out);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("pointerdown", out); document.removeEventListener("keydown", esc); };
+  }, [menu, route]);
+
   return (
     <>
       <a href="#main" onClick={(e) => { e.preventDefault(); document.getElementById("main")?.focus(); }} className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded focus:bg-text focus:px-3 focus:py-2 focus:text-canvas">
         Skip to content
       </a>
-      <header className="sticky top-0 z-40 border-b border-line bg-canvas/90 backdrop-blur-sm">
+      <header ref={bar} className="site-header" data-surface={day ? "day" : "night"}>
         <nav aria-label="Primary" className="mx-auto flex h-14 max-w-[88rem] items-center gap-6 px-5 lg:px-10">
-          <a href="#/" className="flex items-center gap-2 font-semibold tracking-tight">
-            <Logo aria-hidden size={18} className="text-signal" />
+          <a href="#/" className="flex min-h-11 items-center gap-2 font-semibold tracking-tight text-[var(--h-text-on)]">
+            <Logo aria-hidden size={18} className={day ? "text-day-signal" : "text-signal"} />
             {product.name}
           </a>
-          {/* the product in story order; on phones the same links scroll sideways instead of disappearing */}
-          <div className="-mr-5 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto pr-5 text-text-2 sm:mr-0 sm:flex-none sm:pr-0">
+          {/* from tablet up the product is five links in story order */}
+          <div className="hidden items-center gap-1 md:flex">
             {NAV.map((n) => (
-              <a
-                key={n.href}
-                href={n.href}
-                aria-current={n.routes.includes(route) ? "page" : undefined}
-                className={`inline-flex min-h-11 shrink-0 items-center rounded-md px-3 whitespace-nowrap transition-colors duration-150 sm:min-h-0 sm:py-1.5 ${n.routes.includes(route) ? "text-text" : "hover:text-text"}`}
-              >
-                {n.label}
-              </a>
+              <a key={n.href} href={n.href} aria-current={n.routes.includes(route) ? "page" : undefined} className="site-link">{n.label}</a>
             ))}
           </div>
           {route === "story" ? <a href="#/demo" className="btn btn-primary ml-auto hidden h-9 px-4 lg:inline-flex">Launch demo</a> : null}
+          {/* phones: one menu button that names where you are; the five links open below the bar at full 48px height */}
+          <div className="ml-auto flex items-center gap-1 md:hidden">
+            {here ? <span className="text-meta" aria-hidden>{here.label}</span> : null}
+            <button ref={menuBtn} type="button" onClick={() => setMenuFor(menu ? null : route)} aria-expanded={menu} aria-controls="site-menu"
+              className="site-link gap-1.5 font-semibold text-[var(--h-text-on)]">
+              Menu{menu ? <X aria-hidden size={16} /> : <ChevronDown aria-hidden size={16} />}
+            </button>
+          </div>
         </nav>
-        {PREVIEW ? <p role="note" className="border-t border-warn/40 bg-surface px-5 py-1.5 text-center text-meta text-warn lg:px-10">Read-only preview · recorded/synthetic data</p> : null}
+        {PREVIEW ? <p role="note" className="site-strip px-5 py-1.5 text-center text-meta lg:px-10">Read-only preview · recorded/synthetic data</p> : null}
+        <div id="site-menu" hidden={!menu} className="absolute inset-x-0 top-full border-b border-[var(--h-line)] bg-[var(--h-solid)] shadow-[0_16px_24px_-16px_rgb(0_0_0/0.35)] md:hidden">
+          <ul className="mx-auto max-w-[88rem] px-3 py-2">
+            {NAV.map((n) => (
+              <li key={n.href}>
+                <a href={n.href} aria-current={n.routes.includes(route) ? "page" : undefined} onClick={() => setMenuFor(null)} className="site-link w-full justify-between !min-h-12 px-3 text-[1rem]">
+                  {n.label}
+                  {n.routes.includes(route) ? <span aria-hidden className="size-1.5 rounded-full bg-[var(--h-focus)]" /> : null}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
       </header>
       <ErrorBoundary>
       <Suspense fallback={<div className="min-h-[100dvh]" aria-busy="true" />}>

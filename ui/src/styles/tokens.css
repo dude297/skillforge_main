@@ -18,6 +18,21 @@
   --color-warn: #f1ad64;
   --color-fail: #ff8a94;
 
+  /* Daylight World (the office, Set up and Bootstrap pages): the SAME five meanings on a pale canvas. The text-grade
+     cyan/green/amber/rose are the darker twins of signal/verified/warn/fail (each >= 4.8:1 on day-bg and white;
+     checked with the same WCAG formula as scripts/contrast.mjs). Meaning never changes between the two worlds. */
+  --color-day-bg: #dcebf5;
+  --color-day-raised: #eaf2f8;
+  --color-day-surface: #ffffff;
+  --color-day-ink: #14203a;
+  --color-day-muted: #4a5a70;
+  --color-day-line: #aec3d5;
+  --color-day-line-strong: #5f768c;
+  --color-day-signal: #1b6a9c;
+  --color-day-verified: #12714f;
+  --color-day-warn: #8f4d12;
+  --color-day-fail: #b02a3a;
+
   --font-sans: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, "Cascadia Code", monospace;
 
@@ -46,6 +61,9 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     /* no global smooth scrolling: it animated every programmatic scrollIntoView and fought the scrubbed story */
+  }
+  html[data-surface="day"] {
+    background: var(--color-day-bg);
   }
   body {
     min-height: 100dvh;
@@ -77,6 +95,70 @@
 }
 
 @layer components {
+  /* ---- site header: one bar, two surfaces. data-surface="day" on the Daylight World routes ---- */
+  .site-header {
+    --h-bg: color-mix(in oklab, var(--color-canvas) 92%, transparent);
+    --h-solid: var(--color-canvas);
+    --h-line: var(--color-line);
+    --h-text: var(--color-text-2);
+    --h-text-on: var(--color-text);
+    --h-hover: color-mix(in oklab, var(--color-text) 8%, transparent);
+    --h-focus: var(--color-signal);
+    --h-strip-bg: var(--color-surface);
+    --h-strip-text: var(--color-warn);
+    --h-strip-line: color-mix(in oklab, var(--color-warn) 40%, transparent);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: var(--h-bg);
+    border-bottom: 1px solid var(--h-line);
+    color: var(--h-text);
+    backdrop-filter: blur(4px);
+    transition: background-color 240ms var(--ease-standard), border-color 240ms var(--ease-standard), color 240ms var(--ease-standard);
+  }
+  .site-header[data-surface="day"] {
+    --h-bg: color-mix(in oklab, var(--color-day-bg) 94%, transparent);
+    --h-solid: var(--color-day-bg);
+    --h-line: var(--color-day-line);
+    --h-text: var(--color-day-muted);
+    --h-text-on: var(--color-day-ink);
+    --h-hover: color-mix(in oklab, var(--color-day-ink) 7%, transparent);
+    --h-focus: var(--color-day-signal);
+    --h-strip-bg: #fff1dc;
+    --h-strip-text: #7a4510;
+    --h-strip-line: #e3c394;
+  }
+  .site-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.75rem;
+    padding-inline: 0.75rem;
+    border-radius: 8px;
+    white-space: nowrap;
+    color: var(--h-text);
+    transition: color 160ms var(--ease-standard), background-color 160ms var(--ease-standard);
+  }
+  .site-link:hover { color: var(--h-text-on); background: var(--h-hover); }
+  .site-link { position: relative; }
+  .site-link[aria-current="page"] { color: var(--h-text-on); }
+  /* the current page: a 2px bar under the label (no weight change, so nothing shifts between routes) */
+  .site-header nav .site-link[aria-current="page"]::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0.75rem;
+    bottom: 0.4rem;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--h-focus);
+  }
+  #site-menu .site-link[aria-current="page"] { font-weight: 600; }
+  .site-strip {
+    border-top: 1px solid var(--h-strip-line);
+    background: var(--h-strip-bg);
+    color: var(--h-strip-text);
+    transition: background-color 240ms var(--ease-standard), color 240ms var(--ease-standard);
+  }
+  .site-header :focus-visible { outline-color: var(--h-focus); }
   .panel {
     background: color-mix(in oklab, var(--color-surface) 92%, transparent);
     border: 1px solid var(--color-line);

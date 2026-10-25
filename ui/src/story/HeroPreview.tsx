@@ -20,7 +20,7 @@ export function HeroPreview({ instant = false }: { instant?: boolean }) {
   const enter = reduce ? false : { opacity: 0, y: 8 };
 
   return (
-    <motion.div style={reduce ? undefined : { y }} aria-hidden className="relative w-full max-w-[34rem] justify-self-end">
+    <motion.div style={reduce ? undefined : { y }} aria-hidden className="relative w-full max-w-[34rem] lg:justify-self-end">
       <div className="hairline-grid absolute -inset-10 rounded-[2rem] opacity-60 [mask-image:radial-gradient(closest-side,black,transparent)]" />
       <div className="relative overflow-hidden rounded-[var(--radius-stage)] border border-line-strong bg-surface shadow-[0_40px_120px_-40px_rgba(130,216,255,0.18)]">
         <div className="flex items-center gap-4 border-b border-line px-4 py-2.5 text-meta">

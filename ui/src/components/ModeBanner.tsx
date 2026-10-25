@@ -1,11 +1,12 @@
 import { Bot, Clapperboard, Cog, Unplug } from "lucide-react";
 import { modelWrote, type DemoMode, type OnCallOrigin, type OnCallRun } from "../data/oncall";
 
-const TONE: Record<DemoMode, { cls: string; Icon: typeof Bot }> = {
-  "LIVE REAL MODEL": { cls: "border-signal/50 text-signal", Icon: Bot },
-  "RECORDED SCRIPTED SIMULATION": { cls: "border-warn/50 text-warn", Icon: Clapperboard },
-  "DETERMINISTIC SKILL": { cls: "border-verified/50 text-verified", Icon: Cog },
-  UNAVAILABLE: { cls: "border-line-strong text-text-3", Icon: Unplug },
+// The machine value (data-mode, runMode()) stays exactly as is; what a person reads is the same words in sentence case.
+const TONE: Record<DemoMode, { cls: string; label: string; Icon: typeof Bot }> = {
+  "LIVE REAL MODEL": { cls: "border-signal/50 text-signal", label: "Live, real model", Icon: Bot },
+  "RECORDED SCRIPTED SIMULATION": { cls: "border-warn/50 text-warn", label: "Recorded scripted simulation", Icon: Clapperboard },
+  "DETERMINISTIC SKILL": { cls: "border-verified/50 text-verified", label: "Deterministic skill, no model", Icon: Cog },
+  UNAVAILABLE: { cls: "border-line-strong text-text-2", label: "Unavailable", Icon: Unplug },
 };
 
 /** One sentence that says exactly who did the work on screen and where the data came from. */
@@ -18,11 +19,11 @@ export function modeSentence(mode: DemoMode, run: OnCallRun | null, origin: OnCa
 }
 
 export function ModeBanner({ mode, sentence }: { mode: DemoMode; sentence: string }) {
-  const { cls, Icon } = TONE[mode];
+  const { cls, label, Icon } = TONE[mode];
   return (
-    <div role="status" data-testid="mode-banner" data-mode={mode} className={`flex flex-wrap items-center gap-x-4 gap-y-1 border-b bg-surface px-5 py-2.5 lg:px-10 ${cls}`}>
-      <span className="inline-flex items-center gap-2 font-semibold tracking-wide"><Icon aria-hidden size={16} />{mode}</span>
-      <span className="text-meta text-text-2">{sentence}</span>
+    <div role="status" data-testid="mode-banner" data-mode={mode} className={`flex flex-col gap-x-4 gap-y-0.5 border-b bg-surface px-4 py-2.5 sm:flex-row sm:flex-wrap sm:items-baseline sm:px-5 lg:px-10 ${cls}`}>
+      <span className="inline-flex items-center gap-2 font-semibold"><Icon aria-hidden size={16} className="shrink-0" />{label}</span>
+      <span className="min-w-0 flex-1 text-meta leading-snug text-text-2 sm:basis-[28rem]">{sentence}</span>
     </div>
   );
 }

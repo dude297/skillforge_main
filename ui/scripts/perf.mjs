@@ -1,9 +1,10 @@
 // Runtime cost, measured (CDP Performance metrics in the installed Edge). The GB10 runs inference beside the
 // browser, so idle pages must cost ~nothing and scrolling must not produce long tasks.
 import { chromium } from "@playwright/test";
+import { launchBrowser } from "./browser.mjs";
 
 const BASE = "http://127.0.0.1:4173/";
-const b = await chromium.launch({ channel: "msedge" });
+const b = await launchBrowser();
 const page = await b.newPage({ viewport: { width: 1440, height: 900 } });
 const cdp = await page.context().newCDPSession(page);
 await cdp.send("Performance.enable");

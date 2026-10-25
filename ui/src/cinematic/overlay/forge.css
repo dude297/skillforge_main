@@ -1,0 +1,164 @@
+/* The Forge: overlay, controls and poster. Tokens come from styles/tokens.css; the only motion here is clip-path wipes and the
+   rail, both driven by CSS variables the clock writes (overlay/driver.ts), so pause, seek and reduced motion are exact. */
+
+.forge {
+  --gutter: clamp(16px, 3.2vw, 48px);
+  --rail-h: 44px;
+  --trace: var(--color-signal);
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  background: #05080d;
+  color: var(--color-text);
+  /* defaults so every var() has a value before the first frame is written */
+  --t: 0; --a1-in: 0; --a2-in: 0; --a-out: 0; --d1-in: 0; --d2-in: 0; --d-out: 0;
+  --en-title: 0; --en-1: 0; --en-2: 0; --en-3: 0; --cap-in: 1; --cap-out: 0; --note-in: 0;
+}
+.forge[data-mode="intro"] { height: calc(100dvh - var(--forge-top, 3.5rem)); min-height: 32rem; }
+.forge[data-mode="embedded"] { width: 100%; height: 100%; min-height: 26rem; }
+.forge[data-collapsed="true"] { height: auto; min-height: 0; }
+
+.forge-stage { position: absolute; inset: 0; z-index: 0; }
+.forge-scrim {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background:
+    linear-gradient(to top, rgb(5 8 13 / 0.86) 0, rgb(5 8 13 / 0.55) 22%, transparent 48%),
+    linear-gradient(to right, rgb(5 8 13 / 0.6) 0, transparent 52%);
+}
+.forge-ui { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.forge-ui > * { pointer-events: auto; }
+.forge-ui > .forge-text, .forge-ui > .forge-provenance, .forge-ui > .forge-sr { pointer-events: none; }
+
+/* the provenance badge: always on screen */
+.forge-provenance {
+  position: absolute; top: var(--gutter); left: var(--gutter); margin: 0;
+  display: inline-flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; padding-inline: 0.875rem;
+  border: 1px solid var(--color-line-strong); border-radius: 8px;
+  background: rgb(5 8 13 / 0.72);
+  color: var(--color-text-2); font-size: var(--text-meta); font-weight: 520; line-height: 1.2;
+}
+.forge-provenance-mark { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--color-text-3); flex: none; }
+
+/* words */
+.forge-text {
+  position: absolute; left: var(--gutter); right: var(--gutter);
+  bottom: calc(var(--rail-h) + 3.25rem + var(--gutter) * 0.5);
+  max-width: 62rem;
+}
+.forge-heads { display: grid; }
+.forge-head {
+  grid-area: 1 / 1; margin: 0;
+  font-size: clamp(2.75rem, 7.4vw, 6rem); line-height: 0.98; font-weight: 600; letter-spacing: -0.038em;
+  color: var(--color-text);
+}
+.forge-line {
+  display: block; position: relative; width: max-content; max-width: 100%; white-space: nowrap;
+  padding-block: 0.04em;
+  clip-path: inset(-0.12em calc((1 - var(--in, 0)) * 100%) -0.12em calc(var(--out, 0) * 100%));
+}
+.forge-edge {
+  position: absolute; top: 0.1em; bottom: 0.1em; width: 1px; left: calc(var(--in, 0) * 100%);
+  background: var(--color-signal);
+  box-shadow: 0 0 10px 0 rgb(130 216 255 / 0.55);
+  opacity: min(1, calc(var(--in, 0) * (1 - var(--in, 0)) * 14));
+}
+.forge-caption {
+  margin-top: 1.25rem; max-width: 40rem;
+  clip-path: inset(-0.2em calc((1 - var(--cap-in)) * 100%) -0.2em calc(var(--cap-out) * 100%));
+}
+.forge-cap-title { margin: 0; font-size: var(--text-h3); line-height: 1.15; font-weight: 580; letter-spacing: -0.022em; text-wrap: balance; }
+.forge-cap-detail { margin: 0.375rem 0 0; font-size: var(--text-lead); line-height: 1.4; color: var(--color-text-2); text-wrap: pretty; }
+.forge-note {
+  display: flex; gap: 0.625rem; align-items: baseline;
+  margin: 0.875rem 0 0; max-width: 40rem; font-size: var(--text-meta); line-height: 1.45; color: var(--color-text-2);
+  clip-path: inset(-0.2em calc((1 - var(--note-in)) * 100%) -0.2em 0);
+}
+.forge-note::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--color-text-3); transform: translateY(-1px); }
+.forge-note[data-waiting="true"]::before { background: var(--color-warn); border-color: var(--color-warn); }
+
+/* the last act */
+.forge-enter { position: absolute; left: var(--gutter); right: var(--gutter); bottom: calc(var(--rail-h) + 3.25rem + var(--gutter) * 0.5); max-width: 62rem; }
+.forge-enter-title {
+  margin: 0 0 1.25rem; font-size: var(--text-h2); line-height: 1.05; font-weight: 600; letter-spacing: -0.03em;
+  clip-path: inset(-0.15em calc((1 - var(--in, 0)) * 100%) -0.15em 0);
+}
+.forge-exits { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.forge-exit { height: 3rem; padding-inline: 1.375rem; font-size: 1rem; clip-path: inset(0 calc((1 - var(--in, 0)) * 100%) 0 0 round 8px); }
+.forge-exit.btn-quiet { background: rgb(5 8 13 / 0.72); }
+
+/* controls */
+.forge-btn {
+  display: inline-flex; align-items: center; gap: 0.5rem; height: 2.75rem; padding-inline: 0.875rem; cursor: pointer;
+  border: 1px solid var(--color-line-strong); border-radius: 8px; background: rgb(5 8 13 / 0.72);
+  color: var(--color-text); font: inherit; font-size: var(--text-body); font-weight: 560;
+  transition: border-color 160ms var(--ease-standard), background-color 160ms var(--ease-standard), transform 160ms var(--ease-standard);
+}
+.forge-btn:hover:not(:disabled) { border-color: var(--color-text-3); background: var(--color-surface); }
+.forge-btn:active:not(:disabled) { transform: translateY(1px); }
+.forge-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.forge-skip { position: absolute; top: var(--gutter); right: var(--gutter); }
+.forge-bar {
+  position: absolute; left: var(--gutter); right: var(--gutter); bottom: calc(var(--rail-h) + 0.5rem);
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+}
+.forge-beat-label { margin-left: 0.5rem; font-size: var(--text-meta); color: var(--color-text-3); }
+
+/* the rail is the trace: one luminous hairline, in six sections, one per beat */
+.forge-rail { position: absolute; left: var(--gutter); right: var(--gutter); bottom: 0; height: var(--rail-h); display: flex; gap: 6px; }
+.forge-seg[data-trace="warn"] { --trace: var(--color-warn); }
+.forge-seg[data-trace="fail"] { --trace: var(--color-fail); }
+.forge-seg {
+  --p: clamp(0, calc((var(--t) - var(--s)) / var(--d)), 1);
+  position: relative; flex: var(--w) 1 0; min-width: 0; padding: 0; border: 0; background: none; cursor: pointer; overflow: hidden;
+}
+.forge-seg::before { content: ""; position: absolute; left: 0; right: 0; top: calc(50% - 0.5px); height: 1px; background: var(--color-line-strong); }
+.forge-seg:hover::before { background: var(--color-text-3); }
+.forge-seg-fill { position: absolute; left: 0; right: 0; top: calc(50% - 0.5px); height: 1px; background: var(--trace); transform-origin: left center; transform: scaleX(var(--p)); }
+.forge-seg-head {
+  position: absolute; top: calc(50% - 1px); height: 3px; width: 44px; left: calc(var(--p) * 100% - 44px);
+  background: linear-gradient(90deg, transparent, var(--trace)); border-radius: 2px;
+  opacity: min(1, calc(var(--p) * (1 - var(--p)) * 60));
+}
+.forge-seg:focus-visible { outline-offset: -2px; }
+
+.forge-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* poster (fallback) */
+.forge-poster { position: absolute; inset: 0; background: radial-gradient(120% 90% at 70% 30%, #0c141d 0, #05080d 70%); }
+.forge-poster-svg { position: absolute; right: var(--gutter); top: 9%; width: min(54%, 60rem); height: 48%; overflow: visible; }
+.forge-lbl { font-family: var(--font-sans); font-size: 16px; fill: var(--color-text-2); }
+.forge-lbl-short { display: none; }
+.forge-lbl-note { fill: var(--color-text-3); font-size: 15px; }
+.forge-lbl-refused { fill: var(--color-fail); }
+
+/* collapsed band for returning visitors */
+.forge-collapsed-inner {
+  position: relative; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.25rem;
+  padding: 1.5rem var(--gutter) 1.5rem;
+  border-bottom: 1px solid var(--color-line);
+}
+.forge-collapsed-inner::before { content: ""; position: absolute; left: var(--gutter); right: var(--gutter); top: 0; height: 1px; background: linear-gradient(90deg, var(--color-signal), var(--color-line) 70%); }
+.forge-collapsed-title { margin: 0; font-size: var(--text-h3); line-height: 1.15; font-weight: 600; letter-spacing: -0.025em; max-width: 34rem; text-wrap: balance; }
+.forge-meta { margin: 0.375rem 0 0; font-size: var(--text-meta); color: var(--color-text-3); }
+.forge-collapsed-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.forge-collapsed-actions .btn { height: 2.75rem; }
+
+@media (max-width: 640px) {
+  .forge-poster-svg { left: var(--gutter); right: auto; width: calc(100% - 2 * var(--gutter)); top: 14%; height: 34%; }
+  .forge-lbl-long { display: none; }
+  .forge-lbl-short { display: inline; }
+  .forge-lbl { font-size: 26px; }
+  .forge-lbl-note { font-size: 24px; }
+  .forge-text, .forge-enter { bottom: calc(var(--rail-h) + 3.25rem + 0.5rem); }
+  .forge-exit { flex: 1 1 100%; justify-content: center; }
+  .forge-exits { gap: 0.5rem; }
+  .forge-cap-title { font-size: 1.25rem; }
+  .forge-cap-detail { font-size: var(--text-body); }
+  .forge-beat-label { display: none; }
+  /* the badge wraps rather than crowding Skip */
+  .forge-provenance { max-width: calc(100% - 2 * var(--gutter) - 8.5rem); line-height: 1.25; padding-block: 0.375rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .forge-btn { transition: none; }
+}

@@ -21,6 +21,8 @@ const OUTCOME: Record<HistoryRun["outcome"], { text: string; cls: string }> = {
 };
 const PATH = { agent: "Agent with model", skill: "Learned skill", escalated: "Escalated, no model" } as const;
 const TICK_MS = 700;
+const handledBy = (r: HistoryRun) => (r.mock && r.path === "agent" ? "Mock agent, no model" : PATH[r.path]);
+const runMeta = (r: HistoryRun) => `#${r.id} at ${r.when}${r.deterministic ? ", deterministic, no model" : r.mock ? ", mock agent" : ""}`;
 
 /** Past runs plus a step-by-step replay with playback controls. */
 /** runs: the table rows. loadRun: in Live mode, fetch a run's real audit events for the replay. */
@@ -44,17 +46,27 @@ export function History({ runs, source, loadRun, initial }: { runs: HistoryRun[]
     return () => window.clearInterval(id);
   }, [running, STEPS.length]);
 
+  const replayRun = async (r: HistoryRun) => {
+    if (!loadRun) return;
+    wanted.current = r.id;
+    const res = await loadRun(r.id);
+    if (wanted.current !== r.id) return; // a later click wins
+    if (typeof res === "string") return setLoadErr(`run #${r.id} could not be loaded: ${res}`);
+    setReplay({ ...res, source }); setPos(0); setPlaying(true); setLoadErr(null);
+  };
+
   const toggle = () => {
     if (!running && pos >= STEPS.length) setPos(0);
     setPlaying(!running);
   };
 
   return (
-    <div className="grid min-h-full grid-cols-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <section aria-labelledby="hist-h" className="min-w-0 border-b border-line p-6 xl:border-r xl:border-b-0">
+    <div className="grid min-h-full grid-cols-1 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
+      <section aria-labelledby="hist-h" className="@container min-w-0 border-b border-line p-4 sm:p-6 xl:border-r xl:border-b-0">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h1 id="hist-h" className="text-h3 font-semibold tracking-tight">Execution history</h1><SourceBadge source={source} /></div>
         {!runs.length ? <p className="text-text-3">No runs recorded yet.</p> : null}
-        <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Past runs table">
+        {/* wide pane: a table. Narrow pane (phones, and the half-width column at laptop sizes): the same data as stacked rows */}
+        <div className="hidden overflow-x-auto @2xl:block" tabIndex={0} role="region" aria-label="Past runs table">
           <table className="w-full text-left">
             <caption className="sr-only">Past runs, newest first</caption>
             <thead className="text-meta text-text-3">
@@ -65,25 +77,37 @@ export function History({ runs, source, loadRun, initial }: { runs: HistoryRun[]
                 <tr key={r.id} className="border-t border-line align-top">
                   <td className="px-2 py-2.5 [overflow-wrap:anywhere]">
                     {loadRun ? (
-                      <button type="button" className="block text-left font-medium text-text hover:text-signal hover:underline" onClick={async () => {
-                        wanted.current = r.id;
-                        const res = await loadRun(r.id);
-                        if (wanted.current !== r.id) return; // a later click wins
-                        if (typeof res === "string") return setLoadErr(`run #${r.id} could not be loaded: ${res}`);
-                        setReplay({ ...res, source }); setPos(0); setPlaying(true); setLoadErr(null);
-                      }}>{r.title}<span className="sr-only">: replay this run</span></button>
+                      <button type="button" className="block text-left font-medium text-text hover:text-signal hover:underline" onClick={() => replayRun(r)}>{r.title}<span className="sr-only">: replay this run</span></button>
                     ) : <span className="block font-medium">{r.title}</span>}
-                    <span className="tnum text-meta text-text-3">#{r.id} at {r.when}{r.deterministic ? ", deterministic, no model" : r.mock ? ", mock agent" : ""}</span>
+                    <span className="tnum text-meta text-text-3">{runMeta(r)}</span>
                   </td>
-                  <td className="px-2 py-2.5 text-text-2">{r.mock && r.path === "agent" ? "Mock agent, no model" : PATH[r.path]}</td>
+                  <td className="px-2 py-2.5 text-text-2">{handledBy(r)}</td>
                   <td className={`px-2 py-2.5 ${OUTCOME[r.outcome].cls}`}>{OUTCOME[r.outcome].text}</td>
-                  <td className="tnum px-2 py-2.5 text-text-2">{r.modelCalls ?? "not measured"}</td>
-                  <td className="tnum px-2 py-2.5 text-text-2">{r.seconds == null ? "not measured" : `${r.seconds} s`}</td>
+                  <td className={`tnum px-2 py-2.5 ${r.modelCalls == null ? "text-text-3 italic" : "text-text-2"}`}>{r.modelCalls ?? "not measured"}</td>
+                  <td className={`tnum px-2 py-2.5 ${r.seconds == null ? "text-text-3 italic" : "text-text-2"}`}>{r.seconds == null ? "not measured" : `${r.seconds} s`}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        <ul aria-label="Past runs, newest first" className="space-y-2 @2xl:hidden">
+          {runs.map((r) => (
+            <li key={r.id} className="rounded-lg border border-line bg-surface p-3">
+              <div className="flex items-start justify-between gap-3">
+                {loadRun ? (
+                  <button type="button" className="-my-1 min-h-11 min-w-0 py-1 text-left font-medium text-text [overflow-wrap:anywhere] hover:text-signal hover:underline" onClick={() => replayRun(r)}>{r.title}<span className="sr-only">: replay this run</span></button>
+                ) : <p className="min-w-0 font-medium [overflow-wrap:anywhere]">{r.title}</p>}
+                <p className={`shrink-0 text-meta font-medium ${OUTCOME[r.outcome].cls}`}>{OUTCOME[r.outcome].text}</p>
+              </div>
+              <p className="tnum text-meta text-text-3">{runMeta(r)}</p>
+              <dl className="mt-2 grid grid-cols-3 gap-x-3 text-meta">
+                <div><dt className="text-text-3">Handled by</dt><dd className="text-text-2">{handledBy(r)}</dd></div>
+                <div><dt className="text-text-3">Model calls</dt><dd className={`tnum ${r.modelCalls == null ? "text-text-3 italic" : "text-text-2"}`}>{r.modelCalls ?? "not measured"}</dd></div>
+                <div><dt className="text-text-3">Time</dt><dd className={`tnum ${r.seconds == null ? "text-text-3 italic" : "text-text-2"}`}>{r.seconds == null ? "not measured" : `${r.seconds} s`}</dd></div>
+              </dl>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section aria-labelledby="replay-h" className="flex min-w-0 flex-col">
@@ -92,7 +116,7 @@ export function History({ runs, source, loadRun, initial }: { runs: HistoryRun[]
             <h2 id="replay-h" className="font-semibold">Replay: {replay.title}</h2>
             <SourceBadge source={replay.source} />
           </div>
-          <label className="btn btn-quiet h-8 cursor-pointer px-2.5 text-meta focus-within:outline-2 focus-within:outline-signal">
+          <label className="btn btn-quiet h-11 cursor-pointer px-3 text-meta md:h-8 md:px-2.5 focus-within:outline-2 focus-within:outline-signal">
             <FileUp aria-hidden size={14} /> Load an audit export
             <input type="file" accept="application/json,.json" className="sr-only" onChange={async (e) => {
               const f = e.target.files?.[0];
@@ -105,13 +129,13 @@ export function History({ runs, source, loadRun, initial }: { runs: HistoryRun[]
           </label>
           {loadErr ? <p role="alert" className="text-meta text-fail">{loadErr.startsWith("run #") ? loadErr : `That file can't be replayed: ${loadErr}`}</p> : null}
           {replay.source !== "synthetic" && replay.steps.length ? <p className="text-meta text-text-3">Real audit events{replay.source === "recorded" ? <> from <code className="font-mono">python3 -m app audit</code></> : " from this system"}; timing between steps is not reproduced.</p> : null}
-          <div className="flex items-center gap-2">
-            <button type="button" className="btn btn-quiet size-9 justify-center px-0" onClick={() => { setPlaying(false); setPos((p) => Math.max(0, p - 1)); }} aria-label="Previous step"><SkipBack aria-hidden size={16} /></button>
-            <button type="button" className="btn btn-primary h-9 px-3" onClick={toggle}>
+          <div className="flex flex-wrap items-center gap-2">
+            <button type="button" className="btn btn-quiet size-11 justify-center px-0 md:size-9" onClick={() => { setPlaying(false); setPos((p) => Math.max(0, p - 1)); }} aria-label="Previous step"><SkipBack aria-hidden size={16} /></button>
+            <button type="button" className="btn btn-primary h-11 px-3 md:h-9" onClick={toggle}>
               {running ? <Pause aria-hidden size={16} /> : <Play aria-hidden size={16} />}{running ? "Pause" : pos >= STEPS.length ? "Replay" : "Play"}
             </button>
-            <button type="button" className="btn btn-quiet size-9 justify-center px-0" onClick={() => { setPlaying(false); setPos((p) => Math.min(STEPS.length, p + 1)); }} aria-label="Next step"><SkipForward aria-hidden size={16} /></button>
-            <label className="ml-2 flex flex-1 items-center gap-3 text-meta text-text-3">
+            <button type="button" className="btn btn-quiet size-11 justify-center px-0 md:size-9" onClick={() => { setPlaying(false); setPos((p) => Math.min(STEPS.length, p + 1)); }} aria-label="Next step"><SkipForward aria-hidden size={16} /></button>
+            <label className="flex min-h-11 min-w-[11rem] flex-1 items-center gap-3 text-meta text-text-3 sm:ml-2">
               <span className="sr-only">Replay position</span>
               <input type="range" min={0} max={STEPS.length} value={pos} onChange={(e) => { setPlaying(false); setPos(Number(e.target.value)); }}
                 className="w-full accent-[var(--color-signal)]" aria-valuetext={`step ${pos} of ${STEPS.length}`} />

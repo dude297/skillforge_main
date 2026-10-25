@@ -28,7 +28,7 @@ export function loadOnCall(): Promise<OnCallLoad> {
       if (typeof r !== "string") return { state: "ok", run: r, origin: "endpoint" } as const;
       errs.push(r);
     }
-    const f = await fetchRun("./demo/oncall-run.recorded.json", 4000);
+    const f = await fetchRun(`${import.meta.env.BASE_URL}demo/oncall-run.recorded.json`, 4000);
     if (typeof f !== "string") return { state: "ok", run: f, origin: "file" } as const;
     errs.push(f);
     return { state: "missing", detail: errs.join("; ") } as const;

@@ -80,7 +80,7 @@ test.describe("bootstrap illustration", () => {
     const page = await ctx.newPage();
     await page.goto(ROUTE);
     await expect(scrubbed(page)).toHaveCount(0);
-    await expect(page.locator("section[aria-labelledby=bs-h-s] li.world-card")).toHaveCount(5);
+    await expect(page.locator("section[aria-labelledby=bs-h-s] ol > li")).toHaveCount(5);
     await expect(page.locator("section[aria-labelledby=bs-h-s] .world-led, section[aria-labelledby=bs-h-s] .world-pulse")).toHaveCount(0);
     await ctx.close();
   });
@@ -103,7 +103,7 @@ test.describe("bootstrap illustration", () => {
       expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0);
       const res = await new AxeBuilder({ page }).include("main").analyze();
       expect(res.violations.filter((v) => v.impact === "serious" || v.impact === "critical").map((v) => v.id)).toEqual([]);
-      if (width < 768) await expect(page.locator("section[aria-labelledby=bs-h-s] li.world-card")).toHaveCount(5);
+      if (width < 768) await expect(page.locator("section[aria-labelledby=bs-h-s] ol > li")).toHaveCount(5);
       await ctx.close();
     });
   }
