@@ -31,7 +31,7 @@ None in the public tree. The following would be blockers **only** if the enginee
   internal docs (`docs/TEAM.md`, `docs/ORGANIZER_MESSAGE.md`, `docs/PRE_EVENT_REVIEW.md`, `docs/OVERNIGHT_PROGRESS.md`,
   `docs/UNIFIED_ALPHA.md`, `docs/HACKATHON_DAY.md`, `docs/RELEASE_RC1.md`, `docs/UX_REVIEW.md`) are not meant for
   publication, and `docs/ORGANIZER_MESSAGE.md` is an unsent draft to the organisers.
-- B2. `demo/judge-kit:deploy/gb10/README.md:12` contains the GB10's SSH user and hostname (`dell@promaxgb10-...`).
+- B2. `demo/judge-kit:deploy/gb10/README.md:12` contains the GB10's SSH user and hostname (redacted here).
   The public tree replaced it with a placeholder (`docs/GB10_SETUP.md:22`).
 
 ### Should-fix
