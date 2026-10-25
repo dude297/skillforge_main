@@ -107,7 +107,7 @@ export function ConsoleShell({ product, section, view = "" }: { product: Product
       const begin = ev.find((e) => e.event === "task_begin" && e.payload.task_id === task)?.id;
       const end = ev.find((e) => e.event === "task_end" && e.payload.task_id === task)?.id;
       if (begin != null) ev = ev.filter((e) => e.id >= begin && (end == null || e.id <= end));
-      setWorldReplay({ steps: ev.map(toStep), title: `world recorded run${begin != null ? `, task ${task}` : ""} (mock agent)` });
+      setWorldReplay({ steps: ev.map(toStep), title: `world recorded run${begin != null ? `, task ${task}` : ""} (mock agent, ${m.default.recorded_at})` });
     });
     return () => { alive = false; };
   }, []);

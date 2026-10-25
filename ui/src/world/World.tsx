@@ -21,7 +21,7 @@ const RECORDED: VizEvent[] = normalize((recorded.events as LiveEvent[]).map(from
 // the same icons as the console's SourceBadge: a source reads the same in both worlds
 const SOURCE_LABEL: Record<VizSource, { text: string; cls: string; hint: string; Icon: LucideIcon }> = {
   story: { text: "Illustration", cls: "world-tag-story", hint: "A scripted story of how the system works. Not a run.", Icon: FlaskConical },
-  recorded: { text: "Recorded run", cls: "world-tag-recorded", hint: `A real backend run captured through the read-only API. Agent: scripted mock, no model.`, Icon: Film },
+  recorded: { text: "Recorded run", cls: "world-tag-recorded", hint: `A real backend run captured through the read-only API on ${recorded.recorded_at}. Agent: scripted mock, no model.`, Icon: Film },
   live: { text: "Live", cls: "world-tag-live", hint: "This system right now, through the read-only operator API.", Icon: Radio },
   oncall: { text: "OnCall run", cls: "world-tag-recorded", hint: "The OnCall run's audit trail. Its mode banner in the guided demo says whether a model or a recorded reference wrote the code.", Icon: Film },
 };
