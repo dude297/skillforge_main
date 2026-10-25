@@ -19,7 +19,7 @@ if [ -z "${LLM_API_KEY:-}" ] && [ -r "$KEYFILE" ]; then export LLM_API_KEY=$(cat
 CMD=${1:-help}; shift || true
 EV=results/gb10-evidence/$(date -u +%Y%m%dT%H%M%SZ)-$CMD; mkdir -p "$EV"
 exec > >(tee -a "$EV/console.txt") 2>&1   # every command leaves its own evidence folder
-echo "== $CMD  $(date -u +%FT%TZ)  host=$(hostname)  arch=$(uname -m)  bundle=$(cat COMMIT 2>/dev/null || echo unknown)"
+echo "== $CMD  $(date -u +%FT%TZ)  host=$(hostname)  arch=$(uname -m)  bundle=$(cat COMMIT 2>/dev/null || git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 echo "   endpoint=$LLM_BASE_URL  model=$MODEL  api key: ${KEYSRC:-none}"
 FAIL=0
 chk() { if eval "$2" >>"$EV/checks.log" 2>&1; then echo "  PASS  $1"; else echo "  FAIL  $1   -> $3"; FAIL=1; fi; }
@@ -28,7 +28,12 @@ inf() { printf '  INFO  %-28s %s\n' "$1" "$(eval "$2" 2>/dev/null | head -${3:-1
 case "$CMD" in
 preflight)
   echo "-- bundle"
+  if [ -f SHA256SUMS ]; then
   chk "bundle checksums"        'sha256sum --quiet -c SHA256SUMS'                       "bundle corrupted in transfer: copy it again"
+  else  # git checkout instead of a bundle: tracked files must match HEAD
+  chk "git checkout clean"      'git diff --quiet HEAD --'                              "uncommitted changes to tracked files: commit or stash them"
+  inf "git HEAD"                'git log -1 --format="%h %s"'
+  fi
   chk "python3 >= 3.11"         "$PY -c 'import sys; sys.exit(sys.version_info < (3,11))'" "use the system python3"
   inf "pytest (only for tests)" "$PY -c 'import pytest; print(pytest.__version__)' || echo 'absent: test suites unavailable; demo unaffected'"
   echo "-- host (read-only)"
