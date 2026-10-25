@@ -4,7 +4,6 @@ This branch is `exp/router`, cut from `integ/live` at rc1 (`a6fd80a`). Nothing u
 
 **V2 (organizational skill library).**
 - The router now gates exact matches through `experiments/catalog` (namespace, freshness, hash, environment) and attaches bounded catalog suggestions to escalations.
-- Docs: `experiments/catalog/ARCHITECTURE_V2.md`, `SKILL_LIBRARY.md`, `PRODUCT_USE_CASES.md`, and `ROUTER_ACCEPTANCE.md` (here).
 
 | file | what it is |
 |---|---|

@@ -70,8 +70,8 @@ test.describe("rendered world never implies complete success without authority",
   });
 });
 
-test("the usability script only references UI that exists", async ({ page }) => {
-  // USABILITY_TEST.md tells participants/moderators to use these exact things; if the UI drifts, this fails
+test("the world entry points named in the demo guide exist", async ({ page }) => {
+  // the demo route depends on these exact labels; if the UI drifts, this fails
   await page.goto("#/world");
   for (const text of ["Follow one problem", "Watch a real run", "Recorded run"]) await expect(page.getByText(text).first()).toBeAttached();
   await expect(page.getByLabel("How to read the office").first()).toBeAttached();
