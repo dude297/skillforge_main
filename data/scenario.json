@@ -1,0 +1,28 @@
+{
+  "name": "generic-record-discrepancy",
+  "description": "A business record disagrees with its trusted sources. Replace records/evidence/policy to retarget the domain.",
+  "records": [
+    {"id": "REC-001", "kind": "item", "data": {"label": "Unit A", "quantity": 120, "status": "active"}},
+    {"id": "REC-002", "kind": "item", "data": {"label": "Unit B", "quantity": 40, "status": "active"}},
+    {"id": "REC-003", "kind": "item", "data": {"label": "Unit C", "quantity": 75, "status": "active"}}
+  ],
+  "evidence": [
+    {"record_id": "REC-001", "source": "upstream_export", "trusted": true, "data": {"quantity": 100}},
+    {"record_id": "REC-001", "source": "physical_count", "trusted": true, "data": {"quantity": 100}},
+    {"record_id": "REC-001", "source": "manual_spreadsheet", "trusted": false, "data": {"quantity": 120}},
+    {"record_id": "REC-002", "source": "upstream_export", "trusted": true, "data": {"quantity": 40}},
+    {"record_id": "REC-003", "source": "upstream_export", "trusted": true, "data": {"quantity": 70}},
+    {"record_id": "REC-003", "source": "physical_count", "trusted": true, "data": {"quantity": 80}}
+  ],
+  "policy": {
+    "actions": {
+      "set_field": {
+        "requires_approval": true,
+        "fields": {
+          "quantity": {"type": "number", "min": 0, "max_abs_change": 50},
+          "status": {"type": "enum", "values": ["active", "on_hold", "closed"]}
+        }
+      }
+    }
+  }
+}

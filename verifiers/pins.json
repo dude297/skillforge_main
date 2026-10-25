@@ -1,0 +1,4 @@
+{
+ "_doc": "Trusted domain verifiers, pinned by sha256. A changed file is refused until a person re-pins it.",
+ "carrier_invoice_net": "fd13941caa4e89340734b488dfb659756c16b5f42ad394c1aca219ee3da4dfef"
+}

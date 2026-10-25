@@ -1,0 +1,78 @@
+{
+ "name": "ops-freight-accrual-primary",
+ "description": "SYNTHETIC / CONFIDENTIAL-STYLE. Freight accrued on purchase orders at Bramblewood Outfitters Ltd (fictional) vs. invoices from Kestrel Freight Lines (fictional) in their fixed-width export. PO-7731 is off; PO-7732 is correct.",
+ "records": [
+  {
+   "id": "PO-7731",
+   "kind": "freight_po",
+   "data": {
+    "label": "DAL->MEM pallets",
+    "currency": "USD",
+    "freight_accrued": 1250.0
+   }
+  },
+  {
+   "id": "PO-7732",
+   "kind": "freight_po",
+   "data": {
+    "label": "DAL->OKC parcels",
+    "currency": "USD",
+    "freight_accrued": 512.0
+   }
+  }
+ ],
+ "evidence": [
+  {
+   "record_id": "PO-7731",
+   "source": "carrier_export",
+   "trusted": true,
+   "data": {
+    "lines": [
+     "* KESTREL FREIGHT LINES - INVOICE EXPORT KFL v2 - CONFIDENTIAL (SYNTHETIC)",
+     "HDR KFL-INV-20417  PO-7731    USD 20261003",
+     "LIN 001 LHL 000123450 D  linehaul DAL->MEM 14 plt",
+     "LIN 002 FSC 000018519 D  fuel surcharge 15.0%",
+     "LIN 003 ACC 000004000 C  detention credit (carrier late)",
+     "TRL 003 000137969 D"
+    ]
+   }
+  },
+  {
+   "record_id": "PO-7732",
+   "source": "carrier_export",
+   "trusted": true,
+   "data": {
+    "lines": [
+     "HDR KFL-INV-20418  PO-7732    USD 20261003",
+     "LIN 001 LHL 000045000 D  linehaul DAL->OKC",
+     "LIN 002 FSC 000006200 D  fuel surcharge",
+     "TRL 002 000051200 D"
+    ]
+   }
+  }
+ ],
+ "policy": {
+  "actions": {
+   "set_field": {
+    "requires_approval": true,
+    "fields": {
+     "freight_accrued": {
+      "type": "number",
+      "min": 0,
+      "max_abs_change": 500
+     }
+    }
+   }
+  },
+  "invariants": [
+   {
+    "rule": "carrier_invoice_net",
+    "field": "freight_accrued",
+    "source": "carrier_export"
+   }
+  ],
+  "context": {
+   "contract:kestrel-freight": "rev-2026-10"
+  }
+ }
+}

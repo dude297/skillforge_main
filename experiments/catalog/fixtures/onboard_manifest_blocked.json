@@ -1,0 +1,184 @@
+{
+ "schema_version": 1,
+ "source": "live: generated from this host's data, read-only",
+ "workspace": {
+  "namespace": "acme/supply",
+  "role": "analyst",
+  "dataset": "freight_week2_rev2026_11.json",
+  "dataset_sha256": "0d369037f6814eeba4358ab539169a5a731b18f3bed6bef9bdc2d1d4363c0b02",
+  "signature": "3e9a87a79dee7434",
+  "generated_at": "2026-10-22T00:00:00Z"
+ },
+ "steps": {
+  "connect": {
+   "done": true,
+   "what": "one dataset named by the operator, opened read-only"
+  },
+  "inspect": {
+   "done": true,
+   "writes_performed": 0
+  },
+  "define_role": {
+   "done": true,
+   "by": "operator",
+   "namespace": "acme/supply",
+   "role": "analyst"
+  },
+  "propose_workflows": {
+   "done": true
+  },
+  "review_permissions": {
+   "done": false,
+   "by": "a person with authority for this workspace"
+  },
+  "activate": {
+   "done": false,
+   "by": "a person; never automatic"
+  }
+ },
+ "environment": {
+  "type": "skillforge-ops-fixture",
+  "name": {
+   "untrusted_text": "ops-freight-accrual-week2-rev2026-11"
+  },
+  "description": {
+   "untrusted_text": "SYNTHETIC. The same week-2 invoices, but Kestrel's contract revision rev-2026-11 now applies (detention credits are no l"
+  },
+  "records": 2,
+  "record_kinds": [
+   "freight_po"
+  ],
+  "evidence_sources": [
+   "carrier_export:trusted"
+  ],
+  "signature": "3e9a87a79dee7434"
+ },
+ "data_sources": [
+  "carrier_export:trusted"
+ ],
+ "schemas": {
+  "input_shape": {
+   "evidence": [
+    "list",
+    [
+     "{\"data\": {\"lines\": [\"list\", [\"\\\"str\\\"\"]]}, \"record_id\": \"str\", \"source\": \"str\", \"trusted\": \"bool\"}"
+    ]
+   ],
+   "records": [
+    "list",
+    [
+     "{\"data\": {\"currency\": \"str\", \"freight_accrued\": \"number\", \"label\": \"str\"}, \"id\": \"str\", \"kind\": \"str\"}"
+    ]
+   ]
+  },
+  "proposal_keys": [
+   "action_type",
+   "field",
+   "reason",
+   "record_id",
+   "value"
+  ]
+ },
+ "supported_tools": [
+  "execute_action",
+  "freight_invoice",
+  "get_audit",
+  "investigate",
+  "propose_action",
+  "propose_skill",
+  "read_records",
+  "request_approval",
+  "run_skill",
+  "search_skills",
+  "verify_action"
+ ],
+ "allowed_actions": {
+  "set_field": {
+   "requires_approval": true,
+   "fields": {
+    "freight_accrued": {
+     "type": "number",
+     "min": 0,
+     "max_abs_change": 500
+    }
+   }
+  }
+ },
+ "business_context": {
+  "contract:kestrel-freight": "rev-2026-11"
+ },
+ "verifier_coverage": [
+  {
+   "rule": "carrier_invoice_net",
+   "verifiable": false,
+   "by": "pinned verifier carrier_invoice_net v1",
+   "why": "not validated for contract:kestrel-freight=rev-2026-11 (validated: rev-2026-10)"
+  }
+ ],
+ "compatible_skills": [
+  {
+   "skill": "freight-invoice-reconcile@v1",
+   "freshness": "fresh"
+  }
+ ],
+ "dependencies": [
+  {
+   "skill": "freight-invoice-reconcile@v1",
+   "dependency": "contract:kestrel-freight",
+   "validated_against": "rev-2026-10",
+   "this_data": "rev-2026-11",
+   "matches": false
+  },
+  {
+   "skill": "freight-invoice-reconcile@v1",
+   "dependency": "schema:kfl-export",
+   "validated_against": "v2",
+   "this_data": "not declared",
+   "matches": null
+  }
+ ],
+ "proposed_workflows": [
+  {
+   "workflow": "Investigate with the local agent, then keep a proven fix as a skill",
+   "how": "agent proposes, a person approves, the verifier checks; a skill needs hidden tests and a person's promotion",
+   "ready": false
+  }
+ ],
+ "missing_permissions": [
+  "business rule 'carrier_invoice_net' cannot be independently verified here: not validated for contract:kestrel-freight=rev-2026-11 (validated: rev-2026-10)",
+  "freight-invoice-reconcile@v1 was validated against contract:kestrel-freight=rev-2026-10, this data declares rev-2026-11: revalidation needed",
+  "no messaging channel is authorized for this workspace (NemoClaw `channels add` + an admin's tokens)"
+ ],
+ "unknowns": [
+  "evidence 'trusted' flags come from the fixture file; trust was not independently established",
+  "policy (writable fields, limits) comes from the fixture file, not from the environment owner",
+  "rules other than the built-in sum_lines are attested only by a pinned host verifier; without one their records stay unverifiable: [\"carrier_invoice_net\"]",
+  "record kinds/sources are labels only; equal labels do not prove equal business meaning",
+  "this data does not declare schema:kfl-export; freight-invoice-reconcile@v1 assumes v2: confirm with the data owner"
+ ],
+ "relevant_procedures": {
+  "authority": "none: retrieved metadata, never a grant",
+  "results": [
+   {
+    "name": "freight-invoice-reconcile",
+    "version": 1,
+    "namespace": "acme/supply",
+    "domain": "supply-chain",
+    "workflow": "freight invoice reconciliation",
+    "summary": {
+     "untrusted_text": "MOCK-AUTHORED FIXTURE (human-written from the ops scenario reference transform; NOT agent-generated). Proposes freight_accrued = carrier invoice net (debits minus credits, implied cents) when the KFL v2 invoice is in the PO currency; refuse"
+    },
+    "freshness": "fresh",
+    "registry": "approved",
+    "score": 0.0
+   }
+  ]
+ },
+ "activation_commands": [
+  "review this manifest with the workspace owner",
+  "python -m app skill approve <name> <version> --by <you>   # only for skills that passed hidden validation",
+  "catalog.register(conn, <name>, <version>, '<you>', 'acme/supply', <owner team>, <domain>, <workflow>, ['analyst', 'router', 'agent'], dependencies={\"contract:kestrel-freight\": \"rev-2026-11\"})",
+  "nemoclaw <sandbox> channels add slack   # with an admin's tokens; then rebuild"
+ ],
+ "authority": "none: this manifest grants nothing; every step after 'propose workflows' is a human action"
+}

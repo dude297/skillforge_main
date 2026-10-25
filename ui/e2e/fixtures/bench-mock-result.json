@@ -1,0 +1,425 @@
+{
+  "modes": [
+    "A",
+    "C"
+  ],
+  "agent": "mock",
+  "agent_cmd": null,
+  "real_model": false,
+  "trials": 2,
+  "learning": {
+    "phases": {
+      "solve": 0.0175,
+      "generate_and_validate": 0.5519,
+      "hidden_validation_and_approval": 1.2303
+    },
+    "model_calls": null,
+    "tool_calls": 16,
+    "phase_marks": null,
+    "skill": {
+      "name": "line-total-reconcile",
+      "version": 1,
+      "status": "tested"
+    },
+    "approved": true,
+    "autonomous": false,
+    "manual_hints": null,
+    "proposal": {
+      "ok": true,
+      "name": "line-total-reconcile",
+      "version": 1,
+      "status": "tested",
+      "validation": {
+        "lint": [],
+        "lint_warnings": [],
+        "own_tests": {
+          "ok": true,
+          "tests_run": 3,
+          "failures": []
+        },
+        "replay": {
+          "ok": true,
+          "expected": [
+            [
+              "A-102",
+              "total",
+              44.0
+            ],
+            [
+              "A-104",
+              "total",
+              125.0
+            ]
+          ],
+          "got": [
+            [
+              "A-102",
+              "total",
+              44.0
+            ],
+            [
+              "A-104",
+              "total",
+              125.0
+            ]
+          ]
+        }
+      },
+      "profile": {
+        "work_growth_8x": 7.3,
+        "recommended": false,
+        "evidence": []
+      },
+      "next": "human: python -m app skill approve line-total-reconcile 1 --by <name> (runs hidden validation)"
+    }
+  },
+  "summary": [
+    {
+      "case": "lookalike_fingerprint",
+      "mode": "A",
+      "n": 2,
+      "correct": "2/2",
+      "decision": "agent",
+      "fallback": 0,
+      "median_s": 0.0016,
+      "mad_s": 0.0001,
+      "first_s": 0.0016,
+      "model_calls": null,
+      "tool_calls": 4.0,
+      "human_approvals": 0.0
+    },
+    {
+      "case": "lookalike_fingerprint",
+      "mode": "C",
+      "n": 2,
+      "correct": "2/2",
+      "decision": "agent",
+      "fallback": 2,
+      "median_s": 0.0027,
+      "mad_s": 0.0001,
+      "first_s": 0.0026,
+      "model_calls": null,
+      "tool_calls": 4.0,
+      "human_approvals": 0.0
+    },
+    {
+      "case": "unseen_compatible",
+      "mode": "A",
+      "n": 2,
+      "correct": "2/2",
+      "decision": "agent",
+      "fallback": 0,
+      "median_s": 0.0114,
+      "mad_s": 0.0009,
+      "first_s": 0.0123,
+      "model_calls": null,
+      "tool_calls": 20.0,
+      "human_approvals": 3.0
+    },
+    {
+      "case": "unseen_compatible",
+      "mode": "C",
+      "n": 2,
+      "correct": "2/2",
+      "decision": "skill",
+      "fallback": 0,
+      "median_s": 0.131,
+      "mad_s": 0.0101,
+      "first_s": 0.1209,
+      "model_calls": null,
+      "tool_calls": 7.0,
+      "human_approvals": 3.0
+    }
+  ],
+  "breakeven_C": {
+    "formula": "n* = ceil(L / (p*a - r)); never if p*a <= r",
+    "p_reuse_success": 1.0,
+    "case": "unseen_compatible",
+    "reuse_mode": "C",
+    "automated_s": {
+      "L": 1.7997,
+      "a": 0.0114,
+      "r": 0.131,
+      "gain_per_reuse": -0.1196,
+      "n_star": "never (reuse is not cheaper)"
+    },
+    "model_calls": {
+      "L": null,
+      "a": null,
+      "r": null,
+      "n_star": "pending (unmeasured input)"
+    }
+  },
+  "breakeven_B": {
+    "formula": "n* = ceil(L / (p*a - r)); never if p*a <= r",
+    "p_reuse_success": null,
+    "case": "unseen_compatible",
+    "reuse_mode": "B",
+    "automated_s": {
+      "L": 1.7996999999999999,
+      "a": 0.0114,
+      "r": null,
+      "n_star": "pending (unmeasured input)"
+    },
+    "model_calls": {
+      "L": null,
+      "a": null,
+      "r": null,
+      "n_star": "pending (unmeasured input)"
+    }
+  },
+  "db": "<tmp>/bench.db",
+  "agent_turn_errors": [],
+  "rows": [
+    {
+      "mode": "A",
+      "case": "unseen_compatible",
+      "trial": 1,
+      "agent": "mock",
+      "decision": "agent",
+      "fallback": false,
+      "correct": true,
+      "automated_s": 0.0123,
+      "human_approvals": 3,
+      "model_calls": null,
+      "tool_calls": 20,
+      "verifications_failed": 0,
+      "phases": {
+        "agent": 0.0134
+      },
+      "inference": {
+        "requests": null,
+        "prompt_tokens": null,
+        "generation_tokens": null,
+        "mean_ttft_s": null,
+        "inference_s": null,
+        "mean_request_s": null,
+        "kv_cache_usage_end": null,
+        "gpu_memory_used_mib_end": null
+      },
+      "agent_info": {
+        "turns": null,
+        "used_skill": false
+      }
+    },
+    {
+      "mode": "C",
+      "case": "unseen_compatible",
+      "trial": 1,
+      "agent": "mock",
+      "decision": "skill",
+      "fallback": false,
+      "correct": true,
+      "automated_s": 0.1209,
+      "human_approvals": 3,
+      "model_calls": null,
+      "tool_calls": 7,
+      "verifications_failed": 0,
+      "phases": {
+        "match": 0.0003,
+        "skill_exec": 0.1163,
+        "execute": 0.0016,
+        "verify": 0.0024
+      },
+      "inference": {
+        "requests": null,
+        "prompt_tokens": null,
+        "generation_tokens": null,
+        "mean_ttft_s": null,
+        "inference_s": null,
+        "mean_request_s": null,
+        "kv_cache_usage_end": null,
+        "gpu_memory_used_mib_end": null
+      },
+      "agent_info": {}
+    },
+    {
+      "mode": "C",
+      "case": "unseen_compatible",
+      "trial": 2,
+      "agent": "mock",
+      "decision": "skill",
+      "fallback": false,
+      "correct": true,
+      "automated_s": 0.1412,
+      "human_approvals": 3,
+      "model_calls": null,
+      "tool_calls": 7,
+      "verifications_failed": 0,
+      "phases": {
+        "match": 0.0002,
+        "skill_exec": 0.1362,
+        "execute": 0.0025,
+        "verify": 0.0023
+      },
+      "inference": {
+        "requests": null,
+        "prompt_tokens": null,
+        "generation_tokens": null,
+        "mean_ttft_s": null,
+        "inference_s": null,
+        "mean_request_s": null,
+        "kv_cache_usage_end": null,
+        "gpu_memory_used_mib_end": null
+      },
+      "agent_info": {}
+    },
+    {
+      "mode": "A",
+      "case": "unseen_compatible",
+      "trial": 2,
+      "agent": "mock",
+      "decision": "agent",
+      "fallback": false,
+      "correct": true,
+      "automated_s": 0.0105,
+      "human_approvals": 3,
+      "model_calls": null,
+      "tool_calls": 20,
+      "verifications_failed": 0,
+      "phases": {
+        "agent": 0.0111
+      },
+      "inference": {
+        "requests": null,
+        "prompt_tokens": null,
+        "generation_tokens": null,
+        "mean_ttft_s": null,
+        "inference_s": null,
+        "mean_request_s": null,
+        "kv_cache_usage_end": null,
+        "gpu_memory_used_mib_end": null
+      },
+      "agent_info": {
+        "turns": null,
+        "used_skill": false
+      }
+    },
+    {
+      "mode": "A",
+      "case": "lookalike_fingerprint",
+      "trial": 1,
+      "agent": "mock",
+      "decision": "agent",
+      "fallback": false,
+      "correct": true,
+      "automated_s": 0.0016,
+      "human_approvals": 0,
+      "model_calls": null,
+      "tool_calls": 4,
+      "verifications_failed": 0,
+      "phases": {
+        "agent": 0.0016
+      },
+      "inference": {
+        "requests": null,
+        "prompt_tokens": null,
+        "generation_tokens": null,
+        "mean_ttft_s": null,
+        "inference_s": null,
+        "mean_request_s": null,
+        "kv_cache_usage_end": null,
+        "gpu_memory_used_mib_end": null
+      },
+      "agent_info": {
+        "turns": null,
+        "used_skill": false
+      }
+    },
+    {
+      "mode": "C",
+      "case": "lookalike_fingerprint",
+      "trial": 1,
+      "agent": "mock",
+      "decision": "agent",
+      "fallback": true,
+      "correct": true,
+      "automated_s": 0.0026,
+      "human_approvals": 0,
+      "model_calls": null,
+      "tool_calls": 4,
+      "verifications_failed": 0,
+      "phases": {
+        "match": 0.0001,
+        "agent": 0.0021
+      },
+      "inference": {
+        "requests": null,
+        "prompt_tokens": null,
+        "generation_tokens": null,
+        "mean_ttft_s": null,
+        "inference_s": null,
+        "mean_request_s": null,
+        "kv_cache_usage_end": null,
+        "gpu_memory_used_mib_end": null
+      },
+      "agent_info": {
+        "turns": null,
+        "used_skill": false
+      }
+    },
+    {
+      "mode": "C",
+      "case": "lookalike_fingerprint",
+      "trial": 2,
+      "agent": "mock",
+      "decision": "agent",
+      "fallback": true,
+      "correct": true,
+      "automated_s": 0.0028,
+      "human_approvals": 0,
+      "model_calls": null,
+      "tool_calls": 4,
+      "verifications_failed": 0,
+      "phases": {
+        "match": 0.0001,
+        "agent": 0.0024
+      },
+      "inference": {
+        "requests": null,
+        "prompt_tokens": null,
+        "generation_tokens": null,
+        "mean_ttft_s": null,
+        "inference_s": null,
+        "mean_request_s": null,
+        "kv_cache_usage_end": null,
+        "gpu_memory_used_mib_end": null
+      },
+      "agent_info": {
+        "turns": null,
+        "used_skill": false
+      }
+    },
+    {
+      "mode": "A",
+      "case": "lookalike_fingerprint",
+      "trial": 2,
+      "agent": "mock",
+      "decision": "agent",
+      "fallback": false,
+      "correct": true,
+      "automated_s": 0.0015,
+      "human_approvals": 0,
+      "model_calls": null,
+      "tool_calls": 4,
+      "verifications_failed": 0,
+      "phases": {
+        "agent": 0.0015
+      },
+      "inference": {
+        "requests": null,
+        "prompt_tokens": null,
+        "generation_tokens": null,
+        "mean_ttft_s": null,
+        "inference_s": null,
+        "mean_request_s": null,
+        "kv_cache_usage_end": null,
+        "gpu_memory_used_mib_end": null
+      },
+      "agent_info": {
+        "turns": null,
+        "used_skill": false
+      }
+    }
+  ]
+}

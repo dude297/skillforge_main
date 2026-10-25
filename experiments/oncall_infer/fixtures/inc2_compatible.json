@@ -1,0 +1,41 @@
+{
+ "name": "oncall-infer-inc2",
+ "description": "SYNTHETIC incident, hand-written for the demo. Same failure class as INC-1 (serving config regression -> GPU OOM) on a different service, a different key (max_model_len 16384 -> 131072), different values and timestamps.",
+ "records": [
+  {"id": "INC-2", "kind": "inference_incident", "data": {
+   "title": "summarize-qwen-canary: latency spike and 429s after long-context rollout",
+   "service": "summarize-qwen-canary", "severity": "SEV3", "opened_at": "2026-10-25T09:22:00Z",
+   "summary": "p99 latency 1.4s -> 16s, 12% HTTP 429 after deploy d-5203 enabled 128k context. Engine OOM-restarts."}}
+ ],
+ "evidence": [
+  {"record_id": "INC-2", "source": "log", "trusted": true, "data": {"name": "logs/summarize-qwen-canary/vllm-server.log", "lines": [
+   "2026-10-25T09:11:05Z INFO  api_server: starting vLLM engine model=nvidia/Qwen3.6-35B-A3B-NVFP4 max_num_seqs=256 max_model_len=131072 gpu_memory_utilization=0.85",
+   "2026-10-25T09:16:40Z WARN  scheduler: running=212 waiting=88 preempted=19 (swap)",
+   "2026-10-25T09:17:52Z ERROR engine: torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 4.50 GiB (GPU 0; 119.6 GiB total capacity; 116.0 GiB already allocated)",
+   "2026-10-25T09:17:52Z ERROR engine:   at vllm/worker/model_runner.py:execute_model",
+   "2026-10-25T09:17:53Z ERROR api_server: engine dead, restarting (attempt 1/5)",
+   "2026-10-25T09:18:20Z WARN  gateway: upstream unavailable, shedding load: HTTP 429 Too Many Requests"
+  ]}},
+  {"record_id": "INC-2", "source": "metrics", "trusted": true, "data": {"name": "metrics/summarize-qwen-canary.json", "series": [
+   {"t": "2026-10-25T09:08:00Z", "p99_ms": 1400, "http_429_pct": 0.0, "gpu_mem_used_pct": 69.5, "disk_free_gb": 230},
+   {"t": "2026-10-25T09:14:00Z", "p99_ms": 2900, "http_429_pct": 0.3, "gpu_mem_used_pct": 91.0, "disk_free_gb": 230},
+   {"t": "2026-10-25T09:18:00Z", "p99_ms": 16100, "http_429_pct": 12.2, "gpu_mem_used_pct": 99.4, "disk_free_gb": 229},
+   {"t": "2026-10-25T09:21:00Z", "p99_ms": 15400, "http_429_pct": 11.8, "gpu_mem_used_pct": 98.9, "disk_free_gb": 229}
+  ]}},
+  {"record_id": "INC-2", "source": "config_before", "trusted": true, "data": {"name": "deploy/summarize-qwen-canary/serving.yaml@d-5202", "config": {
+   "model": "nvidia/Qwen3.6-35B-A3B-NVFP4", "image_tag": "vllm-0.11.2", "max_num_seqs": 256, "max_model_len": 16384,
+   "gpu_memory_utilization": 0.85, "tensor_parallel_size": 1}}},
+  {"record_id": "INC-2", "source": "config_after", "trusted": true, "data": {"name": "deploy/summarize-qwen-canary/serving.yaml@d-5203", "config": {
+   "model": "nvidia/Qwen3.6-35B-A3B-NVFP4", "image_tag": "vllm-0.11.2", "max_num_seqs": 256, "max_model_len": 131072,
+   "gpu_memory_utilization": 0.85, "tensor_parallel_size": 1}}},
+  {"record_id": "INC-2", "source": "deploy", "trusted": true, "data": {"name": "deploys/d-5203.json", "id": "d-5203",
+   "at": "2026-10-25T09:10:48Z", "author": "a.lee (PR #911 'long-context summaries')", "description": "serving.yaml: max_model_len 16384 -> 131072"}}
+ ],
+ "policy": {
+  "actions": {"revert_config": {"requires_approval": true, "fields": {
+   "max_num_seqs": {"type": "number", "min": 1}, "max_model_len": {"type": "number", "min": 1},
+   "gpu_memory_utilization": {"type": "number", "min": 0.1, "max": 0.95}}}},
+  "invariants": [{"rule": "serving_capacity_check", "field": "max_num_seqs", "source": "config_after"}],
+  "context": {"fixture": "SYNTHETIC oncall_infer"}
+ }
+}

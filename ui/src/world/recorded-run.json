@@ -1,0 +1,551 @@
+{
+ "note": "Recorded through the read-only operator API (sanitized projection) from a real SkillForge backend run. Agent = scripted MOCK (no model); approvals by a stand-in operator via the host CLI.",
+ "recorded_at": "2026-10-21",
+ "source": "scripts/rehearse.py --approve auto --pace 0.4",
+ "events": [
+  {
+   "id": 1,
+   "ts": "2026-10-21 23:19:04",
+   "actor": "system",
+   "event": "reset",
+   "payload": {
+    "scenario": "learn-a-derived-totals"
+   }
+  },
+  {
+   "id": 2,
+   "ts": "2026-10-21 23:19:04",
+   "actor": "operator",
+   "event": "task_begin",
+   "payload": {
+    "task_id": 1,
+    "label": "Totals check, batch A",
+    "mode": "mock"
+   }
+  },
+  {
+   "id": 3,
+   "ts": "2026-10-21 23:19:05",
+   "actor": "agent",
+   "event": "investigate",
+   "payload": {
+    "record_id": "A-101",
+    "findings": 0
+   }
+  },
+  {
+   "id": 4,
+   "ts": "2026-10-21 23:19:05",
+   "actor": "agent",
+   "event": "investigate",
+   "payload": {
+    "record_id": "A-102",
+    "findings": 0
+   }
+  },
+  {
+   "id": 5,
+   "ts": "2026-10-21 23:19:06",
+   "actor": "agent",
+   "event": "propose_action",
+   "payload": {
+    "action_id": 1,
+    "record_id": "A-102",
+    "params": {
+     "field": "total",
+     "value": 44.0
+    }
+   }
+  },
+  {
+   "id": 6,
+   "ts": "2026-10-21 23:19:06",
+   "actor": "agent",
+   "event": "request_approval",
+   "payload": {
+    "action_id": 1
+   }
+  },
+  {
+   "id": 7,
+   "ts": "2026-10-21 23:19:06",
+   "actor": "agent",
+   "event": "investigate",
+   "payload": {
+    "record_id": "A-103",
+    "findings": 0
+   }
+  },
+  {
+   "id": 8,
+   "ts": "2026-10-21 23:19:07",
+   "actor": "agent",
+   "event": "investigate",
+   "payload": {
+    "record_id": "A-104",
+    "findings": 0
+   }
+  },
+  {
+   "id": 9,
+   "ts": "2026-10-21 23:19:07",
+   "actor": "agent",
+   "event": "propose_action",
+   "payload": {
+    "action_id": 2,
+    "record_id": "A-104",
+    "params": {
+     "field": "total",
+     "value": 125.0
+    }
+   }
+  },
+  {
+   "id": 10,
+   "ts": "2026-10-21 23:19:08",
+   "actor": "agent",
+   "event": "request_approval",
+   "payload": {
+    "action_id": 2
+   }
+  },
+  {
+   "id": 11,
+   "ts": "2026-10-21 23:19:08",
+   "actor": "agent",
+   "event": "investigate",
+   "payload": {
+    "record_id": "A-105",
+    "findings": 0
+   }
+  },
+  {
+   "id": 12,
+   "ts": "2026-10-21 23:19:09",
+   "actor": "agent",
+   "event": "execute_refused",
+   "payload": {
+    "action_id": 1,
+    "status": "pending_approval"
+   }
+  },
+  {
+   "id": 13,
+   "ts": "2026-10-21 23:19:10",
+   "actor": "human:rehearsal-operator",
+   "event": "approval_approved",
+   "payload": {
+    "action_id": 1
+   }
+  },
+  {
+   "id": 14,
+   "ts": "2026-10-21 23:19:10",
+   "actor": "human:rehearsal-operator",
+   "event": "approval_approved",
+   "payload": {
+    "action_id": 2
+   }
+  },
+  {
+   "id": 15,
+   "ts": "2026-10-21 23:19:10",
+   "actor": "agent",
+   "event": "execute_action",
+   "payload": {
+    "action_id": 1,
+    "changed": {
+     "total": [
+      45.0,
+      44.0
+     ]
+    }
+   }
+  },
+  {
+   "id": 16,
+   "ts": "2026-10-21 23:19:11",
+   "actor": "verifier",
+   "event": "verify_action",
+   "payload": {
+    "action_id": 1,
+    "passed": true
+   }
+  },
+  {
+   "id": 17,
+   "ts": "2026-10-21 23:19:11",
+   "actor": "agent",
+   "event": "execute_action",
+   "payload": {
+    "action_id": 2,
+    "changed": {
+     "total": [
+      120.0,
+      125.0
+     ]
+    }
+   }
+  },
+  {
+   "id": 18,
+   "ts": "2026-10-21 23:19:12",
+   "actor": "verifier",
+   "event": "verify_action",
+   "payload": {
+    "action_id": 2,
+    "passed": true
+   }
+  },
+  {
+   "id": 19,
+   "ts": "2026-10-21 23:19:13",
+   "actor": "agent",
+   "event": "propose_skill",
+   "payload": {
+    "name": "line-total-reconcile",
+    "version": 1,
+    "status": "tested",
+    "optimizes": null
+   }
+  },
+  {
+   "id": 20,
+   "ts": "2026-10-21 23:19:14",
+   "actor": "operator",
+   "event": "task_end",
+   "payload": {
+    "task_id": 1,
+    "success": 1,
+    "tool_calls": 19,
+    "model_calls": null
+   }
+  },
+  {
+   "id": 21,
+   "ts": "2026-10-21 23:19:17",
+   "actor": "human:rehearsal-operator",
+   "event": "skill_approved",
+   "payload": {
+    "name": "line-total-reconcile",
+    "version": 1
+   }
+  },
+  {
+   "id": 22,
+   "ts": "2026-10-21 23:19:17",
+   "actor": "system",
+   "event": "reset",
+   "payload": {
+    "scenario": "learn-b-derived-totals"
+   }
+  },
+  {
+   "id": 23,
+   "ts": "2026-10-21 23:19:17",
+   "actor": "operator",
+   "event": "task_begin",
+   "payload": {
+    "task_id": 2,
+    "label": "Totals check, batch B",
+    "mode": "mock"
+   }
+  },
+  {
+   "id": 24,
+   "ts": "2026-10-21 23:19:18",
+   "actor": "skill:line-total-reconcile@v1",
+   "event": "run_skill",
+   "payload": {
+    "run_id": 1,
+    "proposals": 3
+   }
+  },
+  {
+   "id": 25,
+   "ts": "2026-10-21 23:19:18",
+   "actor": "skill:line-total-reconcile@v1",
+   "event": "propose_action",
+   "payload": {
+    "action_id": 1,
+    "record_id": "LOT-18",
+    "params": {
+     "field": "total",
+     "value": 6.25
+    }
+   }
+  },
+  {
+   "id": 26,
+   "ts": "2026-10-21 23:19:18",
+   "actor": "agent",
+   "event": "request_approval",
+   "payload": {
+    "action_id": 1
+   }
+  },
+  {
+   "id": 27,
+   "ts": "2026-10-21 23:19:18",
+   "actor": "skill:line-total-reconcile@v1",
+   "event": "propose_action",
+   "payload": {
+    "action_id": 2,
+    "record_id": "LOT-21",
+    "params": {
+     "field": "total",
+     "value": 15.5
+    }
+   }
+  },
+  {
+   "id": 28,
+   "ts": "2026-10-21 23:19:18",
+   "actor": "agent",
+   "event": "request_approval",
+   "payload": {
+    "action_id": 2
+   }
+  },
+  {
+   "id": 29,
+   "ts": "2026-10-21 23:19:18",
+   "actor": "skill:line-total-reconcile@v1",
+   "event": "propose_action",
+   "payload": {
+    "action_id": 3,
+    "record_id": "LOT-22",
+    "params": {
+     "field": "total",
+     "value": 0.75
+    }
+   }
+  },
+  {
+   "id": 30,
+   "ts": "2026-10-21 23:19:18",
+   "actor": "agent",
+   "event": "request_approval",
+   "payload": {
+    "action_id": 3
+   }
+  },
+  {
+   "id": 31,
+   "ts": "2026-10-21 23:19:19",
+   "actor": "human:rehearsal-operator",
+   "event": "approval_approved",
+   "payload": {
+    "action_id": 1
+   }
+  },
+  {
+   "id": 32,
+   "ts": "2026-10-21 23:19:19",
+   "actor": "human:rehearsal-operator",
+   "event": "approval_approved",
+   "payload": {
+    "action_id": 2
+   }
+  },
+  {
+   "id": 33,
+   "ts": "2026-10-21 23:19:19",
+   "actor": "human:rehearsal-operator",
+   "event": "approval_approved",
+   "payload": {
+    "action_id": 3
+   }
+  },
+  {
+   "id": 34,
+   "ts": "2026-10-21 23:19:19",
+   "actor": "agent",
+   "event": "execute_action",
+   "payload": {
+    "action_id": 1,
+    "changed": {
+     "total": [
+      7.0,
+      6.25
+     ]
+    }
+   }
+  },
+  {
+   "id": 35,
+   "ts": "2026-10-21 23:19:20",
+   "actor": "verifier",
+   "event": "verify_action",
+   "payload": {
+    "action_id": 1,
+    "passed": true
+   }
+  },
+  {
+   "id": 36,
+   "ts": "2026-10-21 23:19:21",
+   "actor": "agent",
+   "event": "execute_action",
+   "payload": {
+    "action_id": 2,
+    "changed": {
+     "total": [
+      15.0,
+      15.5
+     ]
+    }
+   }
+  },
+  {
+   "id": 37,
+   "ts": "2026-10-21 23:19:22",
+   "actor": "verifier",
+   "event": "verify_action",
+   "payload": {
+    "action_id": 2,
+    "passed": true
+   }
+  },
+  {
+   "id": 38,
+   "ts": "2026-10-21 23:19:22",
+   "actor": "agent",
+   "event": "execute_action",
+   "payload": {
+    "action_id": 3,
+    "changed": {
+     "total": [
+      0.0,
+      0.75
+     ]
+    }
+   }
+  },
+  {
+   "id": 39,
+   "ts": "2026-10-21 23:19:23",
+   "actor": "verifier",
+   "event": "verify_action",
+   "payload": {
+    "action_id": 3,
+    "passed": true
+   }
+  },
+  {
+   "id": 40,
+   "ts": "2026-10-21 23:19:24",
+   "actor": "operator",
+   "event": "task_end",
+   "payload": {
+    "task_id": 2,
+    "success": 1,
+    "tool_calls": 11,
+    "model_calls": null
+   }
+  }
+ ],
+ "tasks": [
+  {
+   "id": 2,
+   "label": "Totals check, batch B",
+   "scenario": "learn-b-derived-totals",
+   "mode": "mock",
+   "status": "closed",
+   "model": null,
+   "started_at": 1792624757.6779714,
+   "ended_at": 1792624764.1913579,
+   "latency_s": 6.513,
+   "model_calls": null,
+   "tool_calls": 11,
+   "duplicate_tool_calls": 3,
+   "actions_executed": 3,
+   "verifications_passed": 3,
+   "verifications_failed": 0,
+   "invariant_violations": 0,
+   "success": 1,
+   "skills_used": [
+    "line-total-reconcile@v1"
+   ],
+   "skill_proposed": [],
+   "tool_breakdown": {
+    "execute_action": 6,
+    "run_skill": 1,
+    "search_skills": 1,
+    "verify_action": 3
+   },
+   "phase_marks": null
+  },
+  {
+   "id": 1,
+   "label": "Totals check, batch A",
+   "scenario": "learn-a-derived-totals",
+   "mode": "mock",
+   "status": "closed",
+   "model": null,
+   "started_at": 1792624744.3928246,
+   "ended_at": 1792624754.252047,
+   "latency_s": 9.859,
+   "model_calls": null,
+   "tool_calls": 19,
+   "duplicate_tool_calls": 3,
+   "actions_executed": 2,
+   "verifications_passed": 2,
+   "verifications_failed": 0,
+   "invariant_violations": 0,
+   "success": 1,
+   "skills_used": [],
+   "skill_proposed": [
+    "line-total-reconcile@v1:tested"
+   ],
+   "tool_breakdown": {
+    "execute_action": 5,
+    "investigate": 5,
+    "propose_action": 2,
+    "propose_skill": 1,
+    "read_records": 1,
+    "request_approval": 2,
+    "search_skills": 1,
+    "verify_action": 2
+   },
+   "phase_marks": null
+  }
+ ],
+ "skills": [
+  {
+   "name": "line-total-reconcile",
+   "version": 1,
+   "parent_version": null,
+   "status": "approved",
+   "active": true,
+   "description": "MOCK-AUTHORED fixture: recompute a record total from trusted line items and scale",
+   "decided_by": "rehearsal-operator",
+   "source_task": 1,
+   "created_at": "2026-10-21 23:19:13",
+   "sha256": "85d045015d040308",
+   "touches": [
+    "total"
+   ],
+   "validation": {
+    "lint_errors": 0,
+    "own_tests_ok": true,
+    "own_tests": null,
+    "replay_ok": true
+   },
+   "hidden_ok": true,
+   "optimization": {
+    "recommended": false,
+    "retained": null,
+    "warm_speedup": null
+   },
+   "runs": {
+    "total": 1,
+    "ok": 1,
+    "refused": 0,
+    "error": 0,
+    "verified_pass": 3,
+    "verified_fail": 0
+   }
+  }
+ ]
+}

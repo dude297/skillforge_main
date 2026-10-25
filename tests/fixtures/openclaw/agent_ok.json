@@ -1,0 +1,6 @@
+{"runId": "run-0001", "status": "ok", "summary": "completed",
+ "result": {"payloads": [{"text": "3 records; REC-002 total mismatch proposed as action 1, awaiting approval."}],
+            "meta": {"durationMs": 41250,
+                     "agentMeta": {"sessionId": "bench-0000000000", "provider": "vllm",
+                                   "model": "nvidia/Qwen3.6-35B-A3B-NVFP4", "assistantTurns": 4},
+                     "toolSummary": {"calls": 5, "tools": ["exec"], "failures": 0}, "stopReason": "end_turn"}}}

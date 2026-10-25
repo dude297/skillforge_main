@@ -1,0 +1,41 @@
+{
+ "name": "oncall-infer-inc3",
+ "description": "SYNTHETIC incident, hand-written for the demo. LOOKALIKE: same symptoms (429s, p99 spike, a deploy minutes before) and the same evidence layout, but the deploy only bumped the image tag and the root cause is a full cache disk (ENOSPC). Reverting a serving key would not help; reuse must be refused.",
+ "records": [
+  {"id": "INC-3", "kind": "inference_incident", "data": {
+   "title": "chat-qwen-eu: 429 storm and p99 latency spike after deploy",
+   "service": "chat-qwen-eu", "severity": "SEV2", "opened_at": "2026-10-25T11:41:00Z",
+   "summary": "p99 latency 1.0s -> 18s and 24% HTTP 429 shortly after deploy d-5310. Engine restarts repeatedly."}}
+ ],
+ "evidence": [
+  {"record_id": "INC-3", "source": "log", "trusted": true, "data": {"name": "logs/chat-qwen-eu/vllm-server.log", "lines": [
+   "2026-10-25T11:30:12Z INFO  api_server: starting vLLM engine model=nvidia/Qwen3.6-35B-A3B-NVFP4 max_num_seqs=128 max_model_len=32768 gpu_memory_utilization=0.85",
+   "2026-10-25T11:36:03Z WARN  engine: compile cache write slow (/var/lib/vllm/cache 99% used)",
+   "2026-10-25T11:37:47Z ERROR engine: OSError: [Errno 28] No space left on device: '/var/lib/vllm/cache/torch_compile/rank0/graph_7.bin'",
+   "2026-10-25T11:37:47Z ERROR engine:   at vllm/compilation/backends.py:save_graph",
+   "2026-10-25T11:37:48Z ERROR api_server: engine dead, restarting (attempt 1/5)",
+   "2026-10-25T11:38:15Z WARN  gateway: upstream unavailable, shedding load: HTTP 429 Too Many Requests"
+  ]}},
+  {"record_id": "INC-3", "source": "metrics", "trusted": true, "data": {"name": "metrics/chat-qwen-eu.json", "series": [
+   {"t": "2026-10-25T11:28:00Z", "p99_ms": 1010, "http_429_pct": 0.0, "gpu_mem_used_pct": 72.0, "disk_free_gb": 3},
+   {"t": "2026-10-25T11:34:00Z", "p99_ms": 1150, "http_429_pct": 0.0, "gpu_mem_used_pct": 72.4, "disk_free_gb": 1},
+   {"t": "2026-10-25T11:38:00Z", "p99_ms": 18200, "http_429_pct": 24.0, "gpu_mem_used_pct": 40.1, "disk_free_gb": 0},
+   {"t": "2026-10-25T11:40:00Z", "p99_ms": 17600, "http_429_pct": 22.9, "gpu_mem_used_pct": 38.7, "disk_free_gb": 0}
+  ]}},
+  {"record_id": "INC-3", "source": "config_before", "trusted": true, "data": {"name": "deploy/chat-qwen-eu/serving.yaml@d-5309", "config": {
+   "model": "nvidia/Qwen3.6-35B-A3B-NVFP4", "image_tag": "vllm-0.11.1", "max_num_seqs": 128, "max_model_len": 32768,
+   "gpu_memory_utilization": 0.85, "tensor_parallel_size": 1}}},
+  {"record_id": "INC-3", "source": "config_after", "trusted": true, "data": {"name": "deploy/chat-qwen-eu/serving.yaml@d-5310", "config": {
+   "model": "nvidia/Qwen3.6-35B-A3B-NVFP4", "image_tag": "vllm-0.11.2", "max_num_seqs": 128, "max_model_len": 32768,
+   "gpu_memory_utilization": 0.85, "tensor_parallel_size": 1}}},
+  {"record_id": "INC-3", "source": "deploy", "trusted": true, "data": {"name": "deploys/d-5310.json", "id": "d-5310",
+   "at": "2026-10-25T11:29:55Z", "author": "ci-bot (renovate: vllm image)", "description": "serving.yaml: image_tag vllm-0.11.1 -> vllm-0.11.2"}}
+ ],
+ "policy": {
+  "actions": {"revert_config": {"requires_approval": true, "fields": {
+   "max_num_seqs": {"type": "number", "min": 1}, "max_model_len": {"type": "number", "min": 1},
+   "gpu_memory_utilization": {"type": "number", "min": 0.1, "max": 0.95}}}},
+  "invariants": [{"rule": "serving_capacity_check", "field": "max_num_seqs", "source": "config_after"}],
+  "context": {"fixture": "SYNTHETIC oncall_infer"}
+ }
+}

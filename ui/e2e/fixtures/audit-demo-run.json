@@ -1,0 +1,96 @@
+{
+  "ok": true,
+  "events": [
+    {
+      "id": 1,
+      "ts": "2026-10-21 10:27:23",
+      "actor": "system",
+      "event": "reset",
+      "payload": {
+        "scenario": "generic-record-discrepancy"
+      }
+    },
+    {
+      "id": 2,
+      "ts": "2026-10-21 10:27:23",
+      "actor": "agent",
+      "event": "investigate",
+      "payload": {
+        "findings": 1,
+        "record_id": "REC-001"
+      }
+    },
+    {
+      "id": 3,
+      "ts": "2026-10-21 10:27:23",
+      "actor": "agent",
+      "event": "propose_action",
+      "payload": {
+        "action_id": 1,
+        "params": {
+          "field": "quantity",
+          "value": 100
+        },
+        "record_id": "REC-001"
+      }
+    },
+    {
+      "id": 4,
+      "ts": "2026-10-21 10:27:23",
+      "actor": "agent",
+      "event": "request_approval",
+      "payload": {
+        "action_id": 1
+      }
+    },
+    {
+      "id": 5,
+      "ts": "2026-10-21 10:27:23",
+      "actor": "agent",
+      "event": "execute_refused",
+      "payload": {
+        "action_id": 1,
+        "status": "pending_approval"
+      }
+    },
+    {
+      "id": 6,
+      "ts": "2026-10-21 10:27:23",
+      "actor": "human:demo-operator",
+      "event": "approval_approved",
+      "payload": {
+        "action_id": 1,
+        "note": ""
+      }
+    },
+    {
+      "id": 7,
+      "ts": "2026-10-21 10:27:23",
+      "actor": "agent",
+      "event": "execute_action",
+      "payload": {
+        "action_id": 1,
+        "after": {
+          "label": "Unit A",
+          "quantity": 100,
+          "status": "active"
+        },
+        "before": {
+          "label": "Unit A",
+          "quantity": 120,
+          "status": "active"
+        }
+      }
+    },
+    {
+      "id": 8,
+      "ts": "2026-10-21 10:27:23",
+      "actor": "verifier",
+      "event": "verify_action",
+      "payload": {
+        "action_id": 1,
+        "passed": true
+      }
+    }
+  ]
+}

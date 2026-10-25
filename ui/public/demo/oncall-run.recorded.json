@@ -1,0 +1,197 @@
+{
+  "schema": "skillforge.oncall_run/1",
+  "mode": "RECORDED_SIMULATION",
+  "generated_at": "2026-10-25T17:05:43+00:00",
+  "host": "<dev-box>",
+  "model": {
+    "id": null,
+    "endpoint": null,
+    "available": false,
+    "note": "no --live: no model was called. RECORDED SIMULATION: the skill is a hand-written reference (written by an agent, NOT model output). APPROVAL in this artifact was typed by an agent into a throwaway registry to show the full sequence; it is NOT a human approval."
+  },
+  "incident": {
+    "id": "INC-1",
+    "title": "chat-qwen-prod: 429 storm and p99 latency spike after deploy",
+    "service": "chat-qwen-prod",
+    "summary": "p99 latency 0.9s -> 21s and 31% HTTP 429 within 6 minutes of deploy d-4117. Engine restarts with CUDA OOM.",
+    "evidence": [
+      {
+        "kind": "log",
+        "name": "logs/chat-qwen-prod/vllm-server.log",
+        "excerpt": "2026-10-24T14:04:30Z ERROR engine: torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 2.25 GiB (GPU 0; 119.6 GiB total capacity; 117.9 GiB already allocated)\n2026-10-24T14:04:30Z ERROR engine:   at vllm/worker/model_runner.py:execute_model\n2026-10-24T14:04:31Z ERROR api_server: engine dead, restarting (attempt 1/5)",
+        "source_path": "experiments/oncall_infer/fixtures/inc1_primary.json#evidence[0]"
+      },
+      {
+        "kind": "metric",
+        "name": "metrics/chat-qwen-prod.json",
+        "excerpt": "2026-10-24T13:58:00Z p99=910ms 429=0.0% gpu_mem=71.2% disk_free=412GB\n2026-10-24T14:05:00Z p99=21300ms 429=31.0% gpu_mem=99.1% disk_free=411GB",
+        "source_path": "experiments/oncall_infer/fixtures/inc1_primary.json#evidence[1]"
+      },
+      {
+        "kind": "config",
+        "name": "deploy/chat-qwen-prod/serving.yaml@d-4116",
+        "excerpt": "{\"image_tag\": \"vllm-0.11.2\", \"max_num_seqs\": 128, \"max_model_len\": 32768, \"gpu_memory_utilization\": 0.85}",
+        "source_path": "experiments/oncall_infer/fixtures/inc1_primary.json#evidence[2]"
+      },
+      {
+        "kind": "config",
+        "name": "deploy/chat-qwen-prod/serving.yaml@d-4117",
+        "excerpt": "{\"image_tag\": \"vllm-0.11.2\", \"max_num_seqs\": 1024, \"max_model_len\": 32768, \"gpu_memory_utilization\": 0.85}",
+        "source_path": "experiments/oncall_infer/fixtures/inc1_primary.json#evidence[3]"
+      },
+      {
+        "kind": "deploy",
+        "name": "deploys/d-4117.json",
+        "excerpt": "d-4117 at 2026-10-24T14:00:30Z by ci-bot (PR #882 'raise concurrency for launch'): serving.yaml: max_num_seqs 128 -> 1024",
+        "source_path": "experiments/oncall_infer/fixtures/inc1_primary.json#evidence[4]"
+      }
+    ]
+  },
+  "synthesis": {
+    "provenance": "recorded_reference",
+    "model_calls": null,
+    "latency_ms": null,
+    "prompt_tokens": null,
+    "completion_tokens": null,
+    "code": "\"\"\"RECORDED REFERENCE (hand-written by an agent for the demo, NOT model output).\nDiagnose serving-config regressions: GPU OOM in the engine log + exactly one memory-relevant key changed by the\ndeploy -> propose reverting that key to its baseline. Never applies anything.\"\"\"\nimport re\n\nMEMORY_KEYS = (\"max_num_seqs\", \"max_model_len\", \"gpu_memory_utilization\")\nOOM_RE = re.compile(r\"OutOfMemoryError|CUDA out of memory\", re.I)\n\n\ndef _refuse(rid, code, reason):\n    return {\"record_id\": rid, \"code\": code, \"reason\": reason}\n\n\ndef run(dataset):\n    ev = {}\n    for e in dataset.get(\"evidence\", []):\n        if e.get(\"trusted\"):\n            ev.setdefault(e.get(\"record_id\"), {})[e.get(\"source\")] = e.get(\"data\") or {}\n    proposals, refused = [], []\n    for rec in dataset.get(\"records\", []):\n        rid, src = rec.get(\"id\"), ev.get(rec.get(\"id\"), {})\n        before = (src.get(\"config_before\") or {}).get(\"config\")\n        after = (src.get(\"config_after\") or {}).get(\"config\")\n        lines = (src.get(\"log\") or {}).get(\"lines\") or []\n        if not isinstance(before, dict) or not isinstance(after, dict):\n            refused.append(_refuse(rid, \"insufficient_evidence\", \"config before/after missing\"))\n            continue\n        if not any(OOM_RE.search(str(line)) for line in lines):\n            refused.append(_refuse(rid, \"not_applicable\", \"no GPU OOM signature in the engine log\"))\n            continue\n        changed = [k for k in MEMORY_KEYS if before.get(k) != after.get(k)]\n        if len(changed) != 1:\n            refused.append(_refuse(rid, \"requires_review\",\n                                   f\"OOM with {len(changed)} memory-relevant config changes; a person must decide\"))\n            continue\n        key = changed[0]\n        deploy = (src.get(\"deploy\") or {}).get(\"id\")\n        proposals.append({\"record_id\": rid, \"field\": key, \"value\": before[key], \"action_type\": \"revert_config\",\n                          \"reason\": f\"class=serving_config_regression;key={key};from={after[key]};\"\n                                    f\"to={before[key]};deploy={deploy}\"})\n    return {\"proposals\": proposals, \"refused\": refused}\n",
+    "skill_name": "oncall-serving-config-revert",
+    "skill_version": 1,
+    "skill_hash": "ab4217f30ca8a01692065b122a35fa4fc49b5219661259d103acea03e8be8624"
+  },
+  "verification": {
+    "hidden": [
+      {
+        "name": "num_seqs_raised_oom",
+        "pass": true
+      },
+      {
+        "name": "gpu_util_raised_oom",
+        "pass": true
+      },
+      {
+        "name": "context_raised_oom",
+        "pass": true
+      },
+      {
+        "name": "oom_without_memory_key_change_escalates",
+        "pass": true
+      },
+      {
+        "name": "two_memory_keys_changed_escalates",
+        "pass": true
+      },
+      {
+        "name": "disk_full_lookalike_not_applicable",
+        "pass": true
+      },
+      {
+        "name": "key_changed_but_no_oom_not_applicable",
+        "pass": true
+      },
+      {
+        "name": "mixed_batch_one_fix",
+        "pass": true
+      },
+      {
+        "name": "missing_config_after_never_proposes",
+        "pass": true
+      }
+    ],
+    "regression": [
+      {
+        "name": "lint (core static screen)",
+        "pass": true
+      },
+      {
+        "name": "skill's own tests (4 run)",
+        "pass": true
+      },
+      {
+        "name": "INC-1 capacity check fails on the deployed config (reproduces the incident)",
+        "pass": true
+      },
+      {
+        "name": "INC-1 replay: revert max_num_seqs 1024 -> 128",
+        "pass": true
+      },
+      {
+        "name": "INC-1 capacity check passes with the proposed revert (simulated, not applied)",
+        "pass": true
+      }
+    ],
+    "passed": true,
+    "note": "tests, not a formal proof"
+  },
+  "approval": {
+    "state": "approved",
+    "by": "recorded-sim (agent, not a human)",
+    "at": "2026-10-25T17:05:45Z",
+    "command": "APP_DB=\"<throwaway-tmp-registry>/app.db\" SKILLS_DIR=\"<throwaway-tmp-registry>/skills\" HIDDEN_DIR=\"experiments/oncall_infer/hidden\" python -m app skill approve oncall-serving-config-revert 1 --by \"<your name>\"",
+    "kind": "simulated"
+  },
+  "reuse": {
+    "incident_id": "INC-2",
+    "path": "deterministic_fastpath",
+    "model_calls": 0,
+    "latency_ms": 256.0,
+    "diagnosis": {
+      "root_cause_class": "serving_config_regression",
+      "offending_key": "max_model_len",
+      "deployed_value": 131072,
+      "baseline_value": 16384,
+      "deploy": "d-5203",
+      "recommended_remediation": "revert max_model_len to 16384 (proposal only; never applied; a person approves and applies it)",
+      "outcome": {
+        "status": "change_proposed"
+      }
+    },
+    "state": "done",
+    "reason": "core matcher exact + incident fingerprint equal"
+  },
+  "refusal": {
+    "incident_id": "INC-3",
+    "state": "refused",
+    "reason": "structural signature matches (core matcher: exact) but the incident fingerprint differs: exception_type: 'torch.OutOfMemoryError' -> 'OSError'; failure_category: 'gpu_oom' -> 'disk_full'; top_frames: 'vllm/worker/model_runner.py:execute_model' -> 'vllm/compilation/backends.py:save_graph'"
+  },
+  "telemetry": {
+    "gpu": null,
+    "note": "no GPU telemetry on this host"
+  },
+  "audit": [
+    {
+      "t": "2026-10-25T17:05:41+00:00",
+      "event": "incident_loaded",
+      "detail": "INC-1 from experiments/oncall_infer/fixtures/inc1_primary.json (SYNTHETIC)"
+    },
+    {
+      "t": "2026-10-25T17:05:41+00:00",
+      "event": "recorded_reference",
+      "detail": "copied experiments/oncall_infer/reference_skill (hand-written, not model output)"
+    },
+    {
+      "t": "2026-10-25T17:05:43+00:00",
+      "event": "verified",
+      "detail": "hidden 9/9, regression 5/5"
+    },
+    {
+      "t": "2026-10-25T17:05:43+00:00",
+      "event": "pending_approval",
+      "detail": "stopped: a person must run the approve command on the host"
+    },
+    {
+      "t": "2026-10-25T17:05:45+00:00",
+      "event": "approved",
+      "detail": "oncall-serving-config-revert@v1 approved by 'recorded-sim (agent, not a human)' via core `skill approve`"
+    },
+    {
+      "t": "2026-10-25T17:05:45+00:00",
+      "event": "reuse_inc2",
+      "detail": "done: core matcher exact + incident fingerprint equal (256.0 ms, model_calls=0)"
+    },
+    {
+      "t": "2026-10-25T17:05:45+00:00",
+      "event": "reuse_inc3",
+      "detail": "refused: structural signature matches (core matcher: exact) but the incident fingerprint differs: exception_type: 'torch.OutOfMemoryError' -> 'OSError'; failure_category: 'gpu_oom' -> 'disk_full'; top_frames: 'vllm/worker/model_runner.py:execute_model' -> 'vllm/compilation/backends.py:save_graph'"
+    }
+  ]
+}

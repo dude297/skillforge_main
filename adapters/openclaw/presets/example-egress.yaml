@@ -1,0 +1,19 @@
+# TEMPLATE ONLY. Format from NemoClaw docs "create custom policy presets"; NOT tested on a runtime.
+# Our core workflow needs NO egress. Use this only if a tool must reach one specific host.
+# Apply:   nemoclaw my-assistant policy add --from-file adapters/openclaw/presets/example-egress.yaml --dry-run
+#          nemoclaw my-assistant policy add --from-file adapters/openclaw/presets/example-egress.yaml --yes
+preset:
+  name: example-egress
+  description: "Allow python3 GET requests to one internal API host"
+network_policies:
+  example-egress:
+    name: example-egress
+    endpoints:
+      - host: api.example.internal
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow: { method: GET, path: "/v1/**" }
+    binaries:
+      - { path: /usr/bin/python3 }

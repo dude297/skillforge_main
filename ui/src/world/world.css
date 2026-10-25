@@ -1,0 +1,72 @@
+/* EXPERIMENT (exp/world). Scoped under .world so nothing leaks into the console. */
+.world { --w-ink: #14203a; --w-text: #14203a; --w-muted: #4a5a70; --w-card: #ffffff; --w-line: #14203a; --w-accent: #2a7fb8; --w-shadow: #14203a; min-height: 100dvh; color: var(--w-text); }
+.world-night { --w-text: #f3f7fc; --w-muted: #9cadba; --w-card: #121a24; --w-line: #223040; --w-accent: #82d8ff; --w-shadow: transparent; }
+
+.world-h1 { font-size: clamp(2.25rem, 4.6vw, 3.75rem); line-height: 1.04; font-weight: 700; letter-spacing: -0.03em; }
+.world-h2 { font-size: clamp(1.6rem, 2.6vw, 2.25rem); line-height: 1.1; font-weight: 700; letter-spacing: -0.02em; }
+.world-h3 { font-size: clamp(1.35rem, 2vw, 1.75rem); line-height: 1.15; font-weight: 650; letter-spacing: -0.015em; }
+.world-lead { font-size: 1.15rem; line-height: 1.6; color: var(--w-muted); }
+.world-body { line-height: 1.6; color: var(--w-muted); }
+.world-muted { color: var(--w-muted); }
+.world-warn { color: #9a5517; }
+.world-night .world-warn { color: var(--color-warn); }
+.world-step { font-family: "JetBrains Mono Variable", ui-monospace, monospace; font-size: 0.8125rem; color: var(--w-muted); }
+
+/* daylight: chunky pixel-style frames with a hard offset shadow (no blur) */
+.world-daylight .world-card, .world-daylight .world-scene-frame, .world-daylight .world-stage-card, .world-daylight .world-pop {
+  background: var(--w-card); border: 2px solid var(--w-line); box-shadow: 4px 4px 0 var(--w-shadow); border-radius: 6px; }
+.world-daylight .world-stage-card { background: #fff3d1; }
+/* night: the console's hairline panels; pixels stay inside the art */
+.world-night .world-card, .world-night .world-scene-frame, .world-night .world-stage-card, .world-night .world-pop {
+  background: var(--w-card); border: 1px solid var(--w-line); border-radius: 14px; }
+.world-night .world-stage-card { background: radial-gradient(circle at 50% 60%, #18222e, #0b1018 70%); }
+/* the beat being shown is marked, not the others faded: every beat keeps full text contrast */
+.world-beat { border-color: transparent; transition: border-color 200ms; }
+.world-beat.is-on { border-color: var(--w-accent); }
+@media (prefers-reduced-motion: reduce) { .world-beat { transition: none; } }
+.world-pop-item { border-top: 1px solid color-mix(in srgb, var(--w-line) 30%, transparent); padding-top: 0.5rem; }
+
+.world-btn { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 2.75rem; padding: 0 1.1rem; font-weight: 600; border: 2px solid var(--w-line); border-radius: 6px; background: var(--w-card); color: var(--w-text); transition: transform 120ms, box-shadow 120ms; }
+.world-daylight .world-btn { box-shadow: 3px 3px 0 var(--w-shadow); }
+.world-daylight .world-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--w-shadow); }
+.world-btn-primary { background: var(--w-ink); color: #fff; }
+.world-night .world-btn { border-width: 1px; border-radius: 10px; }
+.world-night .world-btn-primary { background: var(--w-accent); color: #080c12; border-color: var(--w-accent); }
+.world-btn:disabled { opacity: 0.5; }
+.world-icon-btn { display: inline-grid; place-items: center; width: 2.25rem; height: 2.25rem; border: 2px solid var(--w-line); border-radius: 6px; background: var(--w-card); color: var(--w-text); }
+.world-night .world-icon-btn { border-width: 1px; border-radius: 10px; }
+.world :focus-visible { outline: 3px solid var(--w-accent); outline-offset: 2px; }
+.world-dept:focus-visible .world-dept-ring { stroke: var(--w-accent); stroke-width: 2.5; }
+.world-dept:hover .world-dept-ring { stroke: color-mix(in srgb, var(--w-accent) 60%, transparent); }
+
+.world-tag { display: inline-flex; align-items: center; border-radius: 4px; border: 2px solid currentColor; padding: 0 0.45rem; font-size: 0.75rem; font-weight: 700; background: var(--w-card); }
+.world-tag-story { color: #9a5517; }
+.world-tag-recorded { color: #1f6a9c; }
+.world-tag-live { color: #187a55; }
+.world-night .world-tag { border-width: 1px; }
+.world-night .world-tag-story { color: var(--color-warn); }
+.world-night .world-tag-recorded { color: var(--color-signal); }
+.world-night .world-tag-live { color: var(--color-verified); }
+.world-chip { border-radius: 4px; padding: 0.05rem 0.45rem; font-size: 0.75rem; background: var(--w-card); color: var(--w-muted); border: 1px solid color-mix(in srgb, var(--w-line) 40%, transparent); }
+.world-seg { border: 2px solid var(--w-line); border-radius: 6px; background: var(--w-card); }
+.world-night .world-seg { border-width: 1px; border-radius: 10px; }
+.world-seg-item { cursor: pointer; padding: 0.35rem 0.8rem; border-radius: 4px; font-weight: 600; color: var(--w-muted); }
+.world-seg-item.is-on { background: var(--w-ink); color: #fff; }
+.world-night .world-seg-item.is-on { background: #18222e; color: var(--w-text); }
+.world-seg-item:has(:focus-visible) { outline: 3px solid var(--w-accent); }
+
+/* "inhabited, not animated": tiny, irregular LED blinks, stepped like pixel art */
+.world-led { animation: world-blink 2.3s steps(1) infinite; }
+@keyframes world-blink { 0%, 61% { opacity: 1; } 62%, 70% { opacity: 0.25; } 71%, 100% { opacity: 1; } }
+.world-pulse { animation: world-pulse 1.4s steps(4) infinite; }
+@keyframes world-pulse { 0% { opacity: 0.15; } 50% { opacity: 0.5; } 100% { opacity: 0.15; } }
+@media (prefers-reduced-motion: reduce) {
+  .world-led, .world-pulse { animation: none; }
+  .world-btn { transition: none; }
+}
+
+.world-link { color: #1d5f8c; text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
+.world-tag-stale { color: var(--w-muted) !important; border-style: dashed; }
+.world-key-wrap { pointer-events: none; }
+.world-key { pointer-events: auto; background: var(--w-card); border: 1px solid color-mix(in srgb, var(--w-line) 35%, transparent); border-radius: 6px; padding: 0.5rem 0.75rem; }
+.world-night .world-link { color: var(--color-signal); }

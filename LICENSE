@@ -1,0 +1,43 @@
+Copyright (c) 2026 the SkillForge team. All rights reserved.
+
+No licence is granted to use, copy, modify or distribute the SkillForge code in this
+repository, except as allowed by law or by written permission from the copyright holders.
+Making the repository publicly visible does not grant a licence.
+
+Third-party software
+--------------------
+Third-party dependencies are not part of the SkillForge code. They are not committed to
+this repository; they are installed from package registries, and each remains under its
+own licence:
+
+Python runtime: standard library only. Tests use pytest (MIT), which is not bundled.
+
+Browser UI (ui/package-lock.json), shipped in the built ui/dist bundle:
+  react, react-dom, scheduler          MIT
+  motion, framer-motion, motion-dom,
+  motion-utils                         MIT
+  lucide-react                         ISC
+  tslib                                0BSD
+  @fontsource-variable/jetbrains-mono  SIL Open Font License 1.1 (font: JetBrains Mono,
+                                       Copyright The JetBrains Mono Project Authors)
+  @fontsource-variable/schibsted-grotesk
+                                       SIL Open Font License 1.1 (font: Schibsted Grotesk,
+                                       Copyright The Schibsted Grotesk Project Authors)
+
+3D experiment (ui-experiments/world3d, not part of the main UI):
+  three, @react-three/fiber, react, react-dom   MIT
+
+Build and test tools (devDependencies: Vite, TypeScript, ESLint, Playwright,
+@axe-core/playwright, lightningcss and others) are used only during development and are not
+shipped. They include MIT, Apache-2.0, ISC, BSD, MPL-2.0 (axe-core, lightningcss) and
+CC-BY-4.0 (caniuse-lite data) licences.
+
+SIL Open Font License notice: the fonts above are licensed under the SIL Open Font License,
+Version 1.1, available at https://openfontlicense.org. The font software is used unmodified,
+is not sold by itself, and its Reserved Font Names are not used for this project.
+
+Models and platforms referred to in this repository (Qwen, NVIDIA Nemotron, vLLM, NVIDIA
+NemoClaw, OpenShell, OpenClaw) are not included in this repository and are under their
+publishers' own terms.
+
+The pixel companion "Ember" (ui/src/world/sprites.ts) is original work of this project.

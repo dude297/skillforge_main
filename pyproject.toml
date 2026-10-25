@@ -1,0 +1,13 @@
+[project]
+name = "local-agent-foundation"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = []  # stdlib only at runtime
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+norecursedirs = ["fixtures"]

@@ -1,0 +1,55 @@
+{
+ "name": "ops-freight-accrual-incompatible",
+ "description": "SYNTHETIC / CONFIDENTIAL-STYLE. Looks identical, but the cross-border invoice is billed in CAD against a USD PO. Summing the lines gives 1518.00, which is the wrong number in the wrong currency. The correct behaviour is to escalate to a human (FX policy) and propose nothing.",
+ "records": [
+  {
+   "id": "PO-9902",
+   "kind": "freight_po",
+   "data": {
+    "label": "DET->TOR cross-border",
+    "currency": "USD",
+    "freight_accrued": 1100.0
+   }
+  }
+ ],
+ "evidence": [
+  {
+   "record_id": "PO-9902",
+   "source": "carrier_export",
+   "trusted": true,
+   "data": {
+    "lines": [
+     "* KESTREL FREIGHT LINES - INVOICE EXPORT KFL v2 - CONFIDENTIAL (SYNTHETIC)",
+     "HDR KFL-INV-20601  PO-9902    CAD 20261012",
+     "LIN 001 LHL 000132000 D  linehaul DET->TOR",
+     "LIN 002 FSC 000019800 D  fuel surcharge 15.0%",
+     "TRL 002 000151800 D"
+    ]
+   }
+  }
+ ],
+ "policy": {
+  "actions": {
+   "set_field": {
+    "requires_approval": true,
+    "fields": {
+     "freight_accrued": {
+      "type": "number",
+      "min": 0,
+      "max_abs_change": 500
+     }
+    }
+   }
+  },
+  "invariants": [
+   {
+    "rule": "carrier_invoice_net",
+    "field": "freight_accrued",
+    "source": "carrier_export"
+   }
+  ],
+  "context": {
+   "contract:kestrel-freight": "rev-2026-10"
+  }
+ }
+}

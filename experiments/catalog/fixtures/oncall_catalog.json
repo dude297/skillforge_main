@@ -1,0 +1,128 @@
+[
+ {
+  "namespace": "acme/sre",
+  "name": "log-signature-diagnose",
+  "domain": "oncall",
+  "workflow": "incident triage (read-only)",
+  "summary": "Match an exception type, top stack frames and log signature to a previously diagnosed incident. Read-only.",
+  "aliases": [
+   "oncall",
+   "stack trace",
+   "exception",
+   "logs",
+   "triage",
+   "ledgermismatch",
+   "error signature"
+  ],
+  "data_sources": [
+   "incident",
+   "service_logs"
+  ],
+  "roles": [
+   "analyst"
+  ]
+ },
+ {
+  "namespace": "acme/sre",
+  "name": "service-config-check",
+  "domain": "oncall",
+  "workflow": "configuration audit (read-only)",
+  "summary": "Compare a service's running configuration with the approved baseline and list drift. Read-only.",
+  "aliases": [
+   "config",
+   "configuration",
+   "drift",
+   "settings",
+   "baseline",
+   "env vars"
+  ],
+  "data_sources": [
+   "service_config"
+  ],
+  "roles": [
+   "analyst"
+  ]
+ },
+ {
+  "namespace": "acme/sre",
+  "name": "dependency-version-investigate",
+  "domain": "oncall",
+  "workflow": "release investigation (read-only)",
+  "summary": "List dependency versions shipped with a release and diff them against the previous release. Read-only.",
+  "aliases": [
+   "deps",
+   "dependencies",
+   "version",
+   "upgrade",
+   "sbom",
+   "release",
+   "changelog"
+  ],
+  "data_sources": [
+   "release_manifest"
+  ],
+  "roles": [
+   "analyst"
+  ]
+ },
+ {
+  "namespace": "acme/sre",
+  "name": "rounding-regression-procedure",
+  "domain": "oncall",
+  "workflow": "validated diagnostic procedure",
+  "summary": "Validated procedure for currency rounding regressions: half-up Decimal versus float rounding, off-by-one-cent totals.",
+  "aliases": [
+   "rounding",
+   "decimal",
+   "half up",
+   "cents",
+   "float",
+   "penny"
+  ],
+  "data_sources": [
+   "incident",
+   "service_logs"
+  ],
+  "roles": [
+   "analyst"
+  ]
+ },
+ {
+  "namespace": "acme/sre",
+  "name": "disk-pressure-runbook",
+  "domain": "oncall",
+  "workflow": "host diagnosis (read-only)",
+  "summary": "Diagnose disk pressure on a host: largest directories, log growth, inode exhaustion. Read-only.",
+  "aliases": [
+   "disk full",
+   "storage",
+   "inode",
+   "no space"
+  ],
+  "data_sources": [
+   "host_metrics"
+  ],
+  "roles": [
+   "analyst"
+  ]
+ },
+ {
+  "namespace": "acme/sre",
+  "name": "cert-expiry-check",
+  "domain": "oncall",
+  "workflow": "tls audit (read-only)",
+  "summary": "List TLS certificates that expire within 30 days.",
+  "aliases": [
+   "tls",
+   "ssl",
+   "certificate",
+   "expiry"
+  ],
+  "data_sources": [
+   "cert_inventory"
+  ],
+  "roles": [
+   "analyst"
+  ]
+ }
+]

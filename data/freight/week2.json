@@ -1,0 +1,77 @@
+{
+ "name": "ops-freight-accrual-week2",
+ "description": "SYNTHETIC. Next week's freight POs: same carrier export, same rule, new values. PO-7801 accrued 900.00, invoice net 952.50; PO-7802 already correct.",
+ "records": [
+  {
+   "id": "PO-7801",
+   "kind": "freight_po",
+   "data": {
+    "label": "DAL->ATL pallets",
+    "currency": "USD",
+    "freight_accrued": 900.0
+   }
+  },
+  {
+   "id": "PO-7802",
+   "kind": "freight_po",
+   "data": {
+    "label": "DAL->AUS parcels",
+    "currency": "USD",
+    "freight_accrued": 460.0
+   }
+  }
+ ],
+ "evidence": [
+  {
+   "record_id": "PO-7801",
+   "source": "carrier_export",
+   "trusted": true,
+   "data": {
+    "lines": [
+     "HDR KFL-INV-20501  PO-7801    USD 20261017",
+     "LIN 001 LHL 000085000 D  linehaul DAL->ATL 9 plt",
+     "LIN 002 FSC 000012750 D  fuel surcharge 15.0%",
+     "LIN 003 ACC 000002500 C  detention credit",
+     "TRL 003 000095250 D"
+    ]
+   }
+  },
+  {
+   "record_id": "PO-7802",
+   "source": "carrier_export",
+   "trusted": true,
+   "data": {
+    "lines": [
+     "HDR KFL-INV-20502  PO-7802    USD 20261017",
+     "LIN 001 LHL 000040000 D  linehaul DAL->AUS",
+     "LIN 002 FSC 000006000 D  fuel surcharge",
+     "TRL 002 000046000 D"
+    ]
+   }
+  }
+ ],
+ "policy": {
+  "actions": {
+   "set_field": {
+    "requires_approval": true,
+    "fields": {
+     "freight_accrued": {
+      "type": "number",
+      "min": 0,
+      "max_abs_change": 500
+     }
+    }
+   }
+  },
+  "invariants": [
+   {
+    "rule": "carrier_invoice_net",
+    "field": "freight_accrued",
+    "source": "carrier_export"
+   }
+  ],
+  "context": {
+   "contract:kestrel-freight": "rev-2026-10"
+  }
+ }
+}

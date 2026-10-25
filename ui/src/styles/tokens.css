@@ -1,0 +1,133 @@
+@import "tailwindcss";
+@import "@fontsource-variable/schibsted-grotesk";
+@import "@fontsource-variable/jetbrains-mono";
+
+/* SIGNAL / NOIR tokens. Colour carries meaning (DESIGN.md §1): signal = agent acting, verified = independent
+   verifier passed, warn = a human is needed / degraded, fail = failure. Contrast: scripts/contrast.mjs. */
+@theme {
+  --color-canvas: #080c12;
+  --color-surface: #121a24;
+  --color-surface-2: #18222e;
+  --color-line: #223040;
+  --color-line-strong: #2f4153;
+  --color-text: #f3f7fc;
+  --color-text-2: #9cadba;
+  --color-text-3: #8193a0;
+  --color-signal: #82d8ff;
+  --color-verified: #65e9b7;
+  --color-warn: #f1ad64;
+  --color-fail: #ff8a94;
+
+  --font-sans: "Schibsted Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "Cascadia Code", monospace;
+
+  --text-meta: 0.8125rem;
+  --text-body: 0.9375rem;
+  --text-lead: 1.125rem;
+  --text-h3: 1.5rem;
+  --text-h2: 2.25rem;
+  --text-h1: 3.5rem;
+  --text-display: clamp(2.75rem, 5.2vw, 5rem);
+
+  --radius-chip: 4px;
+  --radius-panel: 10px;
+  --radius-stage: 16px;
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasis: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@layer base {
+  html {
+    background: var(--color-canvas);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 100%;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /* no global smooth scrolling: it animated every programmatic scrollIntoView and fought the scrubbed story */
+  }
+  body {
+    min-height: 100dvh;
+    font-size: var(--text-body);
+    line-height: 1.5;
+  }
+  code,
+  pre,
+  .font-mono {
+    font-variant-ligatures: none; /* "--by" must not render as a dash ligature in copyable commands */
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--color-signal) 35%, transparent);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-signal);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+@layer components {
+  .panel {
+    background: color-mix(in oklab, var(--color-surface) 92%, transparent);
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-panel);
+  }
+  .hairline-grid {
+    /* fine 48px grid, drawn once as a background: no animated filters */
+    background-image:
+      linear-gradient(to right, color-mix(in oklab, var(--color-line) 55%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklab, var(--color-line) 55%, transparent) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.5rem;
+    padding-inline: 1rem;
+    border-radius: 8px;
+    font-weight: 560;
+    transition:
+      background-color 160ms var(--ease-standard),
+      border-color 160ms var(--ease-standard),
+      transform 160ms var(--ease-standard);
+  }
+  .btn:active {
+    transform: translateY(1px);
+  }
+  .btn-primary {
+    background: var(--color-text);
+    color: var(--color-canvas);
+  }
+  .btn-primary:hover {
+    background: #ffffff;
+  }
+  .btn-quiet {
+    border: 1px solid var(--color-line-strong);
+    color: var(--color-text);
+  }
+  .btn-quiet:hover {
+    border-color: var(--color-text-3);
+    background: var(--color-surface);
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+/* a real Tailwind utility (not a component class) so variants like [&_td]:tnum work */
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+}

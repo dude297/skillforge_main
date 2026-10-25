@@ -1,0 +1,89 @@
+{
+ "name": "ops-freight-accrual-compatible",
+ "description": "SYNTHETIC / CONFIDENTIAL-STYLE. Same rule as the primary case, different POs, values, lane and noise (blank line, two accessorials, an untrusted spreadsheet). The same transform must solve it.",
+ "records": [
+  {
+   "id": "PO-8810",
+   "kind": "freight_po",
+   "data": {
+    "label": "ATL->CLT liftgate",
+    "currency": "USD",
+    "freight_accrued": 980.0
+   }
+  },
+  {
+   "id": "PO-8811",
+   "kind": "freight_po",
+   "data": {
+    "label": "ATL->SAV",
+    "currency": "USD",
+    "freight_accrued": 300.0
+   }
+  }
+ ],
+ "evidence": [
+  {
+   "record_id": "PO-8810",
+   "source": "carrier_export",
+   "trusted": true,
+   "data": {
+    "lines": [
+     "* KFL v2 export  run=2026-10-09T02:00Z",
+     "",
+     "HDR KFL-INV-20533  PO-8810    USD 20261008",
+     "LIN 001 LHL 000089900 D  linehaul ATL->CLT",
+     "LIN 002 FSC 000013485 D  fuel surcharge 15.0%",
+     "LIN 003 ACC 000002500 D  liftgate delivery",
+     "LIN 004 ACC 000001000 C  goodwill credit",
+     "TRL 004 000104885 D"
+    ]
+   }
+  },
+  {
+   "record_id": "PO-8811",
+   "source": "carrier_export",
+   "trusted": true,
+   "data": {
+    "lines": [
+     "HDR KFL-INV-20534  PO-8811    USD 20261008",
+     "LIN 001 LHL 000030000 D  linehaul ATL->SAV",
+     "TRL 001 000030000 D"
+    ]
+   }
+  },
+  {
+   "record_id": "PO-8811",
+   "source": "buyer_spreadsheet",
+   "trusted": false,
+   "data": {
+    "lines": [
+     "PO-8811 freight 350.00"
+    ]
+   }
+  }
+ ],
+ "policy": {
+  "actions": {
+   "set_field": {
+    "requires_approval": true,
+    "fields": {
+     "freight_accrued": {
+      "type": "number",
+      "min": 0,
+      "max_abs_change": 500
+     }
+    }
+   }
+  },
+  "invariants": [
+   {
+    "rule": "carrier_invoice_net",
+    "field": "freight_accrued",
+    "source": "carrier_export"
+   }
+  ],
+  "context": {
+   "contract:kestrel-freight": "rev-2026-10"
+  }
+ }
+}

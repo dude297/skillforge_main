@@ -1,0 +1,15 @@
+{
+  "name": "unrelated-mixed-currency",
+  "description": "Looks similar to A and B but is a different problem: line items carry their own currency, so summing them is wrong. The learned skill must NOT be applied here.",
+  "records": [
+    {"id": "CX-1", "kind": "batch", "data": {"label": "Cross 1", "total": 30.0}},
+    {"id": "CX-2", "kind": "batch", "data": {"label": "Cross 2", "total": 12.0}}
+  ],
+  "evidence": [
+    {"record_id": "CX-1", "source": "line_export", "trusted": true, "data": {"lines": [{"amount": 1250, "currency": "USD"}, {"amount": 1900, "currency": "EUR"}], "scale": 100}},
+    {"record_id": "CX-2", "source": "line_export", "trusted": true, "data": {"lines": [{"amount": 1200, "currency": "JPY"}], "scale": 100}}
+  ],
+  "policy": {
+    "actions": {"set_field": {"requires_approval": true, "fields": {"total": {"type": "number", "min": 0, "max_abs_change": 1000}}}}
+  }
+}

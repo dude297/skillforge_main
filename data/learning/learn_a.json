@@ -1,0 +1,22 @@
+{
+  "name": "learn-a-derived-totals",
+  "description": "Learning scenario A. Each record's total should equal its trusted line items divided by their scale. Nothing says so explicitly; the agent has to work it out.",
+  "records": [
+    {"id": "A-101", "kind": "batch", "data": {"label": "Batch 101", "total": 31.5}},
+    {"id": "A-102", "kind": "batch", "data": {"label": "Batch 102", "total": 45.0}},
+    {"id": "A-103", "kind": "batch", "data": {"label": "Batch 103", "total": 12.75}},
+    {"id": "A-104", "kind": "batch", "data": {"label": "Batch 104", "total": 120.0}},
+    {"id": "A-105", "kind": "batch", "data": {"label": "Batch 105", "total": 9.99}}
+  ],
+  "evidence": [
+    {"record_id": "A-101", "source": "line_export", "trusted": true, "data": {"lines": [1250, 1900], "scale": 100}},
+    {"record_id": "A-102", "source": "line_export", "trusted": true, "data": {"lines": [2000, 2400], "scale": 100}},
+    {"record_id": "A-103", "source": "line_export", "trusted": true, "data": {"lines": [1275], "scale": 100}},
+    {"record_id": "A-104", "source": "line_export", "trusted": true, "data": {"lines": [5000, 5000, 2500], "scale": 100}},
+    {"record_id": "A-105", "source": "line_export", "trusted": true, "data": {"lines": [999], "scale": 100}}
+  ],
+  "policy": {
+    "actions": {"set_field": {"requires_approval": true, "fields": {"total": {"type": "number", "min": 0, "max_abs_change": 1000}}}},
+    "invariants": [{"rule": "sum_lines", "field": "total", "source": "line_export"}]
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "_doc": "Candidate LOCAL models. 'validation' records only what has passed `python -m app models probe` on real hardware; everything else is a documented expectation (docs/DEPLOY_MANIFEST.md). Never add a cloud endpoint here.",
+  "required_for_learning": ["endpoint", "identity", "native_tool_call", "schema", "multi_step", "latency_bound"],
+  "models": [
+    {
+      "id": "nvidia/Qwen3.6-35B-A3B-NVFP4",
+      "served_names": ["nvidia/Qwen3.6-35B-A3B-NVFP4"],
+      "role": "primary",
+      "backend": "vllm (NemoClaw managed)",
+      "nemoclaw_profile": "vllm.dgx-spark-gb10.single.qwen3-6-35b-a3b-nvfp4",
+      "image": "nvcr.io/nvidia/vllm@sha256:9204569b17ee4c0eff75194b8e6e458479c8aee18953b5ab9cf359fcdac659e2",
+      "revision": "491c2f1ea524c639598bf8fa787a93fed5a6fbce",
+      "max_model_len": 262144,
+      "max_tokens": 2048,
+      "tool_parser": "qwen3_coder",
+      "reasoning_parser": "qwen3",
+      "memory": "gpu-memory-utilization 0.4 of 128 GB unified",
+      "storage_gb": 33,
+      "constraints": ["NemoClaw declares structuredOutputs=false: use tool calls, not response_format"],
+      "task_categories": ["investigate", "tool_use", "skill_generation"],
+      "validation": {"status": "unverified", "probe": null}
+    },
+    {
+      "id": "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4",
+      "served_names": ["nvidia-nemotron-3.5-lightning-30b-a3b-nvfp4", "nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4"],
+      "role": "alternate (experimental profile)",
+      "backend": "vllm (NemoClaw managed)",
+      "nemoclaw_profile": "vllm.dgx-spark-gb10.single.nemotron-3.5-lightning-30b-a3b-nvfp4",
+      "image": "vllm/vllm-openai@sha256:3af90144a0926e5c5fe46ee16e5201e763dd854538b9d7ce433755f11dadaf78",
+      "revision": "0dcd680e5585c791728c83342b311d0a0026dbeb",
+      "max_model_len": 65536,
+      "max_tokens": 2048,
+      "tool_parser": "step3p5",
+      "reasoning_parser": "step3p5",
+      "memory": "gpu-memory-utilization 0.65, max-num-seqs 1",
+      "storage_gb": 34,
+      "constraints": ["EXPERIMENTAL in NemoClaw", "reasoning returned in message.reasoning: max_tokens >= 1024",
+                      "parser differs from HF card (qwen3_coder)"],
+      "task_categories": ["investigate", "tool_use"],
+      "validation": {"status": "unverified", "probe": null}
+    }
+  ]
+}

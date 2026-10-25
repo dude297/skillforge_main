@@ -1,0 +1,44 @@
+{
+ "name": "oncall-infer-inc1",
+ "description": "SYNTHETIC incident, hand-written for the demo. vLLM-style serving config regression: deploy d-4117 raised max_num_seqs 128 -> 1024 on chat-qwen-prod; under load the engine runs out of GPU memory, requests queue, the gateway sheds with 429s and p99 latency spikes.",
+ "records": [
+  {"id": "INC-1", "kind": "inference_incident", "data": {
+   "title": "chat-qwen-prod: 429 storm and p99 latency spike after deploy",
+   "service": "chat-qwen-prod", "severity": "SEV2", "opened_at": "2026-10-24T14:07:00Z",
+   "summary": "p99 latency 0.9s -> 21s and 31% HTTP 429 within 6 minutes of deploy d-4117. Engine restarts with CUDA OOM."}}
+ ],
+ "evidence": [
+  {"record_id": "INC-1", "source": "log", "trusted": true, "data": {"name": "logs/chat-qwen-prod/vllm-server.log", "lines": [
+   "2026-10-24T14:00:41Z INFO  api_server: starting vLLM engine model=nvidia/Qwen3.6-35B-A3B-NVFP4 max_num_seqs=1024 max_model_len=32768 gpu_memory_utilization=0.85",
+   "2026-10-24T14:00:58Z INFO  engine: KV cache blocks allocated; cuda graphs captured for 1024 batch sizes",
+   "2026-10-24T14:03:12Z WARN  scheduler: running=1024 waiting=0 preempted=37 (recompute)",
+   "2026-10-24T14:04:30Z ERROR engine: torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 2.25 GiB (GPU 0; 119.6 GiB total capacity; 117.9 GiB already allocated)",
+   "2026-10-24T14:04:30Z ERROR engine:   at vllm/worker/model_runner.py:execute_model",
+   "2026-10-24T14:04:31Z ERROR api_server: engine dead, restarting (attempt 1/5)",
+   "2026-10-24T14:05:02Z WARN  gateway: upstream unavailable, shedding load: HTTP 429 Too Many Requests",
+   "2026-10-24T14:06:44Z ERROR engine: torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 2.25 GiB (GPU 0; 119.6 GiB total capacity; 118.1 GiB already allocated)"
+  ]}},
+  {"record_id": "INC-1", "source": "metrics", "trusted": true, "data": {"name": "metrics/chat-qwen-prod.json", "series": [
+   {"t": "2026-10-24T13:58:00Z", "p99_ms": 910, "http_429_pct": 0.0, "gpu_mem_used_pct": 71.2, "disk_free_gb": 412},
+   {"t": "2026-10-24T14:01:00Z", "p99_ms": 980, "http_429_pct": 0.0, "gpu_mem_used_pct": 84.9, "disk_free_gb": 412},
+   {"t": "2026-10-24T14:04:00Z", "p99_ms": 7400, "http_429_pct": 4.1, "gpu_mem_used_pct": 98.6, "disk_free_gb": 412},
+   {"t": "2026-10-24T14:05:00Z", "p99_ms": 21300, "http_429_pct": 31.0, "gpu_mem_used_pct": 99.1, "disk_free_gb": 411},
+   {"t": "2026-10-24T14:07:00Z", "p99_ms": 19800, "http_429_pct": 28.4, "gpu_mem_used_pct": 98.8, "disk_free_gb": 411}
+  ]}},
+  {"record_id": "INC-1", "source": "config_before", "trusted": true, "data": {"name": "deploy/chat-qwen-prod/serving.yaml@d-4116", "config": {
+   "model": "nvidia/Qwen3.6-35B-A3B-NVFP4", "image_tag": "vllm-0.11.2", "max_num_seqs": 128, "max_model_len": 32768,
+   "gpu_memory_utilization": 0.85, "tensor_parallel_size": 1}}},
+  {"record_id": "INC-1", "source": "config_after", "trusted": true, "data": {"name": "deploy/chat-qwen-prod/serving.yaml@d-4117", "config": {
+   "model": "nvidia/Qwen3.6-35B-A3B-NVFP4", "image_tag": "vllm-0.11.2", "max_num_seqs": 1024, "max_model_len": 32768,
+   "gpu_memory_utilization": 0.85, "tensor_parallel_size": 1}}},
+  {"record_id": "INC-1", "source": "deploy", "trusted": true, "data": {"name": "deploys/d-4117.json", "id": "d-4117",
+   "at": "2026-10-24T14:00:30Z", "author": "ci-bot (PR #882 'raise concurrency for launch')", "description": "serving.yaml: max_num_seqs 128 -> 1024"}}
+ ],
+ "policy": {
+  "actions": {"revert_config": {"requires_approval": true, "fields": {
+   "max_num_seqs": {"type": "number", "min": 1}, "max_model_len": {"type": "number", "min": 1},
+   "gpu_memory_utilization": {"type": "number", "min": 0.1, "max": 0.95}}}},
+  "invariants": [{"rule": "serving_capacity_check", "field": "max_num_seqs", "source": "config_after"}],
+  "context": {"fixture": "SYNTHETIC oncall_infer"}
+ }
+}

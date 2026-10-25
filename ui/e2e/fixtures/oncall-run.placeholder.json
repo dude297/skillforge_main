@@ -1,0 +1,46 @@
+{
+  "schema": "skillforge.oncall_run/1",
+  "mode": "RECORDED_SIMULATION",
+  "generated_at": "2026-10-25T09:00:00Z",
+  "host": "PLACEHOLDER FIXTURE (e2e only, not a run)",
+  "model": { "id": null, "endpoint": null, "available": false, "note": "placeholder fixture: no model was called" },
+  "incident": {
+    "id": "INC-FIXTURE-1",
+    "title": "Placeholder: checkout latency after deploy",
+    "service": "checkout-api",
+    "summary": "Placeholder fixture for UI tests. Not a real incident.",
+    "evidence": [
+      { "kind": "log", "name": "checkout-api.log", "excerpt": "ERROR pool exhausted (max=5)", "source_path": "fixtures/oncall/logs/checkout-api.log" },
+      { "kind": "metric", "name": "p99_latency_ms", "excerpt": "p99 120 -> 2400 at 08:41", "source_path": "fixtures/oncall/metrics/p99.csv" },
+      { "kind": "config", "name": "db.yaml", "excerpt": "pool_size: 5", "source_path": "fixtures/oncall/config/db.yaml" },
+      { "kind": "deploy", "name": "deploy 1.4.2", "excerpt": "08:40 pool_size 20 -> 5", "source_path": "fixtures/oncall/deploys.json" }
+    ]
+  },
+  "synthesis": {
+    "provenance": "recorded_reference",
+    "model_calls": null,
+    "latency_ms": null,
+    "prompt_tokens": null,
+    "completion_tokens": null,
+    "code": "def diagnose(evidence):\n    return {'cause': 'pool_size_regression'}\n",
+    "skill_name": "pool-size-regression",
+    "skill_version": 1,
+    "skill_hash": "0000fixture0000"
+  },
+  "verification": {
+    "hidden": [{ "name": "hidden_pool_case", "pass": true }],
+    "regression": [{ "name": "regression_unrelated_500s", "pass": true }],
+    "passed": true,
+    "note": "placeholder"
+  },
+  "approval": { "state": "pending", "by": null, "at": null, "command": "python -m app approve 1 --by <name>" },
+  "reuse": { "incident_id": "INC-FIXTURE-2", "path": "fastpath", "model_calls": 0, "latency_ms": 12, "diagnosis": "pool_size_regression", "state": "done", "reason": null },
+  "refusal": { "incident_id": "INC-FIXTURE-3", "state": "refused", "reason": "evidence shape does not match the skill's contract (no pool config)" },
+  "telemetry": { "gpu": null, "note": "not measured in fixture" },
+  "audit": [
+    { "t": "2026-10-25T09:00:00Z", "event": "incident_received", "detail": "INC-FIXTURE-1" },
+    { "t": "2026-10-25T09:00:01Z", "event": "skill_synthesized", "detail": "pool-size-regression v1" },
+    { "t": "2026-10-25T09:00:02Z", "event": "verification_passed", "detail": "1 hidden, 1 regression" },
+    { "t": "2026-10-25T09:00:03Z", "event": "approval_requested", "detail": "skill pool-size-regression v1" }
+  ]
+}

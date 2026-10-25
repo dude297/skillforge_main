@@ -1,0 +1,15 @@
+{
+  "name": "lookalike-forecast",
+  "description": "IDENTICAL data shape to learn A/B, different meaning: forecast line items are not expected to sum to the booked total. Correct behaviour: change nothing. A shape-only matcher would wrongly reuse the totals skill.",
+  "records": [
+    {"id": "FC-1", "kind": "budget", "data": {"label": "Q1 budget", "total": 50.0}},
+    {"id": "FC-2", "kind": "budget", "data": {"label": "Q2 budget", "total": 80.0}}
+  ],
+  "evidence": [
+    {"record_id": "FC-1", "source": "forecast_export", "trusted": true, "data": {"lines": [2000, 2500], "scale": 100}},
+    {"record_id": "FC-2", "source": "forecast_export", "trusted": true, "data": {"lines": [6000], "scale": 100}}
+  ],
+  "policy": {
+    "actions": {"set_field": {"requires_approval": true, "fields": {"total": {"type": "number", "min": 0, "max_abs_change": 1000}}}}
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "boundary-derived-totals",
+  "description": "Same structure as learn A/B, boundary values: zero, smallest step, scale 1, large change within policy.",
+  "records": [
+    {"id": "BD-1", "kind": "batch", "data": {"label": "zero", "total": 0.0}},
+    {"id": "BD-2", "kind": "batch", "data": {"label": "tiny diff", "total": 1.0}},
+    {"id": "BD-3", "kind": "batch", "data": {"label": "scale one", "total": 5.0}},
+    {"id": "BD-4", "kind": "batch", "data": {"label": "big change", "total": 900.0}},
+    {"id": "BD-5", "kind": "batch", "data": {"label": "smallest unit", "total": 0.001}}
+  ],
+  "evidence": [
+    {"record_id": "BD-1", "source": "line_export", "trusted": true, "data": {"lines": [0], "scale": 1000}},
+    {"record_id": "BD-2", "source": "line_export", "trusted": true, "data": {"lines": [1001], "scale": 1000}},
+    {"record_id": "BD-3", "source": "line_export", "trusted": true, "data": {"lines": [5], "scale": 1}},
+    {"record_id": "BD-4", "source": "line_export", "trusted": true, "data": {"lines": [1000000, 500000], "scale": 1000}},
+    {"record_id": "BD-5", "source": "line_export", "trusted": true, "data": {"lines": [1], "scale": 1000}}
+  ],
+  "policy": {
+    "actions": {"set_field": {"requires_approval": true, "fields": {"total": {"type": "number", "min": 0, "max_abs_change": 1000}}}},
+    "invariants": [{"rule": "sum_lines", "field": "total", "source": "line_export"}]
+  }
+}

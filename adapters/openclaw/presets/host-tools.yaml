@@ -1,0 +1,32 @@
+# Lets the sandboxed agent's client.py reach the trusted tool service on the HOST (python -m app serve).
+# Field names VERIFIED against OpenShell 0.0.116 policy-schema.mdx + NemoClaw create-custom-policy-presets.mdx and the
+# maintained observability-otlp-local preset (sandbox -> host pattern). That THIS file passes is UNVERIFIED until the
+# dry-run below succeeds on the GB10.
+#   - host must be host.openshell.internal (the gateway host). A private IP literal (e.g. 172.18.0.1) is refused by
+#     NemoClaw custom presets / SSRF rules; allowed_ips is accepted ONLY on this bridge endpoint.
+#   - host loopback is never reachable from the sandbox: serve on the openshell-docker bridge gateway IP.
+#   - __BRIDGE__/32 pins the single host address (least privilege). If the dry-run rejects the /32, the documented
+#     fallback is the three RFC1918 ranges the maintained preset uses -- still only for host.openshell.internal:8765.
+#
+#   BRIDGE=$(docker network inspect openshell-docker -f '{{(index .IPAM.Config 0).Gateway}}')
+#   sed "s#__BRIDGE__#$BRIDGE#" adapters/openclaw/presets/host-tools.yaml > /tmp/host-tools.yaml
+#   nemoclaw my-assistant policy add --from-file /tmp/host-tools.yaml --dry-run
+#   nemoclaw my-assistant policy add --from-file /tmp/host-tools.yaml --yes
+#   denials: openshell logs my-assistant --tail --source sandbox   (or: openshell term)
+preset:
+  name: host-tools
+  description: "records-ops client -> trusted tool service on the gateway host (POST /call only)"
+network_policies:
+  host-tools:
+    name: host-tools
+    endpoints:
+      - host: host.openshell.internal
+        port: 8765
+        protocol: rest
+        enforcement: enforce
+        allowed_ips:
+          - __BRIDGE__/32
+        rules:
+          - allow: { method: POST, path: "/call" }
+    binaries:
+      - { path: /usr/bin/python3 }   # exact path: confirm with `openshell logs` if the denial names another binary

@@ -1,0 +1,220 @@
+[
+ {
+  "query": "freight invoice reconcile",
+  "relevant": [
+   "freight-invoice-reconcile"
+  ],
+  "kind": "exact name"
+ },
+ {
+  "query": "carrier bill doesn't match the accrual",
+  "relevant": [
+   "freight-invoice-reconcile"
+  ],
+  "kind": "paraphrase"
+ },
+ {
+  "query": "KFL export mismatch",
+  "relevant": [
+   "freight-invoice-reconcile"
+  ],
+  "kind": "abbreviation"
+ },
+ {
+  "query": "PO 7731 freight accrued is wrong",
+  "relevant": [
+   "freight-invoice-reconcile"
+  ],
+  "kind": "paraphrase"
+ },
+ {
+  "query": "PO qty vs received",
+  "relevant": [
+   "po-quantity-compare"
+  ],
+  "kind": "abbreviation"
+ },
+ {
+  "query": "goods receipt shortage",
+  "relevant": [
+   "po-quantity-compare"
+  ],
+  "kind": "synonym"
+ },
+ {
+  "query": "three way match",
+  "relevant": [
+   "po-quantity-compare"
+  ],
+  "kind": "jargon"
+ },
+ {
+  "query": "supplier shipped fewer units than ordered",
+  "relevant": [
+   "po-quantity-compare"
+  ],
+  "kind": "no lexical overlap"
+ },
+ {
+  "query": "charged twice by the carrier",
+  "relevant": [
+   "duplicate-charge-detect"
+  ],
+  "kind": "paraphrase"
+ },
+ {
+  "query": "double billing",
+  "relevant": [
+   "duplicate-charge-detect"
+  ],
+  "kind": "synonym"
+ },
+ {
+  "query": "dup charges",
+  "relevant": [
+   "duplicate-charge-detect"
+  ],
+  "kind": "abbreviation"
+ },
+ {
+  "query": "my shipper invoiced the same load two times",
+  "relevant": [
+   "duplicate-charge-detect"
+  ],
+  "kind": "no lexical overlap"
+ },
+ {
+  "query": "fuel surcharge rate too high",
+  "relevant": [
+   "contract-rate-validate"
+  ],
+  "kind": "paraphrase"
+ },
+ {
+  "query": "check tariff against contract",
+  "relevant": [
+   "contract-rate-validate"
+  ],
+  "kind": "synonym"
+ },
+ {
+  "query": "invoice in CAD for a USD order",
+  "relevant": [
+   "fx-freight-convert"
+  ],
+  "kind": "overlapping terms"
+ },
+ {
+  "query": "customs duty landed cost",
+  "relevant": [
+   "customs-duty-allocate"
+  ],
+  "kind": "exact terms"
+ },
+ {
+  "query": "cheapest carrier for this lane",
+  "relevant": [
+   "freight-quote-compare"
+  ],
+  "kind": "paraphrase"
+ },
+ {
+  "query": "cycle count does not match on hand",
+  "relevant": [
+   "inventory-count-variance"
+  ],
+  "kind": "paraphrase"
+ },
+ {
+  "query": "LedgerMismatch stack trace",
+  "relevant": [
+   "log-signature-diagnose",
+   "rounding-regression-procedure"
+  ],
+  "kind": "oncall"
+ },
+ {
+  "query": "triage exception from logs",
+  "relevant": [
+   "log-signature-diagnose"
+  ],
+  "kind": "oncall"
+ },
+ {
+  "query": "config drift on invoice-svc",
+  "relevant": [
+   "service-config-check"
+  ],
+  "kind": "oncall"
+ },
+ {
+  "query": "what changed in dependencies since last release",
+  "relevant": [
+   "dependency-version-investigate"
+  ],
+  "kind": "oncall"
+ },
+ {
+  "query": "totals off by one cent after deploy",
+  "relevant": [
+   "rounding-regression-procedure"
+  ],
+  "kind": "oncall paraphrase"
+ },
+ {
+  "query": "half-up rounding regression",
+  "relevant": [
+   "rounding-regression-procedure"
+  ],
+  "kind": "oncall"
+ },
+ {
+  "query": "disk full on host",
+  "relevant": [
+   "disk-pressure-runbook"
+  ],
+  "kind": "oncall"
+ },
+ {
+  "query": "tls certificate expiring",
+  "relevant": [
+   "cert-expiry-check"
+  ],
+  "kind": "oncall"
+ },
+ {
+  "query": "server ran out of space",
+  "relevant": [
+   "disk-pressure-runbook"
+  ],
+  "kind": "no lexical overlap"
+ },
+ {
+  "query": "line items don't add up to the total",
+  "relevant": [
+   "line-total-reconcile"
+  ],
+  "kind": "records"
+ },
+ {
+  "query": "vendor payment reconcile",
+  "relevant": [],
+  "kind": "unauthorized namespace only"
+ },
+ {
+  "query": "summarize meeting notes",
+  "relevant": [],
+  "kind": "unauthorized namespace only"
+ },
+ {
+  "query": "freight",
+  "relevant": [
+   "freight-invoice-reconcile",
+   "duplicate-charge-detect",
+   "contract-rate-validate",
+   "fx-freight-convert",
+   "freight-quote-compare"
+  ],
+  "kind": "broad, multiple candidates"
+ }
+]

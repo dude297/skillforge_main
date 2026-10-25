@@ -1,0 +1,118 @@
+{
+ "name": "ops-freight-accrual-mixed",
+ "description": "SYNTHETIC. Mixed batch: PO-8101 wrong (805.00), PO-8102 correct, PO-8103 billed in CAD against a USD PO (a person must decide), PO-8104 export trailer does not match its lines (unreadable).",
+ "records": [
+  {
+   "id": "PO-8101",
+   "kind": "freight_po",
+   "data": {
+    "label": "PO-8101",
+    "currency": "USD",
+    "freight_accrued": 700.0
+   }
+  },
+  {
+   "id": "PO-8102",
+   "kind": "freight_po",
+   "data": {
+    "label": "PO-8102",
+    "currency": "USD",
+    "freight_accrued": 455.0
+   }
+  },
+  {
+   "id": "PO-8103",
+   "kind": "freight_po",
+   "data": {
+    "label": "PO-8103",
+    "currency": "USD",
+    "freight_accrued": 1100.0
+   }
+  },
+  {
+   "id": "PO-8104",
+   "kind": "freight_po",
+   "data": {
+    "label": "PO-8104",
+    "currency": "USD",
+    "freight_accrued": 300.0
+   }
+  }
+ ],
+ "evidence": [
+  {
+   "record_id": "PO-8101",
+   "source": "carrier_export",
+   "trusted": true,
+   "data": {
+    "lines": [
+     "HDR KFL-INV-20601  PO-8101    USD 20261019",
+     "LIN 001 LHL 000070000 D  line",
+     "LIN 002 FSC 000010500 D  line",
+     "TRL 002 000080500 D"
+    ]
+   }
+  },
+  {
+   "record_id": "PO-8102",
+   "source": "carrier_export",
+   "trusted": true,
+   "data": {
+    "lines": [
+     "HDR KFL-INV-20602  PO-8102    USD 20261019",
+     "LIN 001 LHL 000040000 D  line",
+     "LIN 002 FSC 000005500 D  line",
+     "TRL 002 000045500 D"
+    ]
+   }
+  },
+  {
+   "record_id": "PO-8103",
+   "source": "carrier_export",
+   "trusted": true,
+   "data": {
+    "lines": [
+     "HDR KFL-INV-20603  PO-8103    CAD 20261019",
+     "LIN 001 LHL 000120000 D  line",
+     "TRL 001 000120000 D"
+    ]
+   }
+  },
+  {
+   "record_id": "PO-8104",
+   "source": "carrier_export",
+   "trusted": true,
+   "data": {
+    "lines": [
+     "HDR KFL-INV-20604  PO-8104    USD 20261019",
+     "LIN 001 LHL 000030000 D  line",
+     "TRL 002 000030000 D"
+    ]
+   }
+  }
+ ],
+ "policy": {
+  "actions": {
+   "set_field": {
+    "requires_approval": true,
+    "fields": {
+     "freight_accrued": {
+      "type": "number",
+      "min": 0,
+      "max_abs_change": 500
+     }
+    }
+   }
+  },
+  "invariants": [
+   {
+    "rule": "carrier_invoice_net",
+    "field": "freight_accrued",
+    "source": "carrier_export"
+   }
+  ],
+  "context": {
+   "contract:kestrel-freight": "rev-2026-10"
+  }
+ }
+}

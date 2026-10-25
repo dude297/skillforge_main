@@ -1,0 +1,24 @@
+{
+  "name": "learn-b-derived-totals",
+  "description": "Learning scenario B. Same underlying problem as A, but with different ids, values, record count and scale (1000).",
+  "records": [
+    {"id": "LOT-17", "kind": "batch", "data": {"label": "Lot 17", "total": 4.5}},
+    {"id": "LOT-18", "kind": "batch", "data": {"label": "Lot 18", "total": 7.0}},
+    {"id": "LOT-19", "kind": "batch", "data": {"label": "Lot 19", "total": 10.0}},
+    {"id": "LOT-20", "kind": "batch", "data": {"label": "Lot 20", "total": 2.2}},
+    {"id": "LOT-21", "kind": "batch", "data": {"label": "Lot 21", "total": 15.0}},
+    {"id": "LOT-22", "kind": "batch", "data": {"label": "Lot 22", "total": 0.0}}
+  ],
+  "evidence": [
+    {"record_id": "LOT-17", "source": "line_export", "trusted": true, "data": {"lines": [2500, 2000], "scale": 1000}},
+    {"record_id": "LOT-18", "source": "line_export", "trusted": true, "data": {"lines": [3000, 3250], "scale": 1000}},
+    {"record_id": "LOT-19", "source": "line_export", "trusted": true, "data": {"lines": [10000], "scale": 1000}},
+    {"record_id": "LOT-20", "source": "line_export", "trusted": true, "data": {"lines": [1100, 1000, 100], "scale": 1000}},
+    {"record_id": "LOT-21", "source": "line_export", "trusted": true, "data": {"lines": [5000, 5000, 5500], "scale": 1000}},
+    {"record_id": "LOT-22", "source": "line_export", "trusted": true, "data": {"lines": [750], "scale": 1000}}
+  ],
+  "policy": {
+    "actions": {"set_field": {"requires_approval": true, "fields": {"total": {"type": "number", "min": 0, "max_abs_change": 1000}}}},
+    "invariants": [{"rule": "sum_lines", "field": "total", "source": "line_export"}]
+  }
+}
