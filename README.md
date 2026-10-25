@@ -167,7 +167,7 @@ python -m pytest -q -p no:cacheprovider        # full suite, about 3 min
 ```
 
 Results on the dev box (Windows 11 x86_64, Python 3.14.3, no GPU) are in
-[docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md#tests-on-this-tree). Measurements, all from the dev box:
+[docs/DEVELOPMENT_LOG.md](docs/DEVELOPMENT_LOG.md#part-3-tests-on-this-tree). Measurements, all from the dev box:
 
 - OnCall INC-2 reuse: `model_calls: 0`; about 117–256 ms across recorded runs. This is match plus deterministic
   execution, **not** an inference saving.

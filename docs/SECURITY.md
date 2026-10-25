@@ -96,7 +96,7 @@ The reuse path also runs with a `NoModel` guard that counts any attempt to build
 
 ## Secrets
 
-- No secrets are in this tree (grep-based scan; see [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md#tests-on-this-tree)).
+- No secrets are in this tree (grep-based scan; see [DEVELOPMENT_LOG.md](DEVELOPMENT_LOG.md#part-3-tests-on-this-tree)).
 - `data/.agent_token`, `data/.operator_token`, `.env*` and runtime databases are gitignored.
 - `deploy/gb10/sf-gb10.sh` reads the vLLM API key from a file into `LLM_API_KEY` and never prints it.
 - `deploy/gb10/make_bundle.sh` refuses to build if the bundle contains this machine's hostname, git email or a
