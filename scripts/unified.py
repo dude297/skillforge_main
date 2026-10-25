@@ -49,8 +49,9 @@ def check(_a):
     rows = [("python >= 3.11", sys.version_info >= (3, 11), sys.version.split()[0]),
             ("UI bundle ui/dist", built, "built" if built else "build: npm --prefix ui run build"),
             ("node (UI build/e2e only)", shutil.which("node") is not None, shutil.which("node") or "not found"),
-            ("docker (skill isolation; else subprocess runner)", shutil.which("docker") is not None,
-             shutil.which("docker") or "not found"),
+            ("skill runner", True if os.environ.get("SKILL_RUNNER") == "docker" else None,  # what actually runs skills
+             "docker (SKILL_RUNNER=docker)" if os.environ.get("SKILL_RUNNER") == "docker" else
+             f"subprocess (no Docker isolation; SKILL_RUNNER unset; docker binary: {shutil.which('docker') or 'not found'})"),
             ("local model", None, os.environ.get("LLM_BASE_URL") or "LLM_BASE_URL unset: MOCK only, nothing downloaded"),
             ("workspace DB", Path(ENV["APP_DB"]).exists(), ENV["APP_DB"] if Path(ENV["APP_DB"]).exists() else "run: setup")]
     for name, ok, detail in rows:
