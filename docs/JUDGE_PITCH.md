@@ -1,6 +1,6 @@
 # SkillForge: 3-minute judge pitch
 
-Rules for the speaker: say only what the table at the end supports. Anything marked **pending** (approval, reuse and refusal on the GB10) is left out unless done on the day and read from its evidence folder. Never read a recorded number as a GB10 number. GB10 figures and their sha256: `docs/BENCHMARKS.md` section 3.
+Rules for the speaker: say only what the table at the end supports. GB10 approval, reuse and refusal are done (section 3 of `docs/BENCHMARKS.md`); say them with their caveats (subprocess runner, `--by` name unverified, n=6). Never read a recorded number as a GB10 number. GB10 figures and their sha256: `docs/BENCHMARKS.md` section 3.
 
 ## Full version (~420 words, 3:00)
 
@@ -21,7 +21,7 @@ Synthesis runs on a local model, Qwen3.6-35B-A3B in NVFP4, served by vLLM on the
 - Reuse of INC-2: 0 model calls, enforced by the guard; 256 ms for match plus deterministic execution, on a Windows dev box. That is not a saving in inference time: the recorded first run made no model call to compare against.
 - INC-3 lookalike: refused by the fingerprint check.
 - Live synthesis on the GB10 (Qwen3.6-35B-A3B, subprocess runner): with the original prompt 0 of 3 attempts passed. After a **disclosed** prompt revision made once the operator saw a 7/9 result, one attempt passed the hidden suite 9/9 (1 model call, 173.0 s, 12,763 completion tokens) and an identical repeat scored 8/9 and was rejected. Say "1 of 2", never "it works". Every failing candidate was rejected by the verifier; none staged. The passing skill is staged as `tested`, proposal only.
-- A person's approval of that skill, INC-2 reuse and INC-3 refusal on the GB10: **pending**. Do not claim them.
+- On the GB10 a person (the operator) approved that skill on the host CLI (`--by` name not identity-verified). INC-2 was then reused with **0 model calls**, 27.0 ms (6 fresh-process trials: p50 28.2 ms, max 42.1), and vLLM request counters did not move. INC-3 was refused by the incident fingerprint every time. Scope: reuse decision plus sandboxed run in the subprocess runner (no Docker isolation). Do not present 28 ms as a speed-up over the 173.0 s synthesis call; they are different scopes.
 - Per-request streaming (not aggregate throughput), 0 of 70 requests failed: TTFT p50 0.0623 s (c=1), 0.1087 s (c=2), 0.1026 s (c=4); decode p50 75.63 / 61.83 / 55.27 tok/s; min free memory 62.78 GiB; peak 62 C and 42.07 W.
 - Security caveat if asked: the GB10 runs used the subprocess runner, the lint is not a boundary (a bypass was found and fixed), and hidden-suite secrecy needs the Docker runner.
 
@@ -42,4 +42,4 @@ Close: "Fix it once with the model, verify it independently, let a person approv
 | Model id | served as `skillforge-qwen` (Qwen3.6-35B-A3B-NVFP4), per the GB10 operator's report | reported, GB10 |
 | Live synthesis attempt 4: hidden 9/9, 1 call, 173.0 s, 12,763 completion tokens; attempt 5: 8/9 rejected; original prompt 0/3 | `docs/evidence/gb10/attempt4-oncall-run.json` sha256 `712dbf78...4b58` and `attempt5-oncall-run.json` sha256 `f95121b0...e01d` (sanitized records, see `docs/evidence/gb10/README.md`); attempts 1-3: operator report only. Attempt 5 failed because the model ignored an explicit prompt instruction (`not_applicable` instead of `requires_review`) | real, GB10, disclosed prompt revision |
 | TTFT, decode, memory, temperature, power | frontier report sha256 `6890165aa86abbb7834ec2aa15784bbf6326104363466d786b0fd66d4e8d23e2` (file on the GB10/SSD) | real, GB10, per request |
-| Person's approval; GB10 reuse and refusal | none | **pending** |
+| Person's approval (`host_cli`, 20:25:02Z); GB10 INC-2 reuse 0 model calls, 6 trials p50 28.2 ms; INC-3 refused | `docs/evidence/gb10/reuse-oncall-run.json` (sha256 in `docs/evidence/gb10/README.md`); GB10 original sha256 `1e32985e...6d2`; vLLM counters unchanged | real, GB10, subprocess runner, `--by` unverified |

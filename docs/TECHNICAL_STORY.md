@@ -1,6 +1,6 @@
 # SkillForge technical story (judge-facing)
 
-Every claim below points to code or a doc in this repo. GB10 numbers are the GB10 operator's report with sha256-named evidence (`docs/BENCHMARKS.md` section 3). Anything about the GB10 that was not measured is marked **pending** and is listed again in section 6. Latency words follow `docs/EVIDENCE_PROTOCOL.md` section 1 (model inference, validation, deterministic reuse, end-to-end are four different things).
+Every claim below points to code or a doc in this repo. GB10 numbers are the GB10 operator's report with sha256-named evidence (`docs/BENCHMARKS.md` section 3). Anything about the GB10 that was not measured is marked as such and is listed again in section 6. Latency words follow `docs/EVIDENCE_PROTOCOL.md` section 1 (model inference, validation, deterministic reuse, end-to-end are four different things).
 
 ## 1. The architecture in one paragraph
 
@@ -13,7 +13,7 @@ A local model writes a small diagnostic program (a "skill") for an incident clas
 | Inference is local, so incident logs, configs and generated code do not leave the machine | the model client talks to `LLM_BASE_URL` (default `http://127.0.0.1:8000/v1`); no cloud API exists in the OnCall path; the console binds loopback only (never `0.0.0.0`, `CLAUDE.md` rule); skill verification runs with no network when `SKILL_RUNNER=docker` (`--network none`, `app/skillforge.py` `sandbox`) | design fact from code. Not a data-loss guarantee: the default child-process runner is not network isolation (`docs/JUDGE_QA.md`) |
 | One 128 GB unified-memory pool holds a large model next to the verifier, sandbox and console | spec 128 GB LPDDR5x (`docs/GB10_FRONTIER.md`); the 35B profile reserves about 0.4 x 128 GB = 51 GB (arithmetic from its serve flag, not a reading). Measured on the GB10: MemTotal 121.63 GiB; during the frontier run min MemAvailable 62.78 GiB, derived peak used 58.85 GiB (78 samples) | measured, GB10: frontier report sha256 `6890165aa86abbb7834ec2aa15784bbf6326104363466d786b0fd66d4e8d23e2` |
 | A large model can stay resident, so the one-time synthesis call has no model-load penalty | the managed vLLM container stays up between requests; `frontier.sh` records warm-up separately | measured, GB10, per request: TTFT p50 0.0623 s (c=1), 0.1087 s (c=2), 0.1026 s (c=4); decode p50 75.63 / 61.83 / 55.27 tok/s; 0 of 70 errors (same report). First-vs-warm split: not reported here |
-| The expensive step (model) is paid once per incident class, the repeat step needs no GPU time | reuse path has no model client (`NoModel`); `model_calls == 0` is enforced and recorded in `oncall-run.json` | 0 model calls: shown on the dev box (recorded run); on GB10 **pending** (no approval or reuse yet). The one-time synthesis cost on GB10 (attempt 4): 1 call, 173.0 s, 12,763 completion tokens. Time saved: **not measured** |
+| The expensive step (model) is paid once per incident class, the repeat step needs no GPU time | reuse path has no model client (`NoModel`); `model_calls == 0` is enforced and recorded in `oncall-run.json` | 0 model calls: shown on the dev box (recorded run) and on the GB10 (6 trials after a person's approval; vLLM request counters unchanged). The one-time synthesis cost on GB10 (attempt 4): 1 call, 173.0 s, 12,763 completion tokens. Time saved: **not measured** (different scopes) |
 | Memory pressure and GPU heat are observed, not assumed | `frontier.sh` guards (MemAvailable >= 16 GiB, temp <= 85 C) abort before load; `samples.csv` records every second | measured, GB10: peak 62 C, 42.07 W in the frontier run; attempt 5: temp max 67 C, power max 44.0 W, util p50 96% (235 samples) |
 
 What the GB10 does **not** prove for us: that deterministic reuse is faster end to end than the agent (plausible, unmeasured: `docs/EXEC_PERF.md` finding 4 shows a 31x speedup inside a skill shrinking to 1.3x end to end behind process start), that the model reliably writes correct skills (live result: 1 of 2 with a disclosed prompt revision, 0 of 3 before), or any energy or cost saving (nothing is measured).
@@ -63,14 +63,14 @@ The report rejects mock, fixture, recorded-simulation and non-GB10 inputs, shows
 | served model id / quantization | `skillforge-qwen` = Qwen3.6-35B-A3B-NVFP4, vLLM 0.21.0+2325b6f0.dev, `max_model_len` 32768, inline thinking. Revision: not reported |
 | first-time synthesis (Qwen, thinking, revised prompt) | attempt 4: 1 model call, 173.0 s, 1,998 / 12,763 tokens, hidden 9/9, regression 5/5, staged `tested`. Attempt 5 (same config): 1 call, 233.8 s, 1,998 / 17,067 tokens, hidden 8/9, rejected (model answered `not_applicable` where the prompt says `requires_review`). Original prompt: 0 of 3 passed (5/9, 7/9, Nemotron failed lint) |
 | first-time automated end-to-end s | not reported (only the synthesis model-call time above) |
-| deterministic reuse on GB10: latency ms, model calls | **pending** (needs a person's approval first). Dev box only: 0 model calls, 117 to 256 ms, Windows, not GPU, reference skill |
+| deterministic reuse on GB10: latency ms, model calls | 0 model calls; 27.0 ms first run, n=6 p50 28.2 ms (min 27.0, max 42.1): reuse decision plus sandboxed run, subprocess runner, after a person's approval (`--by` unverified). INC-3 refused every time. Evidence: `docs/evidence/gb10/reuse-oncall-run.json`. Dev box for comparison: 117 to 256 ms, Windows, not GPU, reference skill |
 | TTFT, decode tok/s per concurrency | see section 2 and `docs/BENCHMARKS.md` section 3 (per request, c=1/2/4) |
 | unified memory headroom, peak temperature | see section 2 |
 | request error rate, probe, stages | 0 of 70 streaming requests failed; probe and stages: not reported here |
 
 ## 6. What is NOT yet verified on hardware
 
-- A person's approval of the live-written skill, INC-2 reuse and INC-3 refusal on the GB10 (pending).
+- The GB10 approval, INC-2 reuse and INC-3 refusal happened (see `docs/BENCHMARKS.md` section 3) but with caveats: subprocess runner (no Docker isolation), `--by` name not identity-verified, n=6 reuse trials of one skill.
 - Reliability of live synthesis: 1 pass in 2 revised-prompt attempts; the prompt was revised after seeing a failure (disclosed); vLLM output is not deterministic at temperature 0.
 - NemoClaw/OpenShell: not installed on the GB10; nothing ran under it. Docker was permission-denied, so all GB10 runs used the subprocess runner, under which hidden-suite secrecy against a hostile skill is not guaranteed (the lint is not a boundary; a bypass was found and fixed in `1094d95`). Docs: `docs/SECURITY.md`.
 - The GB10 raw evidence files themselves are not in this repository (except the two sanitized run records); the recorded 9/9 in the committed UI demo is still a hand-written reference skill.

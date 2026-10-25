@@ -43,10 +43,10 @@ The candidate is then staged as `tested` and the run stops.
 | Item | Real, dev box (Windows, no GPU) | Recorded / simulated | Stub | On the GB10 |
 |---|---|---|---|---|
 | Hidden suite 9/9 | yes, for the hand-written reference skill | the skill is hand-written | | GB10, model-written: 9/9 once (attempt 4), 8/9 on the identical repeat (rejected); original prompt 0 of 3 |
-| Reuse INC-2, 0 model calls | yes (guard) | | | on GB10: **pending** |
-| Reuse latency 256 ms (`reuse.latency_ms`; other runs ~117-256 ms) | yes: match + execution, not inference | | | on GB10: **pending** |
-| INC-3 refusal | yes | | | on GB10: **pending** |
-| Approval | | simulated agent identity | | by a person (`host_cli`): **pending** |
+| Reuse INC-2, 0 model calls | yes (guard) | | | on GB10: done, 0 model calls in 6 trials; vLLM request counters unchanged (subprocess runner) |
+| Reuse latency 256 ms (`reuse.latency_ms`; other runs ~117-256 ms) | yes: match + execution, not inference | | | on GB10: 27.0 ms first run; n=6 p50 28.2, min 27.0, max 42.1 ms (decision + sandboxed run, subprocess runner; not a speed-up claim against the 173.0 s synthesis call) |
+| INC-3 refusal | yes | | | on GB10: refused in all 6 trials (fingerprint differs: OOM -> disk full) |
+| Approval | | simulated agent identity | | by a person (the operator) on the host CLI (`host_cli`), 20:25:02Z; the `--by` name is not identity-verified |
 | Synthesis model calls / latency / tokens | | null in the recording | | measured: attempt 4 1 call, 173.0 s, 12,763 completion tokens; attempt 5 233.8 s, 17,067 (`docs/evidence/gb10/attempt{4,5}-oncall-run.json`, sha256 `712dbf78...4b58`, `f95121b0...e01d`) |
 | TTFT, decode tok/s, memory, temperature | | | bench tests use fixtures (`experiments/gb10_bench/test_frontier.py`) | measured on the GB10 (sha256 `6890165a...d23e2`) |
 | Test suites: oncall + gb10_bench + contracts 33 passed, 1 skipped; UI mock e2e 78/78 | yes (re-run on this tree's code) | | the e2e runs against mock/recorded data | |

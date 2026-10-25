@@ -7,7 +7,7 @@ that skill deterministically instead of making another model call.**
 > synthetic data, a scripted MOCK agent and recorded simulations; the committed demo recording is a
 > `RECORDED_SIMULATION`. On 2026-10-25 the GB10 operator ran a live Qwen3.6-35B-A3B on the Dell Pro Max GB10: one
 > live-written skill passed the hidden suite 9/9 (an identical repeat scored 8/9 and was rejected; the original prompt
-> passed 0 of 3). **Still pending on the GB10: a person's approval of that skill, INC-2 reuse and INC-3 refusal.**
+> passed 0 of 3). **Then a person (the operator) approved that skill on the GB10 host CLI; INC-2 was reused with 0 model calls (6 trials, p50 28.2 ms) and INC-3 was refused.**
 > The GB10 runs used the subprocess runner, not Docker, and NemoClaw/OpenShell is not installed there. Numbers and
 > sha256: [docs/BENCHMARKS.md](docs/BENCHMARKS.md#3-gb10-live-measurements-2026-10-25).
 
@@ -37,8 +37,8 @@ single local machine such as a GB10, inference capacity is also the scarcest res
 The design point is the combination: independently verified, human-approved, immutable executable skills,
 reused deterministically instead of another LLM call. This is a design claim; it has **not** been benchmarked against
 other agent-memory approaches. The model step has run live on the GB10 (1 of 2 attempts with a disclosed prompt
-revision passed the verifier; 0 of 3 with the original prompt), but promotion and reuse of that skill on the GB10 are
-still pending a person's approval.
+revision passed the verifier; 0 of 3 with the original prompt). A person (the operator) then approved that skill on the
+GB10 host CLI and it was reused on INC-2 with 0 model calls (see section 8).
 
 ## 4. How it works
 
@@ -121,7 +121,7 @@ hardware**.
 | Deterministic exact-match reuse with zero model calls | implemented + tested on dev box (MOCK); recorded simulation (OnCall) |
 | OnCall incident fingerprint, fail-closed, bound to the registry row | implemented + tested on dev box |
 | Model writes the OnCall skill (`--live`) | run on the GB10: 1 of 2 passed with a disclosed prompt revision, 0 of 3 with the original ([BENCHMARKS.md](docs/BENCHMARKS.md#3-gb10-live-measurements-2026-10-25)) |
-| Person approves the live skill; INC-2 reuse and INC-3 refusal on the GB10 | **pending** |
+| Person (the operator) approves the live skill on the GB10 host CLI; INC-2 reuse with 0 model calls (6 trials, p50 28.2 ms); INC-3 refused | run on the GB10, subprocess runner, `--by` unverified ([BENCHMARKS.md](docs/BENCHMARKS.md#3-gb10-live-measurements-2026-10-25)) |
 | Docker runner (`--network none --read-only --cap-drop ALL`) | implemented + tested on dev box (Docker Desktop); not run on the GB10 |
 | Guided demo, console, Daylight World, Bootstrap Lite | implemented + tested on dev box (mock e2e 78/78, reported) |
 | Demo launchers | implemented; verified on Windows only |
@@ -147,7 +147,7 @@ verified on a real runtime ([docs/SECURITY.md](docs/SECURITY.md#network-exposure
 synthesis: attempt 4 (revised prompt) one model call, 173.0 s, 12,763 completion tokens, hidden 9/9, regression 5/5,
 staged as `tested`, proposal only; attempt 5 (same config) hidden 8/9, rejected. **Not true on the GB10:** NemoClaw/OpenShell
 is not installed and nothing ran under it; Docker was permission-denied, so every run used the subprocess runner.
-**Pending:** a person's approval, INC-2 reuse, INC-3 refusal. Procedure: [docs/GB10_SETUP.md](docs/GB10_SETUP.md)
+**Approval and reuse (GB10, 2026-10-25):** at 20:25:02Z a person (the operator) ran `skill approve` on the host CLI (status approved, tree sha256 matches, hidden suite re-run ok; the `--by` name is not identity-verified). INC-2 reuse: 0 model calls, 27.0 ms (6 fresh-process trials: p50 28.2, min 27.0, max 42.1 ms); vLLM request counters unchanged. INC-3 refused by the incident fingerprint every time. Latency is the reuse decision plus the sandboxed run in the subprocess runner, not a speed-up claim against synthesis. Procedure: [docs/GB10_SETUP.md](docs/GB10_SETUP.md)
 and [docs/GB10_RUNBOOK.md](docs/GB10_RUNBOOK.md) (gates 0–5).
 
 ## 9. Reproduce the demo
@@ -187,7 +187,7 @@ Results on the dev box (Windows 11 x86_64, Python 3.14.3, no GPU) are in
 - Indexed freight variant: 31× faster skill compute at 4,400 records; human-authored research, not promoted.
 
 GB10 measurements (section 8) are separate: [docs/BENCHMARKS.md](docs/BENCHMARKS.md) keeps the three kinds of numbers
-apart. No GB10 reuse latency exists yet (reuse is pending approval).
+apart. GB10 reuse latency: 6 trials, p50 28.2 ms (subprocess runner; match plus deterministic skill run; 0 model calls).
 
 ## 11. What was built when
 
@@ -223,7 +223,7 @@ reporting: [docs/SECURITY.md](docs/SECURITY.md).
 
 ## 13. Limitations
 
-Live synthesis is 1 pass in 2 revised-prompt attempts (0 of 3 before); approval and reuse on the GB10 pending; GB10
+Live synthesis is 1 pass in 2 revised-prompt attempts (0 of 3 before); approval and reuse on the GB10 done (6 reuse trials; `--by` name unverified); GB10
 runs used the subprocess runner and no NemoClaw; core matcher gap; 15 s sandbox timeout risk under load; flaky
 tests seen under load; approver identity not verified; launchers verified on Windows only. Full list:
 [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
