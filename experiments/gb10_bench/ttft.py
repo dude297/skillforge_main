@@ -1,7 +1,7 @@
 """EXPERIMENT (research/gb10-bench): client-side TTFT / end-to-end / tokens-per-second probe against an
 OpenAI-compatible STREAMING /v1/chat/completions endpoint. Stdlib only. Never imported by the core.
 
-Running it against a real model is a GPU workload: AUTHORIZATION REQUIRED at the event (docs/GB10_BENCH_RUNBOOK.md).
+Running it against a real model is a GPU workload: AUTHORIZATION REQUIRED at the event (docs/GB10_RUNBOOK.md).
 Unknown values stay None, never 0. Fake-server results are plumbing checks, not measurements.
 
   python -m experiments.gb10_bench.ttft --base-url http://127.0.0.1:8000/v1 [--model ID] [--n 10] [--warmup 2]

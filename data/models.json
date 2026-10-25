@@ -1,5 +1,5 @@
 {
-  "_doc": "Candidate LOCAL models. 'validation' records only what has passed `python -m app models probe` on real hardware; everything else is a documented expectation (docs/DEPLOY_MANIFEST.md). Never add a cloud endpoint here.",
+  "_doc": "Candidate LOCAL models. 'validation' records only what has passed `python -m app models probe` on real hardware; everything else is a documented expectation (docs/GB10_RUNBOOK.md). Never add a cloud endpoint here.",
   "required_for_learning": ["endpoint", "identity", "native_tool_call", "schema", "multi_step", "latency_bound"],
   "models": [
     {

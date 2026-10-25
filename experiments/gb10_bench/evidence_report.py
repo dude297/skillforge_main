@@ -9,7 +9,7 @@ Per run dir (all files optional; a missing one renders "not measured"):
 Rules: every number names its source file and that file's sha256 prefix. A missing value is "not measured", never 0.
 A run dir that is mock, fixture, synthetic, a recorded simulation, or not confirmed as a GB10 is REJECTED (exit 2)
 unless --allow-mock, which prints a MOCK banner on top and in every section heading. Nothing is estimated.
-Definitions of the latency terms: docs/EVIDENCE_PROTOCOL.md section 1.
+Definitions of the latency terms: docs/GB10_RUNBOOK.md (Evidence protocol).
 """
 import argparse
 import hashlib
@@ -366,7 +366,7 @@ def build(dirs, allow_mock=False):
     head = ["# SkillForge GB10 evidence report", "",
             f"Generated {datetime.now(timezone.utc).isoformat(timespec='seconds')} on {socket.gethostname()} by "
             "`experiments/gb10_bench/evidence_report.py`. Every figure names its source file and sha256 prefix. "
-            f"`{NM}` = absent in the evidence, never 0. Latency terms: `docs/EVIDENCE_PROTOCOL.md` section 1.", ""]
+            f"`{NM}` = absent in the evidence, never 0. Latency terms: `docs/GB10_RUNBOOK.md` (Evidence protocol).", ""]
     if mock:
         head += ["> **MOCK REPORT: at least one input is not genuine GB10 evidence (--allow-mock). Nothing here may be presented as a result.**", ""]
     return "\n".join(head + body) + "\n"

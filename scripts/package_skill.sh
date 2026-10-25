@@ -5,7 +5,7 @@
 #       ships ONLY SKILL.md + client.py + client.json (url + agent token). No DB, no app source, no verifier,
 #       no scenario data, no hidden suite inside the sandbox. Trusted state lives with `python -m app serve` on the host.
 #   bash scripts/package_skill.sh --local                                      LOCAL fallback
-#       ships the full app into the sandbox (agent can read/modify it; see docs/SKILLFORGE.md trust table).
+#       ships the full app into the sandbox (agent can read/modify it; see docs/ARCHITECTURE.md trust table).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 out=dist/records-ops

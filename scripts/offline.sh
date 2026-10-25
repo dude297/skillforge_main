@@ -4,7 +4,7 @@
 #   bash scripts/offline.sh large   [DIR]   HEAVY assets (vLLM image ~10-20 GB, model weights ~20+ GB): needs LARGE_OK=1
 #   bash scripts/offline.sh verify  [DIR]   sha256 check + inventory (run on the GB10 before restoring)
 #   bash scripts/offline.sh restore [DIR]   docker load + pip install from wheels + clone repo (on the GB10)
-# DIR defaults to ../gb10-stage. Pins live in docs/DEPLOY_MANIFEST.md; keep them in sync with the vars below.
+# DIR defaults to ../gb10-stage. Pins live in docs/GB10_RUNBOOK.md; keep them in sync with the vars below.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 REPO=$PWD
@@ -12,7 +12,7 @@ DIR=$(mkdir -p "${2:-../gb10-stage}" && cd "${2:-../gb10-stage}" && pwd)
 PY_TAG=${PY_TAG:-312}  # Ubuntu 24.04 / DGX OS python3 = 3.12
 RUNNER_IMAGE=${RUNNER_IMAGE:-python:3.12-slim}
 RUNNER_DIGEST=${RUNNER_DIGEST:-sha256:2259debdc6af85626058a15a7bf44ad6a68b8c98c9ae82a02cf5cdb92f096d47}  # OCI index digest
-# NemoClaw LKG v0.0.135 pins (docs/DEPLOY_MANIFEST.md). Lightning instead: VLLM_IMAGE=vllm/vllm-openai@sha256:3af90144a0926e5c5fe46ee16e5201e763dd854538b9d7ce433755f11dadaf78
+# NemoClaw LKG v0.0.135 pins (docs/GB10_RUNBOOK.md). Lightning instead: VLLM_IMAGE=vllm/vllm-openai@sha256:3af90144a0926e5c5fe46ee16e5201e763dd854538b9d7ce433755f11dadaf78
 #   MODEL_REPO=nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4 MODEL_REV=0dcd680e5585c791728c83342b311d0a0026dbeb
 VLLM_IMAGE=${VLLM_IMAGE:-nvcr.io/nvidia/vllm@sha256:9204569b17ee4c0eff75194b8e6e458479c8aee18953b5ab9cf359fcdac659e2}
 MODEL_REPO=${MODEL_REPO:-nvidia/Qwen3.6-35B-A3B-NVFP4}
@@ -47,7 +47,7 @@ stage() {
   echo "== app repo bundle (all branches) -> $DIR/repo"
   git -C "$REPO" bundle create "$DIR/repo/local-agent-foundation.bundle" --all 2>/dev/null
   git -C "$REPO" rev-parse HEAD > "$DIR/repo/HEAD"
-  cp "$REPO/docs/DEPLOY_MANIFEST.md" "$REPO/docs/GB10_RUNBOOK.md" "$DIR/" 2>/dev/null || true
+  cp "$REPO/docs/GB10_RUNBOOK.md" "$DIR/" 2>/dev/null || true
   # the console is served as static files by `python -m app ui`: ship the BUILT bundle so the GB10 needs no Node
   if [ -f "$REPO/ui/dist/index.html" ]; then
     tar -czf "$DIR/repo/ui-dist.tar.gz" -C "$REPO/ui" dist && echo "== console bundle -> $DIR/repo/ui-dist.tar.gz"

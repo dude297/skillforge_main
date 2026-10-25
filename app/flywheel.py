@@ -2,7 +2,7 @@
 
 Everything the "agent" does here is a fixed script, and the skill it submits is a MOCK-AUTHORED fixture
 (tests/fixtures/mock_authored_skill). Model calls are therefore 0 by construction and say nothing about
-learning. The real acceptance test (local model discovers and writes the skill) is in docs/SKILLFORGE.md.
+learning. The real acceptance test (local model discovers and writes the skill) is in docs/ARCHITECTURE.md.
 """
 from pathlib import Path
 

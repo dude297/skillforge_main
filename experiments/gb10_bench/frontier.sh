@@ -3,7 +3,7 @@
 #   bash experiments/gb10_bench/frontier.sh <label> [--concurrency 1,2,4]     # identity, sampling, probe, ttft, oncall run
 #   bash experiments/gb10_bench/frontier.sh <label> --after-approval          # oncall reuse, after a PERSON approved
 #   python3 -m experiments.gb10_bench.frontier_report report                  # merge results/frontier/*/
-# GPU inference: AUTHORIZATION REQUIRED (docs/GB10_BENCH_RUNBOOK.md). Put the authorizer's name in your notes/label.
+# GPU inference: AUTHORIZATION REQUIRED (docs/GB10_RUNBOOK.md). Put the authorizer's name in your notes/label.
 # Never switches models, onboards, downloads, or changes serve flags. Reads docker/nvidia-smi/nemoclaw only.
 # Env: LLM_BASE_URL (http://127.0.0.1:8000/v1), LLM_API_KEY (else ~/.nemoclaw/dual-station-vllm-api-key),
 #      LLM_CHAT_TEMPLATE_KWARGS (JSON, optional; inherited by ttft.py/oncall_infer, e.g. '{"enable_thinking": false}'),
