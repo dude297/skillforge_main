@@ -81,7 +81,7 @@ def test_verifier_treats_unknown_format_as_unverifiable(line):
     assert v.expected("P1", {"currency": "USD"}, [{"lines": lines[:2] + lines[3:]}], {}) == 100.0
 
 
-# --- P0-3: the verifier attests only what it can check; everything else is unverifiable, never "verified" -----------
+# --- the verifier attests only what it can check; everything else is unverifiable, never "verified" -----------
 
 def _scenario(tmp_path, base, **policy):
     d = json.loads((FREIGHT / base).read_text(encoding="utf-8"))
@@ -164,7 +164,7 @@ def test_freight_rehearsal_end_to_end(tmp_path):
     assert c.execute("SELECT COUNT(*) FROM audit WHERE event='execute_refused'").fetchone()[0] >= 1
 
 
-# --- P0-2: a skill says what it will NOT decide; silence is never "nothing to change" ------------------------------
+# --- a skill says what it will NOT decide; silence is never "nothing to change" ------------------------------
 
 def _learned_freight(conn):
     db.load_scenario(conn, FREIGHT / "case_primary.json")

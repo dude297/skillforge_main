@@ -1,5 +1,5 @@
-// Skip, play/pause, replay and the progress rail. The rail is the trace motif: one luminous hairline that follows the film
-// (and, later, the work in the product). Each segment is a real button so the film is navigable by keyboard and touch.
+// Skip, play/pause, replay and the progress rail. The rail is the trace motif: one luminous hairline that follows the film.
+// Each segment is a real button so the film is navigable by keyboard and touch.
 import { Pause, Play, RotateCcw, SkipForward, StepBack, StepForward } from "lucide-react";
 import { BEAT_ORDER } from "../contract";
 import type { Clock, ClockStatus } from "../timeline/clock";

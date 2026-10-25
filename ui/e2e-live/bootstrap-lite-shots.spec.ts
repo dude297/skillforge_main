@@ -27,6 +27,6 @@ test("shots", async ({ browser }) => {
       }
     }
   } finally {
-    await stopServer(s);  // before: a fixed 2.5 s sleep instead of readiness, and s.kill() unawaited and skipped on failure
+    await stopServer(s);
   }
 });

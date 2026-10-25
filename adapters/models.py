@@ -4,7 +4,7 @@
   python -m app models probe        # against LLM_BASE_URL (+ LLM_API_KEY); writes data/model_probe.json
 
 The probe uses NATIVE OpenAI tool calling (`tools=[...]`), the path OpenClaw and vLLM's --tool-call-parser use.
-Autonomous skill generation is allowed only while the CURRENTLY served model has a passing probe (learning_allowed).
+Autonomous skill generation is allowed only while the served model has a passing probe (learning_allowed).
 """
 import json
 import os

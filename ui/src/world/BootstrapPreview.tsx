@@ -1,6 +1,6 @@
 // PREVIEW ONLY (VITE_PREVIEW=1): the Set up walkthrough as an ILLUSTRATION. The hosted preview has no host to read, so
 // this never pretends to: every value comes from bootstrap-data.ts (example values, statuses that are the true state of
-// SkillForge today), it performs no check and no request, and it says so at the top. The live version in
+// SkillForge), it performs no check and no request, and it says so at the top. The live version in
 // BootstrapLite.tsx is unchanged and is what runs on the GB10.
 import { useRef, useState, useEffect, type ReactNode } from "react";
 import { Scene } from "./Scene";

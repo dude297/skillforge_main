@@ -63,7 +63,7 @@ export TELEGRAM_REQUIRE_MENTION="${TELEGRAM_REQUIRE_MENTION:-1}"
 export TELEGRAM_GROUP_POLICY="${TELEGRAM_GROUP_POLICY:-disabled}"
 # channels add rebuilds the sandbox non-interactively. Without the provider env the inner onboard cannot
 # re-select the loopback no-auth Qwen endpoint (onboard.ts: non-interactive needs AUTH_MODE=none), the
-# recreate fails at provider_selection and the old sandbox is already deleted (seen 2026-10-25).
+# recreate fails at provider_selection and the old sandbox is already deleted.
 export NEMOCLAW_NON_INTERACTIVE=1 NEMOCLAW_COMPATIBLE_AUTH_MODE=none NEMOCLAW_PROVIDER=custom \
   NEMOCLAW_ENDPOINT_URL="${NEMOCLAW_ENDPOINT_URL:-http://127.0.0.1:8000/v1}" \
   NEMOCLAW_MODEL="${NEMOCLAW_MODEL:-skillforge-qwen}" NEMOCLAW_NO_EXPRESS=1 NEMOCLAW_DISABLE_TELEMETRY=1
