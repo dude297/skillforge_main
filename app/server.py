@@ -17,6 +17,7 @@ import re
 import secrets
 import shutil
 import sys
+import time
 import uuid
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
@@ -82,7 +83,13 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *a):  # never log bodies (records, drafts) or headers (token)
         pass
 
-    def _send(self, code, obj):
+    def _log(self, code, tool=None, ok=None):  # one access line per request on stderr: no body, no headers, no token
+        print(json.dumps({"ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "client": self.client_address[0],
+                          "method": self.command, "path": self.path, "status": code,
+                          "tool": str(tool)[:64] if tool else None, "ok": ok}), file=sys.stderr, flush=True)
+
+    def _send(self, code, obj, tool=None):
+        self._log(code, tool, obj.get("ok") if isinstance(obj, dict) else None)  # app errors are HTTP 200 with ok=false
         body = json.dumps(obj, default=str).encode()
         self.send_response(code)
         self.send_header("Content-Type", "application/json")
@@ -121,7 +128,7 @@ class Handler(BaseHTTPRequestHandler):
             conn.close()
         if len(json.dumps(res, default=str)) > MAX_RESP:
             res = tools.ToolError("response_too_large", f"result > {MAX_RESP} bytes; narrow the request").to_dict()
-        self._send(200, res)
+        self._send(200, res, tool=body.get("tool") if isinstance(body, dict) else None)
 
     do_GET = do_PUT = do_DELETE = lambda self: self._send(405, {"ok": False, "error": {"code": "method", "message": "POST /call"}})
 
