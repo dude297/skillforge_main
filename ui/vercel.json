@@ -4,6 +4,6 @@
   "installCommand": "npm ci",
   "buildCommand": "VITE_PREVIEW=1 npm run build",
   "outputDirectory": "dist",
-  "ignoreCommand": "git diff --quiet ${VERCEL_GIT_PREVIOUS_SHA:-HEAD^} HEAD -- .",
+  "ignoreCommand": "P=${VERCEL_GIT_PREVIOUS_SHA:-HEAD^}; git cat-file -e \"$P^{commit}\" 2>/dev/null || exit 1; git diff --quiet \"$P\" HEAD -- .",
   "headers": [{ "source": "/(.*)", "headers": [{ "key": "X-Robots-Tag", "value": "noindex" }] }]
 }
