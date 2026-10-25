@@ -42,9 +42,8 @@ None in the public tree. The following would be blockers **only** if the enginee
   path), but they contradict the "nothing measured on the GB10" message. Mitigation applied: a note in
   `docs/LIMITATIONS.md` (Launchers section). Better: delete all but `ui/screenshots/demo/` (only `scene-4` and `scene-5`
   are referenced from `README.md:103`) before publishing. Not done here because other docs list these folders.
-- S2. **Licence decision.** `LICENSE:1-6` is "All rights reserved, no licence granted" and `README.md` (last section) says
-  the same, so they agree. A public repository with no licence means others may not legally use it. If the hackathon rules
-  require an open-source licence, this must change; that is the owners' call.
+- S2. **Licence decision: resolved 2026-10-25, MIT** (owners' decision). `LICENSE` is now MIT plus the third-party
+  notices, and the README licence section says the same.
 - S3. `deploy/gb10/make_bundle.sh:14-15` leak check covers only the hostname, `git config user.email` and `C:\Users`.
   It does not check the Windows username, runs before `ui/dist` is built and copied in, and `grep -I` skips binaries.
   The bundle also carries internal docs and the tracked `ui/tsconfig.tsbuildinfo` (see N3). Fine for a private

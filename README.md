@@ -226,5 +226,5 @@ trailer.
 
 ## Licence
 
-Copyright (c) 2026 the SkillForge team. All rights reserved. No open-source licence is granted; see [LICENSE](LICENSE).
+MIT. Copyright (c) 2026 the SkillForge team; see [LICENSE](LICENSE).
 Third-party dependencies remain under their own licences.
