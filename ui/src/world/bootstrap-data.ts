@@ -2,7 +2,7 @@
 // Field names follow the read-only manifest of experiments/router/bootstrap.py (branch exp/router): environment,
 // tool_inventory, required_permissions, missing_skill_opportunities. A future Bootstrap Lite can feed a real manifest
 // into the same view; until then these are example values, and the page says so.
-// The connection statuses are deliberately the TRUE state of SkillForge today, so the illustration can't overclaim.
+// The connection statuses are deliberately the TRUE state of SkillForge, so the illustration can't overclaim.
 import type { Dept } from "./events";
 
 // This page performs NO checks, so it may never say "connected", "available" or "healthy". Real health lives in the

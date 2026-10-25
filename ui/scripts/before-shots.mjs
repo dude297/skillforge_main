@@ -1,4 +1,4 @@
-// Before shots (earlier build): landing + console, for comparison with the guided demo work.
+// Baseline shots: landing + console, for comparison with the guided demo.
 import { chromium } from "@playwright/test";
 import { launchBrowser } from "./browser.mjs";
 const b = await launchBrowser();
