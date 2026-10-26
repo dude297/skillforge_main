@@ -5,6 +5,17 @@ that skill deterministically instead of making another model call.**
 
 Repository: `<REPO_URL>`. Hosted preview (read-only, recorded data, no backend calls): https://skillforge-ui-lab.vercel.app
 
+## Meet Ember
+
+**Agents respond. SkillForge remembers.**
+
+Follow Ember from investigation and human review to verification, a reusable skill, and the next compatible incident.
+The dashboard brings the workflow, skill library, and recorded GB10 evidence into one workspace.
+
+[![Ember dashboard with a luminous systems map, an investigation in progress, and recorded GB10 results](docs/images/ember-dashboard.png)](docs/images/ember-dashboard.png)
+
+[Run the interactive dashboard](docs/DASHBOARD.md#local-development) · [Inspect the GB10 evidence](docs/evidence/gb10/README.md)
+
 ## What it is
 
 A local model solves an operations problem once. Trusted code lints the skill it drafts, runs its tests in an isolated

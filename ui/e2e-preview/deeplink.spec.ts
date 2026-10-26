@@ -3,7 +3,12 @@ import { dataRequests, expect, previewStrip, settle, test } from "./guard";
 // Cold loads (new page, full URL): what a judge gets from a pasted link. Vercel serves index.html for any path;
 // the hash picks the route. Expectations use the nav hrefs (stable), not copy.
 const CASES: { hash: string; topNav: string; sectionNav?: string }[] = [
-  { hash: "#/", topNav: "#/" },
+  { hash: "#/", topNav: "#/dashboard" },
+  { hash: "#/story", topNav: "#/story" },
+  { hash: "#/dashboard/tasks", topNav: "#/dashboard/tasks" },
+  { hash: "#/dashboard/skills", topNav: "#/dashboard/skills" },
+  { hash: "#/dashboard/activity", topNav: "#/dashboard/activity" },
+  { hash: "#/dashboard/evidence", topNav: "#/dashboard/evidence" },
   { hash: "#/world/onboard", topNav: "#/world/onboard" },
   { hash: "#/world/bootstrap", topNav: "#/world/onboard" },
   { hash: "#/world", topNav: "#/world" },
@@ -23,9 +28,9 @@ for (const c of CASES) {
     await page.goto(`/${c.hash}`);
     await settle(page, 500);
     expect(new URL(page.url()).hash).toBe(c.hash);
-    await expect(page.locator(`a[href="${c.topNav}"][aria-current="page"]`).first()).toBeVisible();
+    await expect(page.locator(`a[href="${c.topNav}"][aria-current="page"]:visible`).first()).toBeVisible();
     if (c.sectionNav) await expect(page.locator(`a[href="${c.sectionNav}"][aria-current="page"]`).first()).toBeVisible();
-    await expect(previewStrip(page)).toBeVisible();
+    await expect(previewStrip(page)).toHaveCount(0);
   });
 }
 

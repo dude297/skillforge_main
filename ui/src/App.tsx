@@ -3,7 +3,6 @@ import { ChevronDown, X } from "lucide-react";
 import { currentProduct } from "./config/product";
 import type { Section } from "./console/ConsoleShell";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { PREVIEW } from "./lib/preview";
 
 // one chunk per route: the story's scenes never load for the console, and vice versa
 const Story = lazy(() => import("./story/Story").then((m) => ({ default: m.Story })));
@@ -19,10 +18,12 @@ const BootstrapLite = lazy(() => import("./world/BootstrapLite").then((m) => ({ 
 const WorldLab = lazy(() => import("./world/Lab").then((m) => ({ default: m.Lab })));
 // Ember Living System: read-only projection, its own chunk; nothing in the core imports it.
 const LivingSystem = lazy(() => import("./moonshot/LivingSystem").then((m) => ({ default: m.LivingSystem })));
+const Dashboard = lazy(() => import("./dashboard/Dashboard"));
 
-type Route = "story" | "console" | "demo" | "pitch" | "world" | "lab" | "bootstrap" | "onboard" | "moonshot";
+type Route = "dashboard" | "story" | "console" | "demo" | "pitch" | "world" | "lab" | "bootstrap" | "onboard" | "moonshot";
 const NAV: { href: string; label: string; routes: Route[] }[] = [
-  { href: "#/", label: "How it works", routes: ["story"] },
+  { href: "#/dashboard", label: "Workspace", routes: ["dashboard"] },
+  { href: "#/story", label: "How it works", routes: ["story"] },
   { href: "#/world/onboard", label: "Set up", routes: ["onboard", "bootstrap"] },
   { href: "#/world", label: "Office", routes: ["world"] },
   { href: "#/world/moonshot", label: "Living map", routes: ["moonshot"] },
@@ -32,6 +33,7 @@ const NAV: { href: string; label: string; routes: Route[] }[] = [
 const SECTIONS: Section[] = ["overview", "investigations", "skills", "history", "benchmarks", "system"];
 const routeFromHash = (): Route => {
   const h = window.location.hash;
+  if (!h || h === "#/" || h.startsWith("#/dashboard")) return "dashboard";
   return h.startsWith("#/console") ? "console" : h.startsWith("#/demo/pitch") ? "pitch" : h.startsWith("#/demo") ? "demo" : h.startsWith("#/world/moonshot") ? "moonshot" : h.startsWith("#/world/lab") ? "lab" : h.startsWith("#/world/bootstrap") ? "bootstrap" : h.startsWith("#/world/onboard") ? "onboard" : h.startsWith("#/world") ? "world" : "story";
 };
 const sectionFromHash = (): Section => {
@@ -60,7 +62,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    document.title = route === "console" ? `${product.name} console` : route === "demo" || route === "pitch" ? `${product.name}: guided demo` : product.name;
+    document.title = route === "dashboard" ? `${product.name} workspace` : route === "console" ? `${product.name} console` : route === "demo" || route === "pitch" ? `${product.name}: guided demo` : product.name;
   }, [route, product.name]);
 
   const Logo = product.icon;
@@ -102,7 +104,7 @@ export default function App() {
       <a href="#main" onClick={(e) => { e.preventDefault(); document.getElementById("main")?.focus(); }} className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded focus:bg-text focus:px-3 focus:py-2 focus:text-canvas">
         Skip to content
       </a>
-      <header ref={bar} className="site-header" data-surface={day ? "day" : "night"}>
+      <header hidden={route === "dashboard"} ref={bar} className="site-header" data-surface={day ? "day" : "night"}>
         <nav aria-label="Primary" className="mx-auto flex h-14 max-w-[88rem] items-center gap-6 px-5 lg:px-10">
           <a href="#/" className="flex min-h-11 items-center gap-2 font-semibold tracking-tight text-[var(--h-text-on)]">
             <Logo aria-hidden size={18} className={day ? "text-day-signal" : "text-signal"} />
@@ -124,7 +126,6 @@ export default function App() {
             </button>
           </div>
         </nav>
-        {PREVIEW ? <p role="note" className="site-strip px-5 py-1.5 text-center text-meta lg:px-10">Read-only preview · recorded/synthetic data</p> : null}
         <div id="site-menu" hidden={!menu} className="absolute inset-x-0 top-full border-b border-[var(--h-line)] bg-[var(--h-solid)] shadow-[0_16px_24px_-16px_rgb(0_0_0/0.35)] md:hidden">
           <ul className="mx-auto max-w-[88rem] px-3 py-2">
             {NAV.map((n) => (
@@ -140,7 +141,7 @@ export default function App() {
       </header>
       <ErrorBoundary>
       <Suspense fallback={<div className="min-h-[100dvh]" aria-busy="true" />}>
-        {route === "console" ? <ConsoleShell product={product} section={section} view={view} /> : route === "demo" ? <GuidedDemo /> : route === "pitch" ? <Presenter product={product} />
+        {route === "dashboard" ? <Dashboard /> : route === "console" ? <ConsoleShell product={product} section={section} view={view} /> : route === "demo" ? <GuidedDemo /> : route === "pitch" ? <Presenter product={product} />
           : route === "world" ? <World /> : route === "bootstrap" ? <World prelude={(theme, desktop) => <Bootstrap theme={theme} desktop={desktop} />} />
           : route === "onboard" ? <World prelude={(theme, desktop) => <BootstrapLite theme={theme} desktop={desktop} />} />
           : route === "moonshot" ? <LivingSystem />

@@ -15,7 +15,7 @@ test("investigation workflow: start, approve, learn, promote, reuse; every step 
   // a public preview must never present a scripted decision as a real one
   for (const name of clicked.filter((n) => MUTATING_NAME.test(n))) expect(name, "scripted decisions are labelled as simulations").toMatch(/^simulate/i);
   expect(dataRequests(net.since(before)), "no network traffic besides lazy code chunks").toEqual([]);
-  await expect(previewStrip(page)).toBeVisible();
+  await expect(previewStrip(page)).toHaveCount(0);
   expect(await liveSourceControls(page)).toEqual([]);
   test.info().annotations.push({ type: "scripted-controls-clicked", description: clicked.join(" > ") });
 });
@@ -56,14 +56,14 @@ test("guided demo: keyboard steps change the scene and never touch the network",
   expect(dataRequests(net.since(before))).toEqual([]);
   expect(new URL(page.url()).hash).toBe("#/demo");
   expect(text1, "stepping through the demo changed what is on screen").not.toBe(text0);
-  await expect(previewStrip(page)).toBeVisible();
+  await expect(previewStrip(page)).toHaveCount(0);
 });
 
 test("presenter route survives keyboard use", async ({ page }) => {
   await page.goto("/#/demo/pitch");
   await settle(page, 500);
   for (const k of ["ArrowRight", "ArrowRight", "ArrowLeft", "n", "n"]) { await page.keyboard.press(k); await page.waitForTimeout(150); }
-  await expect(previewStrip(page)).toBeVisible();
+  await expect(previewStrip(page)).toHaveCount(0);
 });
 
 test.describe("console sources", () => {
@@ -86,7 +86,7 @@ test.describe("console sources", () => {
       await settle(page, 500);
       expect(await liveSourceControls(page), path).toEqual([]);
       await expect(page.getByText(/not connected to a live system/i), `${path}: live view rendered`).toHaveCount(0);
-      await expect(previewStrip(page)).toBeVisible();
+      await expect(previewStrip(page)).toHaveCount(0);
     }
     expect(net.requests.filter((r) => new URL(r.url).pathname.split("/").includes("ui"))).toEqual([]);
   });
@@ -161,7 +161,7 @@ test.describe("click every visible button once, per route", () => {
   }
 
   test("story: scrolling the whole page makes no requests beyond code chunks", async ({ page, net }) => {
-    await page.goto("/#/");
+    await page.goto("/#/story");
     await settle(page, 500);
     const before = net.mark();
     const h = await page.evaluate(() => document.documentElement.scrollHeight);
