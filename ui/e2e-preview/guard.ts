@@ -63,8 +63,8 @@ export async function settle(page: Page, ms = 900) {
   await page.waitForTimeout(ms);
 }
 
-/** The preview strip. Matched by its stable phrase, not by role or styling. */
-export const previewStrip = (page: Page) => page.getByText(/read-only preview/i).first();
+/** The removed global preview strip must not return. Provenance remains local to each view. */
+export const previewStrip = (page: Page) => page.locator(".site-strip");
 
 /** Any control that offers the live source: radio, tab, button, option or menu item whose name starts with "Live". */
 export async function liveSourceControls(page: Page): Promise<string[]> {

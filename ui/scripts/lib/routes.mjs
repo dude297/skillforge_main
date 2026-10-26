@@ -2,7 +2,13 @@
 // Superset of scripts/lab-tour.mjs: the same 12 routes plus the console incident view and the dev-only world lab,
 // because both are reachable in a built bundle and a judge can type the URL.
 export const ROUTES = [
-  { name: "story", hash: "#/" },
+  { name: "dashboard", hash: "#/" },
+  { name: "dashboard-tasks", hash: "#/dashboard/tasks" },
+  { name: "dashboard-skills", hash: "#/dashboard/skills" },
+  { name: "dashboard-activity", hash: "#/dashboard/activity" },
+  { name: "dashboard-evidence", hash: "#/dashboard/evidence" },
+  { name: "dashboard-settings", hash: "#/dashboard/settings" },
+  { name: "story", hash: "#/story" },
   { name: "onboard", hash: "#/world/onboard" },
   { name: "bootstrap", hash: "#/world/bootstrap" },
   { name: "world", hash: "#/world" },

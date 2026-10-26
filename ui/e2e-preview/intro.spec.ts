@@ -1,6 +1,6 @@
 import { expect, settle, test } from "./guard";
 
-// The cinematic intro (a lazily loaded WebGL layer) is hosted on the story route `#/`. Whatever it renders it must
+// The cinematic intro (a lazily loaded WebGL layer) is hosted on the story route `#/story`. Whatever it renders it must
 // stay skippable, keyboard-reachable, and local-only. Tolerant by design: until the intro exists there is no Skip
 // control (the page's "Skip to content" link is not it), and the test says so instead of failing.
 const SKIP = /skip(?!\s+to\s+(main\s+)?content)/i;
@@ -8,7 +8,7 @@ const SKIP = /skip(?!\s+to\s+(main\s+)?content)/i;
 for (const width of [1440, 390]) {
   test(`#/ keeps a reachable Skip control and stays on the origin (${width}px)`, async ({ page, net }) => {
     await page.setViewportSize({ width, height: width === 1440 ? 900 : 844 });
-    await page.goto("/#/");
+    await page.goto("/#/story");
     await page.waitForTimeout(600); // the intro may mount after the first paint
     const skip = page.getByRole("button", { name: SKIP }).or(page.getByRole("link", { name: SKIP })).first();
     if (await skip.count() === 0) {
@@ -30,7 +30,7 @@ for (const width of [1440, 390]) {
     await page.keyboard.press("Enter");
     await settle(page, 700);
     await expect(page.getByRole("heading", { level: 1 }).first(), "the story is usable after skipping").toBeVisible();
-    expect(new URL(page.url()).hash).toBe("#/");
+    expect(new URL(page.url()).hash).toBe("#/story");
     expect(net.requests.every((r) => new URL(r.url).origin === new URL(page.url()).origin)).toBe(true);
   });
 }

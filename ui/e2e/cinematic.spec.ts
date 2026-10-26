@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 
-// The Forge intro on #/: skip/replay, the returning-visitor band, WebGL fallback, reduced motion, where three.js loads,
+// The Forge intro on #/story: skip/replay, the returning-visitor band, WebGL fallback, reduced motion, where three.js loads,
 // and the exits into the product. Status truth is covered by cinematic-truth.spec.ts (pure functions).
 
 const forge = (page: Page) => page.locator("section.forge");
@@ -22,7 +22,7 @@ const noWebGL = (page: Page) => page.addInitScript(() => {
 
 test.describe("The Forge intro", () => {
   test("is labelled an illustration, can be skipped with a button or Esc, and replays", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/#/story");
     await mounted(page);
     await expect(forge(page)).toBeVisible();
     await expect(forge(page).getByText("Illustration, not a recorded run")).toBeVisible();
@@ -45,7 +45,7 @@ test.describe("The Forge intro", () => {
   });
 
   test("its exits are real routes", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/#/story");
     await mounted(page);
     await expect(page.getByRole("button", { name: /^skip (intro|to end)/i })).toBeVisible(); // the film (3D or plan view) is mounted and listening
     await page.keyboard.press("Escape");
@@ -57,7 +57,7 @@ test.describe("The Forge intro", () => {
   test("a returning visitor gets the compact band and three.js is never requested", async ({ page }) => {
     await page.addInitScript(() => { try { sessionStorage.setItem("skillforge.forge.seen", "1"); } catch { /* ignore */ } });
     const reqs = stage3dRequests(page);
-    await page.goto("/");
+    await page.goto("/#/story");
     await mounted(page);
     await expect(forge(page)).toHaveAttribute("data-collapsed", "true");
     await expect(page.getByRole("button", { name: "Replay the intro" })).toBeVisible();
@@ -69,7 +69,7 @@ test.describe("The Forge intro", () => {
   test("without WebGL it tells the same story as a stepped plan view, and three.js is never requested", async ({ page }) => {
     await noWebGL(page);
     const reqs = stage3dRequests(page);
-    await page.goto("/");
+    await page.goto("/#/story");
     await mounted(page);
     await expect(forge(page)).toHaveAttribute("data-path", "poster");
     await expect(page.getByRole("img", { name: /^Plan view of the SkillForge office/ })).toBeVisible();
@@ -83,7 +83,7 @@ test.describe("The Forge intro", () => {
   test("with reduced motion it does not autoplay: the visitor steps through it", async ({ browser }) => {
     const ctx = await browser.newContext({ reducedMotion: "reduce", baseURL: test.info().project.use.baseURL });
     const page = await ctx.newPage();
-    await page.goto("/");
+    await page.goto("/#/story");
     await mounted(page);
     await expect(forge(page)).toHaveAttribute("data-path", /^(stepped-3d|poster)$/);
     const first = page.getByRole("group", { name: "Sequence" }).getByRole("button", { name: /, 1 of 6$/ });

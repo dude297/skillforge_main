@@ -1,19 +1,19 @@
 import { ROUTES } from "../scripts/lib/routes.mjs";
 import { expect, liveSourceControls, previewStrip, settle, test } from "./guard";
 
-// Every route: renders, no console/page errors (guard), strip visible, Live not offered, no horizontal overflow.
+// Every route renders without errors or overflow. No global strip; hosted mode cannot contact the operator API.
 for (const width of [1440, 390]) {
   test.describe(`at ${width}px`, () => {
     test.use({ viewport: { width, height: width === 1440 ? 900 : 844 } });
     for (const r of ROUTES) {
-      test(`${r.hash} loads clean, shows the preview strip, offers no Live source, does not overflow`, async ({ page, net }) => {
+      test(`${r.hash} loads clean, has no global preview strip, offers no Live source, does not overflow`, async ({ page, net }) => {
         await page.goto(`/${r.hash}`);
         await settle(page);
 
         expect(await page.title(), "document has a title").not.toBe("");
         const text = await page.locator("#root").innerText();
         expect(text.trim().length, "route rendered something").toBeGreaterThan(40);
-        await expect(previewStrip(page)).toBeVisible();
+        await expect(previewStrip(page)).toHaveCount(0);
         expect(await liveSourceControls(page), "Live must not be offered in the preview").toEqual([]);
 
         const overflow = await page.evaluate(() => {
@@ -31,6 +31,6 @@ for (const width of [1440, 390]) {
 test("unknown hash falls back to the story instead of a blank page", async ({ page }) => {
   await page.goto("/#/definitely/not/a/route");
   await settle(page, 400);
-  await expect(previewStrip(page)).toBeVisible();
+  await expect(previewStrip(page)).toHaveCount(0);
   expect((await page.locator("#root").innerText()).trim().length).toBeGreaterThan(40);
 });

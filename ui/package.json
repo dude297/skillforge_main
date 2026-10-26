@@ -10,7 +10,7 @@
     "typecheck": "tsc -b",
     "lint": "eslint src",
     "test:e2e": "playwright test",
-    "build:preview": "VITE_PREVIEW=1 npm run build",
+    "build:preview": "node scripts/build-preview.mjs",
     "test:preview": "playwright test -c playwright.preview.config.ts",
     "scan:public": "node scripts/scan-public.mjs",
     "check:csp": "node scripts/check-csp.mjs",

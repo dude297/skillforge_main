@@ -19,18 +19,18 @@ async function runToReuse(page: Page) {
 
 test.describe("story", () => {
   test("hero offers the live demo immediately and tells all five acts", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/#/story");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Reuse the fix without it.");
     await page.getByRole("link", { name: "Open the console" }).first().click();
     await expect(page).toHaveURL(/#\/console/);
-    await page.goto("/");
+    await page.goto("/#/story");
     for (const n of [1, 2, 3, 4, 5]) await expect(page.locator(`#act-${n}-h`)).toHaveCount(1);
   });
 
   test("reduced motion renders every act statically", async ({ browser }) => {
     const ctx = await browser.newContext({ reducedMotion: "reduce", baseURL: `http://127.0.0.1:${process.env.PORT ?? 4173}/` });
     const page = await ctx.newPage();
-    await page.goto("/");
+    await page.goto("/#/story");
     await expect(page.getByText("line-total-reconcile").first()).toBeVisible();
     expect(await page.evaluate(() => document.getAnimations().filter((a) => a.playState === "running").length)).toBe(0);
     await ctx.close();
@@ -144,7 +144,7 @@ test.describe("navigation, keyboard, layout, accessibility", () => {
   });
 
   test("skip link and visible focus", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/#/story");
     await page.keyboard.press("Tab");
     await expect(page.getByRole("link", { name: "Skip to content" })).toBeFocused();
     await page.keyboard.press("Tab");
@@ -212,7 +212,7 @@ test.describe("presenter and product variants", () => {
   });
 
   test("OnCall variant changes wording, not the product", async ({ page }) => {
-    await page.goto("?product=oncall#/");
+    await page.goto("?product=oncall#/story");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Every fix remembered.");
     await page.goto("?product=oncall#/console/investigations");
     await expect(page.getByRole("navigation", { name: "Console" })).toContainText("Incidents");
