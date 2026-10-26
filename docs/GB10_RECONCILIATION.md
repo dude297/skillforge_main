@@ -1,26 +1,28 @@
-# GB10 reconciliation checkpoint — 2026-10-25
+# GB10 source reconciliation
 
-> **Draft-only staging record.** This file does not mean the Dell GB10 changes have been merged, tested on the public main branch, or deployed. Keep the working GB10 installation and its approved skills unchanged while reconciling.
+This document tracks code transfer from the Dell GB10 development worktrees into the public SkillForge repository. It is an integration checklist, not a benchmark report or a deployment record.
 
-## Starting points
+## Baselines
 
-- Public `main` when this branch was cut: `4a4b8827c4e13a854348e0fb6508bdec2b61ae3c`.
-- Dell live Git checkout (operator report): `gb10-local` at `36766a5`, clean.
-- Live Qwen stack (operator report): `qwen-solo-mtp`, local inference healthy; Nemotron intentionally stopped.
-- Source-of-truth handoff on the Dell: `~/skillforge-gb10/outbox/HANDOFF.md`. This file and the scratch/SSD evidence are not included in this PR.
+- Public base: `main` at `4a4b8827c4e13a854348e0fb6508bdec2b61ae3c`.
+- Dell development checkout: `gb10-local` at `36766a5` (operator-reported).
+- Model serving: Qwen remains active; the approved demo registry and runtime are outside this reconciliation.
+- Local handoff: `~/skillforge-gb10/outbox/HANDOFF.md`.
 
-## Changes to reconcile (NOT YET APPLIED)
+## Integration scope
 
-- [ ] Gate 3 host bridge, independent-verifier hook, restricted agent-facing response (no hidden oracle), and per-task submission cap. Operator reports the fixed-bridge Gate 3 candidate was refused by human-triggered hidden validation at 8/9; do **not** call Gate 3 passed.
-- [ ] Data-file prototype, schema fingerprinting, approval and deterministic reuse, with appropriate labels distinguishing its three held-out examples from a separate hidden suite.
-- [ ] Best-of-N experiment code/results summary: spec-only reviewer selected 2/4 passing candidates at N=4, K=4, temperature 0. This is a separate experiment and must not be pooled with the single-shot 3/7 rate.
-- [ ] Docker-runner and gate-related local fixes: compare against existing `main` before applying; avoid duplicate commits.
-- [ ] Hermeticize `test_faults` (do not rely on a live console port).
-- [ ] Review sanitized changes for secrets, host details, private paths, temporary state, model weights, and accidentally exposed validation material; retain raw evidence and model caches on the Dell/SSD only.
-- [ ] Run focused tests, static checks, and security review against the exact proposed PR head. No change to the live serving or approval state.
+- [ ] Import the Gate 3 OpenClaw/SkillForge bridge, host-side verifier integration, agent-facing response boundaries, and per-task submission limit.
+- [ ] Integrate the data-file skill prototype, schema matching, explicit approval, and deterministic reuse tests.
+- [ ] Include the best-of-N evaluation harness with its experimental methodology. Store detailed measurements in separately identified evidence records.
+- [ ] Reconcile Docker runner and service changes with existing code in `main`.
+- [ ] Make fault tests hermetic and independent of running local services.
+- [ ] Review changes for credentials, host identifiers, private paths, state files, model weights, and sensitive validation material.
+- [ ] Run focused unit tests and appropriate regression/security checks against the exact PR commit before review.
 
-## Reconciliation method
+## Workflow
 
-Start from public `main` in a separate worktree, inspect `git am --check` or `git apply --check` for each scrubbed patch, apply only reviewed and non-duplicate changes, and push this branch for review. Do not rebase, reset, force-push, pull, or cherry-pick into the active `gb10-local` tree.
+Use the isolated reconciliation checkout and reviewed, sanitized patches. Apply non-duplicate changes incrementally; record commit hashes and test commands in the PR as integrations are completed.
 
-This document is a staging checklist, **not** acceptance evidence. Update it with actual applied commit hashes and test results before marking the PR ready for review.
+Do not alter the active `gb10-local` checkout, Qwen serving stack, or approved demo skills. Keep local model caches, scratch state, credentials, and raw evaluation artifacts off the public branch.
+
+This PR remains a draft until its code changes have been integrated and verified. 
